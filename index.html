@@ -559,11 +559,51 @@
         <p class="text-xs leading-relaxed" style="color:rgba(217,119,6,0.9)" x-text="t('disclaimer')"></p>
       </div>
 
-      <div class="flex gap-3">
+      <!-- Actions : Restart / Share / Print -->
+      <div class="flex gap-3 flex-wrap">
         <button @click="wizardStep=1; results=null" class="flex-1 font-medium py-3 rounded-xl transition-colors text-sm tx-muted card-hover card" x-text="t('restart')"></button>
+
+        <!-- ② Partage URL -->
+        <button @click="shareUrl()" class="flex-1 font-medium py-3 rounded-xl text-sm transition-all no-print"
+          :class="copiedUrl ? 'bg-emerald-600 text-white' : ''"
+          :style="!copiedUrl ? 'background:var(--c-surface2); color:var(--c-muted); border:1px solid var(--c-border)' : ''">
+          <span x-text="copiedUrl ? t('share_copied') : t('share_btn')"></span>
+        </button>
+
         <button @click="window.print()" class="flex-1 grad-btn font-medium py-3 rounded-xl text-sm no-print">
           🖨️ <span x-text="t('print')"></span>
         </button>
+      </div>
+
+      <!-- ① Historique -->
+      <div x-show="history.length > 0" class="mt-4 no-print">
+        <button @click="showHistory = !showHistory"
+          class="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm tx-muted transition-colors"
+          style="background:var(--c-surface2); border:1px solid var(--c-border)">
+          <span x-text="t('history_title')"></span>
+          <span class="transition-transform" :class="showHistory ? 'rotate-180' : ''" style="display:inline-block">▾</span>
+        </button>
+
+        <div x-show="showHistory" class="mt-2 space-y-2">
+          <template x-for="entry in history" :key="entry.id">
+            <div class="card p-3 flex items-center justify-between gap-3 card-hover">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1 flex-wrap">
+                  <span class="text-xs tx-faint" x-text="entry.date"></span>
+                  <span class="badge bg-violet-500/10 text-violet-400 text-xs" x-text="t('label_'+entry.type)"></span>
+                  <span class="badge text-xs" style="background:var(--c-surface3);color:var(--c-muted)" x-text="t(entry.category)"></span>
+                  <span class="badge text-xs" style="background:var(--c-surface3);color:var(--c-muted)" x-text="entry.seniority + (lang==='ar' ? ' سنة' : ' ans')"></span>
+                </div>
+                <p class="text-sm font-bold text-violet-400" x-text="fmt(entry.total) + ' MAD'"></p>
+              </div>
+              <button @click="restoreFromHistory(entry)"
+                class="flex-shrink-0 text-xs grad-btn px-3 py-1.5 rounded-lg font-medium"
+                x-text="t('history_restore')">
+              </button>
+            </div>
+          </template>
+          <button @click="clearHistory()" class="w-full text-xs tx-faint hover:text-red-400 transition-colors py-1" x-text="t('history_clear')"></button>
+        </div>
       </div>
     </div>
   </div>
@@ -750,6 +790,122 @@
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════
+     TAB: DATES LÉGALES ③
+══════════════════════════════════════════ -->
+<div x-show="activeTab==='dates'" x-cloak>
+
+  <div class="text-center mb-10">
+    <h2 class="text-3xl font-bold tx-main mb-2" x-text="t('dates_title')"></h2>
+    <p class="tx-muted" x-text="t('dates_sub')"></p>
+  </div>
+
+  <div class="max-w-2xl mx-auto">
+
+    <!-- Formulaire -->
+    <div class="card p-8 mb-6">
+      <div class="space-y-5">
+
+        <!-- Date de notification -->
+        <div>
+          <label class="block text-sm font-medium tx-main mb-2" x-text="t('dates_notif_label')"></label>
+          <input type="date" x-model="dateForm.notifDate" class="input-field">
+        </div>
+
+        <!-- Type de licenciement -->
+        <div>
+          <label class="block text-sm font-medium tx-main mb-2" x-text="t('dates_type_label')"></label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <template x-for="opt in dismissalOptions()" :key="opt.value">
+              <button @click="dateForm.type = opt.value"
+                :class="dateForm.type === opt.value ? 'selected' : ''"
+                class="step-option p-3 text-center">
+                <span class="text-xl block mb-1" x-text="opt.icon"></span>
+                <span class="text-xs tx-main font-medium leading-tight" x-text="opt.label"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Catégorie -->
+        <div>
+          <label class="block text-sm font-medium tx-main mb-2" x-text="t('dates_category_label')"></label>
+          <div class="grid grid-cols-3 gap-3">
+            <template x-for="opt in categoryOptions()" :key="opt.value">
+              <button @click="dateForm.category = opt.value"
+                :class="dateForm.category === opt.value ? 'selected' : ''"
+                class="step-option p-4 text-center">
+                <span class="text-2xl block mb-1" x-text="opt.icon"></span>
+                <span class="text-xs tx-main font-medium" x-text="opt.label"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Ancienneté -->
+        <div x-show="dateForm.type !== 'faute_grave'">
+          <label class="block text-sm font-medium tx-main mb-2">
+            <span x-text="t('dates_seniority_label')"></span>
+            <span class="text-violet-400 font-bold ms-2" x-text="dateForm.seniority"></span>
+          </label>
+          <input type="range" min="1" max="40" x-model.number="dateForm.seniority">
+        </div>
+
+        <!-- Bouton calculer -->
+        <button @click="calculateDates()"
+          :disabled="!dateForm.notifDate || !dateForm.category"
+          class="grad-btn glow-violet w-full py-3.5 rounded-xl font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+          📅 <span x-text="t('dates_calculate')"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Timeline résultats -->
+    <div x-show="dateResults" class="space-y-3">
+      <h3 class="text-sm font-semibold tx-faint uppercase tracking-widest text-center mb-4" x-text="t('dates_timeline_title')"></h3>
+
+      <template x-if="dateResults">
+        <div class="space-y-3">
+          <template x-for="(step, i) in dateResults.steps" :key="i">
+            <div class="card p-5 flex items-start gap-4"
+              :style="step.highlight ? 'border-color:rgba(124,58,237,0.35); background:var(--c-surface2)' : ''">
+
+              <!-- Icône + ligne verticale -->
+              <div class="flex flex-col items-center flex-shrink-0">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+                  :style="step.highlight ? 'background:rgba(124,58,237,0.15)' : 'background:var(--c-surface3)'">
+                  <span x-text="step.icon"></span>
+                </div>
+                <div x-show="i < dateResults.steps.length - 1" class="w-0.5 flex-1 mt-2 min-h-4" style="background:var(--c-border)"></div>
+              </div>
+
+              <!-- Contenu -->
+              <div class="flex-1 min-w-0 pb-2">
+                <p class="text-sm font-medium tx-main mb-1" x-text="step.label"></p>
+                <p class="text-base font-bold tx-main" x-text="step.date"></p>
+                <div x-show="step.badge" class="mt-2">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold border"
+                    :class="step.badge ? step.badge.cls : ''"
+                    x-text="step.badge ? step.badge.text : ''">
+                  </span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
+
+      <p class="text-xs tx-faint text-center mt-4">⚠️ <span x-text="t('disclaimer').replace('⚠️ ','')"></span></p>
+
+      <button @click="dateResults = null; dateForm.notifDate = ''; dateForm.category = null"
+        class="w-full text-center text-xs tx-faint hover:text-violet-400 transition-colors py-2"
+        x-text="t('dates_reset')">
+      </button>
+    </div>
+
+  </div>
+</div>
+
 </main>
 
 <!-- Footer -->
@@ -759,6 +915,6 @@
   </div>
 </footer>
 
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>

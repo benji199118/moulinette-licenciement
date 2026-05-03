@@ -8,12 +8,30 @@ function app() {
     openRef: null,
     form: { salary: null, seniority: 5, category: null, type: null },
 
+    // ① Historique
+    showHistory: false,
+    history: [],
+
+    // ② Partage URL
+    copiedUrl: false,
+
+    // ③ Calculateur de dates
+    dateForm: { notifDate: '', category: null, seniority: 5, type: 'faute_non_grave' },
+    dateResults: null,
+
     tabs: [
       { id: 'calc',      icon: '🧮', labelKey: 'nav_calc' },
       { id: 'procedure', icon: '📋', labelKey: 'nav_procedure' },
       { id: 'types',     icon: '📂', labelKey: 'nav_types' },
       { id: 'refs',      icon: '⚖️',  labelKey: 'nav_refs' },
+      { id: 'dates',     icon: '📅', labelKey: 'nav_dates' },
     ],
+
+    // Lifecycle — chargement initial
+    init() {
+      this.loadHistory();
+      this.$nextTick(() => this.loadFromUrl());
+    },
 
     setLang(code) { this.lang = code; },
 
@@ -139,6 +157,124 @@ function app() {
 
       this.results = { salaireHoraire, breakdown, indemniteLegale, indemnitePreavis, preavislabel, dommages, total, seniorityLabel };
       this.wizardStep = 5;
+      this.saveToHistory();
+    },
+
+    // ─── ① HISTORIQUE LOCALSTORAGE ───────────────────────────────────────────
+    saveToHistory() {
+      if (!this.results || this.form.type === 'faute_grave') return;
+      const stored = JSON.parse(localStorage.getItem('lic_history') || '[]');
+      stored.unshift({
+        id: Date.now(),
+        date: new Date().toLocaleDateString('fr-MA'),
+        type: this.form.type,
+        category: this.form.category,
+        seniority: this.form.seniority,
+        salary: this.form.salary,
+        total: this.results.total,
+      });
+      const trimmed = stored.slice(0, 5);
+      localStorage.setItem('lic_history', JSON.stringify(trimmed));
+      this.history = trimmed;
+    },
+
+    loadHistory() {
+      this.history = JSON.parse(localStorage.getItem('lic_history') || '[]');
+    },
+
+    restoreFromHistory(entry) {
+      this.form.type = entry.type;
+      this.form.category = entry.category;
+      this.form.seniority = entry.seniority;
+      this.form.salary = entry.salary;
+      this.calculateAndNext();
+      this.activeTab = 'calc';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    clearHistory() {
+      localStorage.removeItem('lic_history');
+      this.history = [];
+      this.showHistory = false;
+    },
+
+    // ─── ② PARTAGE PAR URL ───────────────────────────────────────────────────
+    shareUrl() {
+      const params = new URLSearchParams({
+        t: this.form.type || '',
+        c: this.form.category || '',
+        s: this.form.seniority || '',
+        sal: this.form.salary || '',
+      });
+      const url = `${location.origin}${location.pathname}?${params}`;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+          this.copiedUrl = true;
+          setTimeout(() => { this.copiedUrl = false; }, 2500);
+        });
+      } else {
+        prompt(this.t('share_copy_prompt'), url);
+      }
+    },
+
+    loadFromUrl() {
+      const p = new URLSearchParams(location.search);
+      const t = p.get('t'), c = p.get('c'),
+            s = parseInt(p.get('s')), sal = parseFloat(p.get('sal'));
+      if (t && c && s > 0 && sal > 0) {
+        this.form.type = t;
+        this.form.category = c;
+        this.form.seniority = s;
+        this.form.salary = sal;
+        this.calculateAndNext();
+        window.history.replaceState({}, '', location.pathname);
+      }
+    },
+
+    // ─── ③ CALCULATEUR DE DATES ──────────────────────────────────────────────
+    calculateDates() {
+      if (!this.dateForm.notifDate || !this.dateForm.category) return;
+      const notif = new Date(this.dateForm.notifDate);
+      const { category, seniority, type } = this.dateForm;
+      const isFaute = type === 'faute_grave';
+
+      let preavismois = 0;
+      if (!isFaute) {
+        if (category === 'cadre')        preavismois = seniority < 1 ? 1 : seniority <= 5 ? 2 : 3;
+        else if (category === 'employe') preavismois = seniority < 1 ? 8/30 : seniority <= 5 ? 1 : 2;
+        else                             preavismois = seniority <= 5 ? 8/30 : 1;
+      }
+      const preavisdays = Math.round(preavismois * 30);
+
+      const add = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+      const today = new Date(); today.setHours(0,0,0,0);
+      const isAr = this.lang === 'ar';
+
+      const fmtDate = d => d.toLocaleDateString(isAr ? 'ar-MA' : 'fr-MA', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+      const left = d => Math.ceil((d - today) / 86400000);
+
+      const badge = d => {
+        const n = left(d);
+        if (n < 0)  return { text: isAr ? `تأخير ${-n} يوم` : `Passé depuis ${-n}j`,    cls: 'text-red-400 bg-red-500/10 border-red-500/20' };
+        if (n === 0) return { text: isAr ? 'اليوم !' : "Aujourd'hui !",                   cls: 'text-red-400 bg-red-500/10 border-red-500/20' };
+        if (n <= 7)  return { text: isAr ? `خلال ${n} أيام` : `Dans ${n}j`,              cls: 'text-amber-400 bg-amber-500/10 border-amber-500/20' };
+        return         { text: isAr ? `${n} يوم متبقٍ` : `Dans ${n} jours`,              cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' };
+      };
+
+      const finPreavis   = add(notif, preavisdays);
+      const depart       = isFaute ? notif : finPreavis;
+      const limiteDaman  = add(depart, 30);
+      const limiteRecours= add(notif, 90);
+
+      this.dateResults = {
+        steps: [
+          { icon:'📋', label: isAr ? 'تاريخ الإشعار بالفصل'                           : 'Notification du licenciement',        date: fmtDate(notif),          badge: null,              highlight: true },
+          ...(preavisdays > 0 ? [{ icon:'⏳', label: isAr ? `نهاية مهلة الإشعار (${preavisdays} يوم)` : `Fin du préavis (${preavisdays} jours)`, date: fmtDate(finPreavis), badge: badge(finPreavis), highlight: false }] : []),
+          { icon:'📁', label: isAr ? 'تسليم وثائق نهاية العقد'                        : 'Remise des documents de fin contrat',  date: fmtDate(depart),         badge: badge(depart),     highlight: false },
+          { icon:'🏢', label: isAr ? 'آخر أجل — تصريح Damancom (30 يوم)'             : 'Déclaration Damancom (30j après départ)', date: fmtDate(limiteDaman), badge: badge(limiteDaman),highlight: false },
+          { icon:'⚖️', label: isAr ? 'آخر أجل — الطعن أمام المحكمة الاجتماعية (90 يوم)' : 'Délai de recours prud\'homal (90j)', date: fmtDate(limiteRecours), badge: badge(limiteRecours), highlight: false },
+        ],
+      };
     },
 
     // ─── PROCEDURE STEPS ─────────────────────────────────────────────────────
@@ -307,6 +443,27 @@ const translations = {
     docs_title: 'Documents types',
     docs_sub: 'Modèles conformes au Code du Travail marocain',
     footer: '⚖️ Basé sur la Loi 65-99 (Code du Travail Marocain) · À titre indicatif uniquement · Consultez un avocat pour toute situation particulière.',
+    // Historique
+    nav_dates: 'Dates légales',
+    history_title: '🕑 Calculs récents',
+    history_empty: 'Aucun calcul sauvegardé',
+    history_restore: 'Restaurer',
+    history_clear: 'Vider l\'historique',
+    history_total: 'Total',
+    // Partage
+    share_btn: '🔗 Partager le lien',
+    share_copied: '✓ Lien copié !',
+    share_copy_prompt: 'Copier ce lien :',
+    // Calculateur dates
+    dates_title: 'Calculateur de délais légaux',
+    dates_sub: 'Entrez la date de notification pour visualiser toutes les échéances',
+    dates_notif_label: 'Date de notification du licenciement',
+    dates_category_label: 'Catégorie professionnelle',
+    dates_seniority_label: 'Ancienneté (années)',
+    dates_type_label: 'Type de licenciement',
+    dates_calculate: 'Calculer les délais',
+    dates_reset: 'Réinitialiser',
+    dates_timeline_title: 'Échéancier légal',
   },
   ar: {
     app_title: 'حاسبة إنهاء عقد العمل',
@@ -375,5 +532,26 @@ const translations = {
     docs_title: 'نماذج الوثائق',
     docs_sub: 'نماذج مطابقة لقانون الشغل المغربي',
     footer: '⚖️ مستند إلى القانون 65-99 (قانون الشغل المغربي) · للاستئناس فقط · استشر محامياً متخصصاً لأي حالة خاصة.',
+    // Historique
+    nav_dates: 'المواعيد القانونية',
+    history_title: '🕑 الحسابات الأخيرة',
+    history_empty: 'لا توجد حسابات محفوظة',
+    history_restore: 'استعادة',
+    history_clear: 'مسح التاريخ',
+    history_total: 'المجموع',
+    // Partage
+    share_btn: '🔗 مشاركة الرابط',
+    share_copied: '✓ تم نسخ الرابط !',
+    share_copy_prompt: 'انسخ هذا الرابط :',
+    // Calculateur dates
+    dates_title: 'حاسبة الآجال القانونية',
+    dates_sub: 'أدخل تاريخ الإشعار لعرض جميع المواعيد النهائية',
+    dates_notif_label: 'تاريخ الإشعار بالفصل',
+    dates_category_label: 'الفئة المهنية',
+    dates_seniority_label: 'الأقدمية (سنوات)',
+    dates_type_label: 'نوع الفصل',
+    dates_calculate: 'احسب الآجال',
+    dates_reset: 'إعادة تعيين',
+    dates_timeline_title: 'جدول المواعيد القانونية',
   },
 };
