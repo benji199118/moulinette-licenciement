@@ -418,17 +418,34 @@
     <h3 class="text-xl font-semibold tx-main mb-2 text-center" x-text="t('step3_title')"></h3>
     <p class="tx-muted text-center text-sm mb-8" x-text="t('step3_sub')"></p>
     <div class="max-w-lg mx-auto">
+
+      <!-- Date d'embauche (calcul auto) -->
+      <div class="rounded-xl p-4 mb-4" style="background:rgba(124,58,237,0.07); border:1px solid rgba(124,58,237,0.2)">
+        <label class="block text-xs font-semibold text-violet-400 mb-2" x-text="t('hire_date_label')"></label>
+        <input type="date" x-model="form.hireDate"
+          @change="updateSeniorityFromDate()"
+          :max="new Date().toISOString().split('T')[0]"
+          class="input-field text-sm">
+        <div x-show="form.hireDate" class="flex items-center justify-between mt-2">
+          <p class="text-sm font-semibold text-violet-400">
+            <span x-text="t('hire_date_calculated')"></span>
+            <span x-text="hireDateLabel()"></span>
+          </p>
+          <button @click="form.hireDate = ''" class="text-xs tx-faint hover:text-red-400 transition-colors" x-text="t('hire_date_clear')"></button>
+        </div>
+      </div>
+
       <div class="card p-8">
         <div class="text-center mb-8">
           <div class="text-7xl font-bold grad-text" x-text="form.seniority"></div>
           <div class="tx-muted mt-2 text-sm" x-text="t('years_label')"></div>
         </div>
-        <input type="range" min="1" max="40" x-model.number="form.seniority" class="mb-6">
+        <input type="range" min="1" max="40" x-model.number="form.seniority" @input="form.hireDate = ''" class="mb-6">
         <div class="flex justify-between text-xs tx-faint mb-6">
           <span>1 <span x-text="t('year_short')"></span></span>
           <span>20</span><span>40</span>
         </div>
-        <input type="number" min="1" max="50" x-model.number="form.seniority" class="input-field text-center text-lg font-semibold" :placeholder="t('seniority_placeholder')">
+        <input type="number" min="1" max="50" x-model.number="form.seniority" @input="form.hireDate = ''" class="input-field text-center text-lg font-semibold" :placeholder="t('seniority_placeholder')">
       </div>
       <div class="flex justify-between mt-6">
         <button @click="prevStep()" class="tx-muted hover:text-violet-400 text-sm flex items-center gap-2 transition-colors">
@@ -515,14 +532,25 @@
             </div>
             <span class="font-bold text-violet-500" x-text="results ? fmt(results.indemniteLegale)+' MAD' : ''"></span>
           </div>
-          <div class="rounded-xl px-4 py-3 space-y-1.5 bg-s2">
+          <div class="rounded-xl px-4 py-3 bg-s2">
+            <!-- Taux horaire -->
+            <div x-show="results" class="flex items-center gap-2 text-xs pb-2.5 mb-2.5" style="border-bottom:1px solid var(--c-border)">
+              <span class="text-violet-400 font-semibold" x-text="t('calc_hourly_rate') + ' :'"></span>
+              <span class="tx-faint font-mono" x-text="results ? results.salaireHoraireFormula : ''"></span>
+            </div>
+            <!-- Tranches avec formule -->
             <template x-if="results">
-              <template x-for="line in results.breakdown" :key="line.label">
-                <div class="flex justify-between text-xs">
-                  <span class="tx-faint" x-text="line.label"></span>
-                  <span class="tx-muted font-medium" x-text="fmt(line.amount)+' MAD'"></span>
-                </div>
-              </template>
+              <div class="space-y-2.5">
+                <template x-for="line in results.breakdown" :key="line.label">
+                  <div>
+                    <div class="flex justify-between text-xs">
+                      <span class="tx-muted font-semibold" x-text="line.label"></span>
+                      <span class="text-violet-500 font-bold" x-text="fmt(line.amount)+' MAD'"></span>
+                    </div>
+                    <div class="text-xs tx-faint mt-0.5 font-mono opacity-80" x-text="line.formula"></div>
+                  </div>
+                </template>
+              </div>
             </template>
           </div>
         </div>
@@ -534,6 +562,7 @@
               <div>
                 <span class="font-medium tx-main text-sm" x-text="t('notice_indemnity')"></span>
                 <p class="text-xs tx-faint mt-0.5" x-text="results ? results.preavislabel : ''"></p>
+                <p class="text-xs font-mono mt-1 opacity-75" style="color:var(--c-faint)" x-text="results ? results.preFormula : ''"></p>
               </div>
             </div>
             <span class="font-bold text-blue-500" x-text="results ? fmt(results.indemnitePreavis)+' MAD' : ''"></span>
@@ -547,6 +576,7 @@
               <div>
                 <span class="font-medium tx-main text-sm" x-text="t('damages')"></span>
                 <p class="text-xs tx-faint mt-0.5" x-text="t('damages_ref')"></p>
+                <p class="text-xs font-mono mt-1 opacity-75" style="color:var(--c-faint)" x-text="results ? results.domFormula : ''"></p>
               </div>
             </div>
             <span class="font-bold text-red-500" x-text="results ? fmt(results.dommages)+' MAD' : ''"></span>
@@ -915,6 +945,6 @@
   </div>
 </footer>
 
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

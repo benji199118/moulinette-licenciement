@@ -6,7 +6,7 @@ function app() {
     wizardStep: 1,
     results: null,
     openRef: null,
-    form: { salary: null, seniority: 5, category: null, type: null },
+    form: { salary: null, seniority: 5, category: null, type: null, hireDate: '' },
 
     // ① Historique
     showHistory: false,
@@ -46,6 +46,31 @@ function app() {
 
     nextStep() { this.wizardStep = Math.min(this.wizardStep + 1, 5); },
     prevStep() { this.wizardStep = Math.max(this.wizardStep - 1, 1); },
+
+    // ─── DATE D'EMBAUCHE → ancienneté automatique ─────────────────────────────
+    updateSeniorityFromDate() {
+      if (!this.form.hireDate) return;
+      const hire = new Date(this.form.hireDate);
+      const today = new Date();
+      let y = today.getFullYear() - hire.getFullYear();
+      const m = today.getMonth() - hire.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < hire.getDate())) y--;
+      this.form.seniority = Math.max(1, Math.max(0, y));
+    },
+
+    hireDateLabel() {
+      if (!this.form.hireDate) return '';
+      const hire = new Date(this.form.hireDate);
+      const today = new Date();
+      let y = today.getFullYear() - hire.getFullYear();
+      let m = today.getMonth() - hire.getMonth();
+      if (today.getDate() < hire.getDate()) m--;
+      if (m < 0) { y--; m += 12; }
+      const isAr = this.lang === 'ar';
+      const yStr = y > 0 ? (isAr ? `${y} سنة` : `${y} an${y > 1 ? 's' : ''}`) : '';
+      const mStr = m > 0 ? (isAr ? ` و ${m} شهر` : ` et ${m} mois`) : '';
+      return (yStr + mStr) || (isAr ? 'أقل من شهر' : 'Moins d\'1 mois');
+    },
 
     // ─── WIZARD OPTIONS ──────────────────────────────────────────────────────
     dismissalOptions() {
@@ -124,7 +149,10 @@ function app() {
           const label = this.lang === 'ar'
             ? `${tr.from}${toStr} سنة × ${tr.rate} ساعة`
             : `Années ${tr.from}${toStr} × ${tr.rate}h`;
-          breakdown.push({ label, amount });
+          const formula = this.lang === 'ar'
+            ? `${years} سنة × ${tr.rate}س × ${this.fmt(salaireHoraire)} MAD/h`
+            : `${years} an${years > 1 ? 's' : ''} × ${tr.rate}h × ${this.fmt(salaireHoraire)} MAD/h`;
+          breakdown.push({ label, amount, formula });
           indemniteLegale += amount;
         }
       }
@@ -155,7 +183,19 @@ function app() {
       // Seniority label
       const seniorityLabel = this.lang === 'ar' ? `${seniority} سنة` : `${seniority} ans`;
 
-      this.results = { salaireHoraire, breakdown, indemniteLegale, indemnitePreavis, preavislabel, dommages, total, seniorityLabel };
+      // Formules détaillées
+      const salaireHoraireFormula = `${this.fmt(salary)} ÷ 191 = ${this.fmt(salaireHoraire)} MAD/h`;
+      const preFormula = this.lang === 'ar'
+        ? `${jours >= 25 ? Math.round(preavismois) + ' شهر' : jours + ' يوم'} × ${this.fmt(salary)} درهم`
+        : `${jours >= 25 ? Math.round(preavismois) + ' mois' : jours + ' jours'} × ${this.fmt(salary)} MAD`;
+      const plafonne = type === 'abusif' && (salary * 1.5 * seniority > salary * 36);
+      const domFormula = type === 'abusif'
+        ? (this.lang === 'ar'
+          ? `${seniority} سنة × 1.5 × ${this.fmt(salary)} درهم${plafonne ? ' (محدود بـ 36 شهراً)' : ''}`
+          : `${seniority} ans × 1,5 × ${this.fmt(salary)} MAD${plafonne ? ' (plafonné 36 mois)' : ''}`)
+        : '';
+
+      this.results = { salaireHoraire, salaireHoraireFormula, breakdown, indemniteLegale, indemnitePreavis, preavislabel, preFormula, dommages, domFormula, total, seniorityLabel };
       this.wizardStep = 5;
       this.saveToHistory();
     },
@@ -443,6 +483,12 @@ const translations = {
     docs_title: 'Documents types',
     docs_sub: 'Modèles conformes au Code du Travail marocain',
     footer: '⚖️ Basé sur la Loi 65-99 (Code du Travail Marocain) · À titre indicatif uniquement · Consultez un avocat pour toute situation particulière.',
+    // Date d'embauche
+    hire_date_label: 'Date d\'embauche (calcul auto de l\'ancienneté)',
+    hire_date_calculated: '→ Ancienneté :',
+    hire_date_clear: 'Effacer la date',
+    // Détail calcul
+    calc_hourly_rate: 'Taux horaire',
     // Historique
     nav_dates: 'Dates légales',
     history_title: '🕑 Calculs récents',
@@ -532,6 +578,12 @@ const translations = {
     docs_title: 'نماذج الوثائق',
     docs_sub: 'نماذج مطابقة لقانون الشغل المغربي',
     footer: '⚖️ مستند إلى القانون 65-99 (قانون الشغل المغربي) · للاستئناس فقط · استشر محامياً متخصصاً لأي حالة خاصة.',
+    // Date d'embauche
+    hire_date_label: 'تاريخ التوظيف (احتساب الأقدمية تلقائياً)',
+    hire_date_calculated: '← الأقدمية :',
+    hire_date_clear: 'مسح التاريخ',
+    // Détail calcul
+    calc_hourly_rate: 'الأجر الساعي',
     // Historique
     nav_dates: 'المواعيد القانونية',
     history_title: '🕑 الحسابات الأخيرة',
