@@ -419,19 +419,30 @@
     <p class="tx-muted text-center text-sm mb-8" x-text="t('step3_sub')"></p>
     <div class="max-w-lg mx-auto">
 
-      <!-- Date d'embauche (calcul auto) -->
+      <!-- Dates de contrat (calcul auto de l'ancienneté) -->
       <div class="rounded-xl p-4 mb-4" style="background:rgba(124,58,237,0.07); border:1px solid rgba(124,58,237,0.2)">
-        <label class="block text-xs font-semibold text-violet-400 mb-2" x-text="t('hire_date_label')"></label>
-        <input type="date" x-model="form.hireDate"
-          @change="updateSeniorityFromDate()"
-          :max="new Date().toISOString().split('T')[0]"
-          class="input-field text-sm">
-        <div x-show="form.hireDate" class="flex items-center justify-between mt-2">
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-violet-400 mb-2" x-text="t('hire_date_label')"></label>
+            <input type="date" x-model="form.hireDate"
+              @change="updateSeniorityFromDate()"
+              :max="new Date().toISOString().split('T')[0]"
+              class="input-field text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-violet-400 mb-2" x-text="t('end_date_label')"></label>
+            <input type="date" x-model="form.endDate"
+              @change="updateSeniorityFromDate()"
+              :max="new Date().toISOString().split('T')[0]"
+              class="input-field text-sm">
+          </div>
+        </div>
+        <div x-show="form.hireDate" class="flex items-center justify-between mt-3">
           <p class="text-sm font-semibold text-violet-400">
             <span x-text="t('hire_date_calculated')"></span>
             <span x-text="hireDateLabel()"></span>
           </p>
-          <button @click="form.hireDate = ''" class="text-xs tx-faint hover:text-red-400 transition-colors" x-text="t('hire_date_clear')"></button>
+          <button @click="form.hireDate = ''; form.endDate = ''" class="text-xs tx-faint hover:text-red-400 transition-colors" x-text="t('hire_date_clear')"></button>
         </div>
       </div>
 
@@ -481,6 +492,38 @@
         </div>
         <p class="mt-4 text-center text-xs tx-faint" x-text="t('smig_ref')"></p>
       </div>
+
+      <!-- Compléments : jours non payés + congés non pris -->
+      <div class="card p-5 mt-4 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold tx-main mb-1">
+            🟢 <span x-text="t('unpaid_label')"></span>
+          </label>
+          <p class="text-xs tx-faint mb-2" x-text="t('unpaid_help')"></p>
+          <div class="relative">
+            <input type="number" x-model.number="form.unpaidDays" min="0" max="365" class="input-field text-center text-base font-semibold" placeholder="0">
+            <span class="absolute end-4 top-1/2 -translate-y-1/2 tx-faint text-xs" x-text="lang==='ar' ? 'يوم' : 'jours'"></span>
+          </div>
+        </div>
+
+        <div style="border-top:1px solid var(--c-border); padding-top:16px">
+          <label class="block text-xs font-semibold tx-main mb-1">
+            🌴 <span x-text="t('leave_label')"></span>
+          </label>
+          <p class="text-xs tx-faint mb-2" x-text="t('leave_help')"></p>
+          <div class="relative">
+            <input type="number" x-model.number="form.unusedLeave" min="0" max="365" class="input-field text-center text-base font-semibold" placeholder="0">
+            <span class="absolute end-4 top-1/2 -translate-y-1/2 tx-faint text-xs" x-text="lang==='ar' ? 'يوم' : 'jours'"></span>
+          </div>
+        </div>
+
+        <p x-show="form.salary && (form.unpaidDays > 0 || form.unusedLeave > 0)"
+          class="text-xs tx-faint pt-2 text-center" style="border-top:1px solid var(--c-border)">
+          <span x-text="t('daily_rate') + ' :'"></span>
+          <span class="text-violet-400 font-semibold ms-1" x-text="form.salary ? fmt(form.salary/26)+' MAD/' + (lang==='ar'?'يوم':'jour') : ''"></span>
+        </p>
+      </div>
+
       <div class="flex justify-between mt-6">
         <button @click="prevStep()" class="tx-muted hover:text-violet-400 text-sm flex items-center gap-2 transition-colors">
           <span x-text="lang==='ar' ? '→' : '←'"></span><span x-text="t('back')"></span>
@@ -566,6 +609,39 @@
               </div>
             </div>
             <span class="font-bold text-blue-500" x-text="results ? fmt(results.indemnitePreavis)+' MAD' : ''"></span>
+          </div>
+        </div>
+
+        <!-- Salaires non payés -->
+        <div x-show="results && results.unpaidAmount > 0" class="card p-5 result-row" style="animation-delay:0.35s">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style="background:rgba(16,185,129,0.12)">🟢</div>
+              <div>
+                <span class="font-medium tx-main text-sm" x-text="t('unpaid_indemnity')"></span>
+                <p class="text-xs tx-faint mt-0.5">
+                  <span x-text="results ? results.unpaidDays : 0"></span>
+                  <span x-text="lang==='ar' ? 'يوم' : 'jour' + (results && results.unpaidDays > 1 ? 's' : '')"></span>
+                </p>
+                <p class="text-xs font-mono mt-1 opacity-75" style="color:var(--c-faint)" x-text="results ? results.unpaidFormula : ''"></p>
+              </div>
+            </div>
+            <span class="font-bold text-emerald-500" x-text="results ? fmt(results.unpaidAmount)+' MAD' : ''"></span>
+          </div>
+        </div>
+
+        <!-- Congés non pris -->
+        <div x-show="results && results.leaveAmount > 0" class="card p-5 result-row" style="animation-delay:0.4s">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style="background:rgba(20,184,166,0.12)">🌴</div>
+              <div>
+                <span class="font-medium tx-main text-sm" x-text="t('leave_indemnity')"></span>
+                <p class="text-xs tx-faint mt-0.5" x-text="t('leave_ref')"></p>
+                <p class="text-xs font-mono mt-1 opacity-75" style="color:var(--c-faint)" x-text="results ? results.leaveFormula : ''"></p>
+              </div>
+            </div>
+            <span class="font-bold text-teal-500" x-text="results ? fmt(results.leaveAmount)+' MAD' : ''"></span>
           </div>
         </div>
 
@@ -945,6 +1021,6 @@
   </div>
 </footer>
 
-<script src="app.js?v=6"></script>
+<script src="app.js?v=7"></script>
 </body>
 </html>

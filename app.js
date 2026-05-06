@@ -6,7 +6,16 @@ function app() {
     wizardStep: 1,
     results: null,
     openRef: null,
-    form: { salary: null, seniority: 5, category: null, type: null, hireDate: '' },
+    form: {
+      salary: null,
+      seniority: 5,
+      category: null,
+      type: null,
+      hireDate: '',
+      endDate: '',
+      unpaidDays: 0,
+      unusedLeave: 0,
+    },
 
     // ① Historique
     showHistory: false,
@@ -51,20 +60,20 @@ function app() {
     updateSeniorityFromDate() {
       if (!this.form.hireDate) return;
       const hire = new Date(this.form.hireDate);
-      const today = new Date();
-      let y = today.getFullYear() - hire.getFullYear();
-      const m = today.getMonth() - hire.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < hire.getDate())) y--;
+      const end = this.form.endDate ? new Date(this.form.endDate) : new Date();
+      let y = end.getFullYear() - hire.getFullYear();
+      const m = end.getMonth() - hire.getMonth();
+      if (m < 0 || (m === 0 && end.getDate() < hire.getDate())) y--;
       this.form.seniority = Math.max(1, Math.max(0, y));
     },
 
     hireDateLabel() {
       if (!this.form.hireDate) return '';
       const hire = new Date(this.form.hireDate);
-      const today = new Date();
-      let y = today.getFullYear() - hire.getFullYear();
-      let m = today.getMonth() - hire.getMonth();
-      if (today.getDate() < hire.getDate()) m--;
+      const end = this.form.endDate ? new Date(this.form.endDate) : new Date();
+      let y = end.getFullYear() - hire.getFullYear();
+      let m = end.getMonth() - hire.getMonth();
+      if (end.getDate() < hire.getDate()) m--;
       if (m < 0) { y--; m += 12; }
       const isAr = this.lang === 'ar';
       const yStr = y > 0 ? (isAr ? `${y} سنة` : `${y} an${y > 1 ? 's' : ''}`) : '';
@@ -178,7 +187,14 @@ function app() {
       const dommages = type === 'abusif'
         ? Math.min(salary * 1.5 * seniority, salary * 36) : 0;
 
-      const total = indemniteLegale + indemnitePreavis + dommages;
+      // Salaires non payés + congés non pris (Art. 247)
+      const salaireJournalier = salary / 26;
+      const unpaidDays = this.form.unpaidDays || 0;
+      const unusedLeave = this.form.unusedLeave || 0;
+      const unpaidAmount = unpaidDays * salaireJournalier;
+      const leaveAmount = unusedLeave * salaireJournalier;
+
+      const total = indemniteLegale + indemnitePreavis + dommages + unpaidAmount + leaveAmount;
 
       // Seniority label
       const seniorityLabel = this.lang === 'ar' ? `${seniority} سنة` : `${seniority} ans`;
@@ -195,7 +211,25 @@ function app() {
           : `${seniority} ans × 1,5 × ${this.fmt(salary)} MAD${plafonne ? ' (plafonné 36 mois)' : ''}`)
         : '';
 
-      this.results = { salaireHoraire, salaireHoraireFormula, breakdown, indemniteLegale, indemnitePreavis, preavislabel, preFormula, dommages, domFormula, total, seniorityLabel };
+      // Formules complémentaires
+      const unpaidFormula = this.lang === 'ar'
+        ? `${unpaidDays} يوم × ${this.fmt(salaireJournalier)} درهم/يوم`
+        : `${unpaidDays} jours × ${this.fmt(salaireJournalier)} MAD/jour`;
+      const leaveFormula = this.lang === 'ar'
+        ? `${unusedLeave} يوم × ${this.fmt(salaireJournalier)} درهم/يوم`
+        : `${unusedLeave} jours × ${this.fmt(salaireJournalier)} MAD/jour`;
+
+      this.results = {
+        salaireHoraire, salaireHoraireFormula,
+        salaireJournalier,
+        breakdown,
+        indemniteLegale,
+        indemnitePreavis, preavislabel, preFormula,
+        dommages, domFormula,
+        unpaidDays, unpaidAmount, unpaidFormula,
+        unusedLeave, leaveAmount, leaveFormula,
+        total, seniorityLabel,
+      };
       this.wizardStep = 5;
       this.saveToHistory();
     },
@@ -484,9 +518,19 @@ const translations = {
     docs_sub: 'Modèles conformes au Code du Travail marocain',
     footer: '⚖️ Basé sur la Loi 65-99 (Code du Travail Marocain) · À titre indicatif uniquement · Consultez un avocat pour toute situation particulière.',
     // Date d'embauche
-    hire_date_label: 'Date d\'embauche (calcul auto de l\'ancienneté)',
+    hire_date_label: 'Date de début de contrat',
+    end_date_label: 'Date de licenciement (par défaut : aujourd\'hui)',
     hire_date_calculated: '→ Ancienneté :',
-    hire_date_clear: 'Effacer la date',
+    hire_date_clear: 'Effacer les dates',
+    // Compléments salaire
+    unpaid_label: 'Jours travaillés non payés',
+    unpaid_help: 'Salaires dus non versés',
+    leave_label: 'Droit au congé non pris (en jours)',
+    leave_help: 'Selon Art. 247 — Loi 65-99',
+    unpaid_indemnity: 'Salaires non payés',
+    leave_indemnity: 'Congés non pris',
+    leave_ref: 'Art. 247 — Loi 65-99',
+    daily_rate: 'Salaire journalier',
     // Détail calcul
     calc_hourly_rate: 'Taux horaire',
     // Historique
@@ -579,9 +623,19 @@ const translations = {
     docs_sub: 'نماذج مطابقة لقانون الشغل المغربي',
     footer: '⚖️ مستند إلى القانون 65-99 (قانون الشغل المغربي) · للاستئناس فقط · استشر محامياً متخصصاً لأي حالة خاصة.',
     // Date d'embauche
-    hire_date_label: 'تاريخ التوظيف (احتساب الأقدمية تلقائياً)',
+    hire_date_label: 'تاريخ بداية العقد',
+    end_date_label: 'تاريخ الفصل (افتراضياً : اليوم)',
     hire_date_calculated: '← الأقدمية :',
-    hire_date_clear: 'مسح التاريخ',
+    hire_date_clear: 'مسح التواريخ',
+    // Compléments salaire
+    unpaid_label: 'أيام عمل غير مؤدّى عنها',
+    unpaid_help: 'متأخرات الأجور غير المدفوعة',
+    leave_label: 'العطلة المؤدى عنها غير المتمتع بها (بالأيام)',
+    leave_help: 'حسب المادة 247 — قانون 65-99',
+    unpaid_indemnity: 'الأجور غير المدفوعة',
+    leave_indemnity: 'العطلة غير المتمتع بها',
+    leave_ref: 'المادة 247 — قانون 65-99',
+    daily_rate: 'الأجر اليومي',
     // Détail calcul
     calc_hourly_rate: 'الأجر الساعي',
     // Historique
