@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion — Moulinette Licenciement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+
+:root {
+  --bg:        #f6f3ec;
+  --bg-2:      #efebe1;
+  --card:      #ffffff;
+  --ink:       #0d0f0e;
+  --ink-2:     #2c302e;
+  --ink-mute:  #6b6f6c;
+  --ink-faint: #9b9e9a;
+  --line:      rgba(13,15,14,0.10);
+  --line-s:    rgba(13,15,14,0.18);
+  --green:     #0f4d3a;
+  --green-2:   #1a6b51;
+  --green-s:   #dce8e0;
+  --rouge:     #b6402a;
+  --rouge-s:   rgba(182,64,42,0.10);
+  --r:         10px;
+  --sh:        0 1px 2px rgba(13,15,14,.04), 0 8px 24px -8px rgba(13,15,14,.12), 0 0 0 1px rgba(13,15,14,.05);
+  --f-sans:    "Inter", -apple-system, system-ui, sans-serif;
+  --f-mono:    "IBM Plex Mono", ui-monospace, monospace;
+}
+
+body {
+  background: var(--bg);
+  font-family: var(--f-sans);
+  font-size: 15px;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── Layout ── */
+.page {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: var(--sh);
+  padding: 40px;
+  width: 100%;
+  max-width: 420px;
+}
+
+/* ── Logo ── */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+  text-decoration: none;
+  color: var(--ink);
+}
+.logo__mark {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--bg);
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 15px;
+  letter-spacing: -0.02em;
+}
+.logo__name { font-weight: 600; font-size: 16px; letter-spacing: -0.02em; }
+.logo__sub  { font-size: 12px; color: var(--ink-mute); font-weight: 400; }
+
+/* ── Tab switcher ── */
+.tabs {
+  display: flex;
+  border: 1px solid var(--line-s);
+  border-radius: 999px;
+  padding: 3px;
+  margin-bottom: 28px;
+  gap: 2px;
+}
+.tab {
+  flex: 1;
+  padding: 9px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink-mute);
+  cursor: pointer;
+  transition: all .15s;
+  text-align: center;
+}
+.tab.is-active {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+/* ── Form ── */
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.field label {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.field input {
+  padding: 12px 14px;
+  border: 1px solid var(--line-s);
+  border-radius: var(--r);
+  font: inherit;
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--bg);
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  width: 100%;
+}
+.field input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(15,77,58,0.12);
+  background: #fff;
+}
+.field input::placeholder { color: var(--ink-faint); }
+
+/* Password toggle wrapper */
+.field__pwd { position: relative; }
+.field__pwd input { padding-right: 44px; }
+.pwd-toggle {
+  position: absolute;
+  right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none;
+  cursor: pointer; color: var(--ink-mute);
+  font-size: 14px; padding: 4px;
+  transition: color .15s;
+}
+.pwd-toggle:hover { color: var(--ink); }
+
+/* ── Buttons ── */
+.btn {
+  width: 100%;
+  height: 48px;
+  border-radius: 999px;
+  border: none;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  letter-spacing: -0.01em;
+}
+.btn--primary {
+  background: var(--green);
+  color: #f6f3ec;
+}
+.btn--primary:hover { background: var(--green-2); }
+.btn--primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Alerts ── */
+.alert {
+  padding: 12px 14px;
+  border-radius: var(--r);
+  font-size: 13.5px;
+  margin-bottom: 16px;
+  display: none;
+  line-height: 1.5;
+}
+.alert.is-visible { display: block; }
+.alert--error   { background: var(--rouge-s); color: var(--rouge); }
+.alert--success { background: var(--green-s); color: var(--green); }
+
+/* ── Divider ── */
+.divider {
+  display: flex; align-items: center; gap: 12px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  margin: 18px 0;
+}
+.divider::before, .divider::after {
+  content: ""; flex: 1;
+  height: 1px; background: var(--line-s);
+}
+
+/* ── Footer links ── */
+.link-row {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--ink-mute);
+}
+.link-row a {
+  color: var(--green);
+  text-decoration: none;
+  font-weight: 500;
+  cursor: pointer;
+}
+.link-row a:hover { text-decoration: underline; }
+
+/* ── Reset password view ── */
+.reset-view { display: none; }
+
+/* ── Loader spinner ── */
+.spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(246,243,236,0.4);
+  border-top-color: #f6f3ec;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Page footer ── */
+footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 12px;
+  color: var(--ink-faint);
+  font-family: var(--f-mono);
+  letter-spacing: 0.04em;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .card { padding: 28px 22px; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="card">
+
+    <!-- Logo -->
+    <div class="logo">
+      <div class="logo__mark">M</div>
+      <div>
+        <div class="logo__name">Moulinette · Licenciement</div>
+        <div class="logo__sub">Code du Travail Marocain — Loi 65-99</div>
+      </div>
+    </div>
+
+    <!-- ════════ LOGIN VIEW ════════ -->
+    <div id="login-view">
+
+      <!-- Tab switcher -->
+      <div class="tabs">
+        <button class="tab is-active" id="tab-login" onclick="switchTab('login')">Connexion</button>
+        <button class="tab" id="tab-signup" onclick="switchTab('signup')">Créer un compte</button>
+      </div>
+
+      <!-- Alert -->
+      <div class="alert" id="alert"></div>
+
+      <!-- Login form -->
+      <form id="form-login" onsubmit="handleLogin(event)" autocomplete="on">
+        <div class="field">
+          <label>Adresse email</label>
+          <input type="email" id="login-email" placeholder="vous@entreprise.ma"
+            autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label>Mot de passe</label>
+          <div class="field__pwd">
+            <input type="password" id="login-password" placeholder="••••••••"
+              autocomplete="current-password" required>
+            <button type="button" class="pwd-toggle" onclick="togglePwd('login-password', this)">👁</button>
+          </div>
+        </div>
+        <div class="link-row" style="margin-top: -4px; margin-bottom: 18px; text-align: right;">
+          <a onclick="showReset()">Mot de passe oublié ?</a>
+        </div>
+        <button type="submit" class="btn btn--primary" id="btn-login">
+          Se connecter <span class="ml-arrow">→</span>
+        </button>
+      </form>
+
+      <!-- Signup form -->
+      <form id="form-signup" onsubmit="handleSignup(event)" autocomplete="off" style="display:none;">
+        <div class="field">
+          <label>Adresse email</label>
+          <input type="email" id="signup-email" placeholder="vous@entreprise.ma"
+            autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label>Mot de passe</label>
+          <div class="field__pwd">
+            <input type="password" id="signup-password" placeholder="8 caractères minimum"
+              autocomplete="new-password" minlength="8" required>
+            <button type="button" class="pwd-toggle" onclick="togglePwd('signup-password', this)">👁</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Confirmer le mot de passe</label>
+          <div class="field__pwd">
+            <input type="password" id="signup-confirm" placeholder="Retaper le mot de passe"
+              autocomplete="new-password" minlength="8" required>
+            <button type="button" class="pwd-toggle" onclick="togglePwd('signup-confirm', this)">👁</button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn--primary" id="btn-signup">
+          Créer mon compte <span>→</span>
+        </button>
+        <p style="font-size: 12px; color: var(--ink-faint); text-align: center; margin-top: 14px; line-height: 1.5;">
+          En créant un compte, vous acceptez que vos données soient traitées
+          conformément à la politique de confidentialité.
+        </p>
+      </form>
+
+    </div>
+
+    <!-- ════════ RESET PASSWORD VIEW ════════ -->
+    <div id="reset-view" style="display:none;">
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 8px;">
+          Réinitialiser le mot de passe
+        </h2>
+        <p style="font-size: 13.5px; color: var(--ink-mute); margin: 0;">
+          Entrez votre email — nous vous enverrons un lien de réinitialisation.
+        </p>
+      </div>
+      <div class="alert" id="alert-reset"></div>
+      <form id="form-reset" onsubmit="handleReset(event)">
+        <div class="field">
+          <label>Adresse email</label>
+          <input type="email" id="reset-email" placeholder="vous@entreprise.ma" required>
+        </div>
+        <button type="submit" class="btn btn--primary" id="btn-reset">
+          Envoyer le lien <span>→</span>
+        </button>
+      </form>
+      <div class="link-row" style="margin-top: 16px;">
+        <a onclick="showLogin()">← Retour à la connexion</a>
+      </div>
+    </div>
+
+    <!-- ════════ EMAIL CONFIRM VIEW ════════ -->
+    <div id="confirm-view" style="display:none; text-align: center;">
+      <div style="font-size: 40px; margin-bottom: 16px;">📬</div>
+      <h2 style="font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 10px;">
+        Vérifiez votre email
+      </h2>
+      <p style="font-size: 14px; color: var(--ink-mute); line-height: 1.6; margin: 0 0 24px;">
+        Un lien de confirmation a été envoyé à <strong id="confirm-email-addr"></strong>.
+        Cliquez sur le lien pour activer votre compte.
+      </p>
+      <div class="link-row">
+        <a onclick="showLogin()">← Retour à la connexion</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>⚖️ Moulinette · Loi 65-99 · Maroc · outil à titre indicatif</footer>
+
+<script>
+// ─── Check if already logged in → redirect ───────────────
+(async () => {
+  const session = await getSession();
+  if (session) window.location.href = 'index.html';
+
+  // Handle password reset redirect from email link
+  const hash = window.location.hash;
+  if (hash.includes('type=recovery')) {
+    showAlert('alert', 'success', 'Vous pouvez maintenant définir un nouveau mot de passe. Reconnectez-vous.');
+  }
+})();
+
+// ─── Tab switch ───────────────────────────────────────────
+function switchTab(tab) {
+  clearAlert();
+  document.getElementById('tab-login').classList.toggle('is-active', tab === 'login');
+  document.getElementById('tab-signup').classList.toggle('is-active', tab === 'signup');
+  document.getElementById('form-login').style.display  = tab === 'login'  ? 'block' : 'none';
+  document.getElementById('form-signup').style.display = tab === 'signup' ? 'block' : 'none';
+}
+
+// ─── Show/hide views ──────────────────────────────────────
+function showReset() {
+  document.getElementById('login-view').style.display   = 'none';
+  document.getElementById('reset-view').style.display   = 'block';
+  document.getElementById('confirm-view').style.display = 'none';
+}
+function showLogin() {
+  document.getElementById('login-view').style.display   = 'block';
+  document.getElementById('reset-view').style.display   = 'none';
+  document.getElementById('confirm-view').style.display = 'none';
+  clearAlert();
+}
+function showConfirm(email) {
+  document.getElementById('login-view').style.display   = 'none';
+  document.getElementById('reset-view').style.display   = 'none';
+  document.getElementById('confirm-view').style.display = 'block';
+  document.getElementById('confirm-email-addr').textContent = email;
+}
+
+// ─── Alerts ───────────────────────────────────────────────
+function showAlert(id, type, msg) {
+  const el = document.getElementById(id);
+  el.className = `alert alert--${type} is-visible`;
+  el.textContent = msg;
+}
+function clearAlert() {
+  ['alert', 'alert-reset'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.className = 'alert'; el.textContent = ''; }
+  });
+}
+
+// ─── Loading state ────────────────────────────────────────
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  if (loading) {
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div>';
+  } else {
+    btn.disabled = false;
+  }
+}
+
+// ─── Login ────────────────────────────────────────────────
+async function handleLogin(e) {
+  e.preventDefault();
+  clearAlert();
+  setLoading('btn-login', true);
+
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+
+  const { error } = await signIn(email, password);
+
+  if (error) {
+    const msg = error.message.includes('Invalid login')
+      ? 'Email ou mot de passe incorrect.'
+      : error.message.includes('Email not confirmed')
+      ? 'Veuillez confirmer votre email avant de vous connecter.'
+      : 'Erreur de connexion. Réessayez.';
+    showAlert('alert', 'error', msg);
+    document.getElementById('btn-login').innerHTML = 'Se connecter <span>→</span>';
+    setLoading('btn-login', false);
+  } else {
+    window.location.href = 'index.html';
+  }
+}
+
+// ─── Signup ───────────────────────────────────────────────
+async function handleSignup(e) {
+  e.preventDefault();
+  clearAlert();
+
+  const email    = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+  const confirm  = document.getElementById('signup-confirm').value;
+
+  if (password !== confirm) {
+    showAlert('alert', 'error', 'Les mots de passe ne correspondent pas.');
+    return;
+  }
+  if (password.length < 8) {
+    showAlert('alert', 'error', 'Le mot de passe doit contenir au moins 8 caractères.');
+    return;
+  }
+
+  setLoading('btn-signup', true);
+  const { error } = await signUp(email, password);
+
+  if (error) {
+    const msg = error.message.includes('already registered')
+      ? 'Cet email est déjà utilisé. Connectez-vous.'
+      : 'Erreur lors de la création du compte. Réessayez.';
+    showAlert('alert', 'error', msg);
+    document.getElementById('btn-signup').innerHTML = 'Créer mon compte <span>→</span>';
+    setLoading('btn-signup', false);
+  } else {
+    showConfirm(email);
+  }
+}
+
+// ─── Reset password ───────────────────────────────────────
+async function handleReset(e) {
+  e.preventDefault();
+  clearAlert();
+  setLoading('btn-reset', true);
+
+  const email = document.getElementById('reset-email').value.trim();
+  const { error } = await resetPassword(email);
+
+  if (error) {
+    showAlert('alert-reset', 'error', 'Erreur. Vérifiez l\'adresse email saisie.');
+    document.getElementById('btn-reset').innerHTML = 'Envoyer le lien <span>→</span>';
+    setLoading('btn-reset', false);
+  } else {
+    showAlert('alert-reset', 'success', `Lien envoyé à ${email}. Vérifiez votre boîte mail.`);
+    document.getElementById('btn-reset').innerHTML = 'Envoyer le lien <span>→</span>';
+    setLoading('btn-reset', false);
+  }
+}
+
+// ─── Password visibility toggle ──────────────────────────
+function togglePwd(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  btn.textContent = isHidden ? '🙈' : '👁';
+}
+</script>
+</body>
+</html>

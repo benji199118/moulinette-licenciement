@@ -2,6 +2,7 @@ function app() {
   return {
     lang: 'fr',
     darkMode: false,
+    currentUser: null,
     activeTab: 'calc',
     wizardStep: 1,
     results: null,
@@ -36,8 +37,12 @@ function app() {
       { id: 'dates',     icon: '📅', labelKey: 'nav_dates' },
     ],
 
-    // Lifecycle — chargement initial
-    init() {
+    // Lifecycle — auth guard + chargement initial
+    async init() {
+      // Vérifie la session — redirige vers login.html si pas connecté
+      const session = await requireAuth();
+      if (!session) return; // requireAuth() redirige, on stoppe ici
+      this.currentUser = session.user;
       this.loadHistory();
       this.$nextTick(() => this.loadFromUrl());
     },

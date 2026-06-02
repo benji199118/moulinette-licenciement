@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Supabase CDN — doit charger AVANT auth.js et Alpine -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <style>
 /* ════════════════════════════════════════════════════════════════
@@ -291,6 +294,44 @@ img, svg { display: block; max-width: 100%; }
   font-size: 15px;
 }
 .ml-theme:hover { border-color: var(--ml-ink); }
+
+/* User pill */
+.ml-user-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--ml-line-strong);
+  background: var(--ml-card);
+}
+.ml-user-pill__avatar {
+  width: 28px; height: 28px;
+  border-radius: 999px;
+  background: var(--ml-green);
+  color: #f6f3ec;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 600;
+  flex-shrink: 0;
+}
+.ml-user-pill__email {
+  font-size: 11.5px;
+  color: var(--ml-ink-mute);
+  letter-spacing: 0;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 640px) { .ml-user-pill__email { display: none; } }
+.ml-user-pill__logout {
+  background: none; border: none;
+  color: var(--ml-ink-faint);
+  cursor: pointer; font-size: 14px;
+  padding: 2px 2px 2px 4px;
+  border-left: 1px solid var(--ml-line);
+  transition: color .15s;
+  line-height: 1;
+}
+.ml-user-pill__logout:hover { color: var(--ml-rouge); }
 
 /* Tabs */
 .ml-tabs {
@@ -928,6 +969,13 @@ img, svg { display: block; max-width: 100%; }
         <div class="ml-lang">
           <button @click="setLang('fr')" :class="lang==='fr' ? 'is-active' : ''" lang="fr">FR</button>
           <button @click="setLang('ar')" :class="lang==='ar' ? 'is-active' : ''" lang="ar">عربية</button>
+        </div>
+
+        <!-- User pill + logout -->
+        <div x-show="currentUser" class="ml-user-pill">
+          <span class="ml-user-pill__avatar" x-text="currentUser ? currentUser.email[0].toUpperCase() : ''"></span>
+          <span class="ml-user-pill__email ml-mono" x-text="currentUser ? currentUser.email : ''"></span>
+          <button @click="signOut()" class="ml-user-pill__logout" title="Se déconnecter">⏻</button>
         </div>
       </div>
     </div>
