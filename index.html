@@ -10,6 +10,7 @@
 <!-- Supabase CDN — doit charger AVANT auth.js et Alpine -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth.js"></script>
+<script defer src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <style>
 /* ════════════════════════════════════════════════════════════════
@@ -1352,6 +1353,33 @@ img, svg { display: block; max-width: 100%; }
 
         </div>
 
+        <!-- Infos dossier (optionnel — pour le PDF) -->
+        <div class="ml-card ml-card--bordered no-print" style="margin-bottom: 16px;">
+          <div class="ml-row ml-row--between" style="margin-bottom: 14px;">
+            <span class="ml-eyebrow" style="display:inline-flex; gap:6px;">
+              <span>Informations dossier</span>
+            </span>
+            <span class="ml-chip" style="font-size:10px;" x-text="t('dossier_opt')"></span>
+          </div>
+          <div class="ml-grid-2" style="gap: 12px; margin-bottom: 12px;">
+            <div class="ml-field">
+              <label class="ml-field__label" x-text="t('dossier_nom')"></label>
+              <input type="text" x-model="dossier.nomSalarie" class="ml-input"
+                :placeholder="t('dossier_nom_ph')">
+            </div>
+            <div class="ml-field">
+              <label class="ml-field__label" x-text="t('dossier_poste')"></label>
+              <input type="text" x-model="dossier.poste" class="ml-input"
+                :placeholder="t('dossier_poste_ph')">
+            </div>
+          </div>
+          <div class="ml-field">
+            <label class="ml-field__label" x-text="t('dossier_ref')"></label>
+            <input type="text" x-model="dossier.ref" class="ml-input"
+              :placeholder="t('dossier_ref_ph')">
+          </div>
+        </div>
+
         <!-- Disclaimer -->
         <div class="ml-card ml-card--bordered" style="background: var(--ml-ochre-soft); border-color: transparent; margin-bottom: 20px;">
           <p style="color: #6b4515; font-size: 13px; margin: 0;" x-text="t('disclaimer')"></p>
@@ -1359,16 +1387,17 @@ img, svg { display: block; max-width: 100%; }
 
         <!-- Actions -->
         <div class="ml-row no-print" style="gap: 10px; flex-wrap: wrap;">
-          <button @click="wizardStep=1; results=null" class="ml-btn" style="flex: 1; min-width: 140px;" x-text="t('restart')"></button>
+          <button @click="wizardStep=1; results=null; dossier={nomSalarie:'',poste:'',ref:''}" class="ml-btn" style="flex: 1; min-width: 120px;" x-text="t('restart')"></button>
           <button @click="shareUrl()" class="ml-btn"
-            :class="copiedUrl ? '' : ''"
             :style="copiedUrl ? 'background: var(--ml-green); color: #f6f3ec; border-color: var(--ml-green);' : ''"
-            style="flex: 1; min-width: 140px;">
+            style="flex: 1; min-width: 120px;">
             <span x-text="copiedUrl ? t('share_copied') : t('share_btn')"></span>
           </button>
-          <button @click="window.print()" class="ml-btn ml-btn--primary" style="flex: 1; min-width: 140px;">
-            <span x-text="t('print')"></span>
-            <span>⬇</span>
+          <button @click="generatePDF()" class="ml-btn ml-btn--primary" style="flex: 1; min-width: 140px;">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+              <path d="M7 1v8M4 6l3 3 3-3"/><path d="M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1"/>
+            </svg>
+            <span x-text="t('pdf_btn')"></span>
           </button>
         </div>
 
@@ -1685,6 +1714,9 @@ img, svg { display: block; max-width: 100%; }
   </div>
 </footer>
 
-<script src="app.js?v=8"></script>
+<!-- jsPDF + AutoTable — génération PDF côté client -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="app.js?v=9"></script>
 </body>
 </html>

@@ -29,6 +29,9 @@ function app() {
     dateForm: { notifDate: '', category: null, seniority: 5, type: 'faute_non_grave' },
     dateResults: null,
 
+    // ④ Infos dossier (pour PDF)
+    dossier: { nomSalarie: '', poste: '', ref: '' },
+
     tabs: [
       { id: 'calc',      icon: '🧮', labelKey: 'nav_calc' },
       { id: 'procedure', icon: '📋', labelKey: 'nav_procedure' },
@@ -356,6 +359,213 @@ function app() {
       };
     },
 
+    // ─── ④ GÉNÉRATION PDF ────────────────────────────────────────────────────
+    generatePDF() {
+      if (!this.results || !window.jspdf) return;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+      // ── Constantes ──────────────────────────────────────────────────────────
+      const G  = [15, 77, 58];    // moroccan green
+      const GS = [220, 232, 224]; // green soft
+      const K  = [13, 15, 14];    // ink
+      const M  = [107, 111, 108]; // muted
+      const W  = [246, 243, 236]; // cream
+      const L  = [220, 218, 210]; // line
+
+      const LM = 18, RM = 192, PW = 174;
+      const now = new Date();
+      const ref = this.dossier.ref || `M${now.getFullYear()}-${String(Math.floor(Math.random()*9000)+1000)}`;
+      const dateStr = now.toLocaleDateString('fr-MA');
+      const timeStr = now.toLocaleTimeString('fr-MA', { hour:'2-digit', minute:'2-digit' });
+
+      let y = 0;
+
+      // ── En-tête vert ────────────────────────────────────────────────────────
+      doc.setFillColor(...G);
+      doc.rect(0, 0, 210, 30, 'F');
+
+      // Logo carré
+      doc.setFillColor(...W);
+      doc.roundedRect(LM, 8, 13, 13, 2, 2, 'F');
+      doc.setTextColor(...K);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.text('M', LM + 6.5, 16.5, { align: 'center' });
+
+      // Titre
+      doc.setTextColor(246, 243, 236);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text('MOULINETTE LICENCIEMENT', LM + 17, 14.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.text('Code du Travail Marocain — Loi 65-99', LM + 17, 20);
+
+      // Réf + date (droite)
+      doc.setTextColor(200, 230, 210);
+      doc.setFontSize(7.5);
+      doc.text(`Réf. ${ref}`, RM, 14, { align: 'right' });
+      doc.text(`${dateStr}  ${timeStr}`, RM, 20, { align: 'right' });
+
+      y = 40;
+
+      // ── Section : Infos dossier ──────────────────────────────────────────────
+      const typeLabels = { faute_grave:'Faute grave', faute_non_grave:'Faute non grave', economique:'Licenciement économique', abusif:'Licenciement abusif' };
+      const catLabels  = { cadre:'Cadre', employe:'Employé', ouvrier:'Ouvrier' };
+
+      // Titre section
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(...M);
+      doc.text('DOSSIER DE LICENCIEMENT', LM, y);
+      doc.setDrawColor(...L);
+      doc.line(LM, y + 2, RM, y + 2);
+      y += 8;
+
+      // Grille 2 colonnes
+      const infoGrid = [
+        ['Salarié', this.dossier.nomSalarie || '—', 'Poste', this.dossier.poste || '—'],
+        ['Type', typeLabels[this.form.type] || this.form.type, 'Catégorie', catLabels[this.form.category] || this.form.category],
+        ['Ancienneté', `${this.form.seniority} an${this.form.seniority > 1 ? 's' : ''}`, 'Salaire mensuel', `${this.fmt(this.form.salary)} MAD`],
+      ];
+      if (this.form.hireDate) {
+        const ed = this.form.endDate ? new Date(this.form.endDate).toLocaleDateString('fr-MA') : "Aujourd'hui";
+        infoGrid.push(["Date d'embauche", new Date(this.form.hireDate).toLocaleDateString('fr-MA'), 'Date de licenciement', ed]);
+      }
+
+      doc.setFontSize(8.5);
+      infoGrid.forEach(row => {
+        doc.setFont('helvetica', 'bold');  doc.setTextColor(...M);
+        doc.text(row[0] + ' :', LM, y);
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(...K);
+        doc.text(String(row[1]), LM + 32, y);
+        doc.setFont('helvetica', 'bold');  doc.setTextColor(...M);
+        doc.text(row[2] + ' :', 108, y);
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(...K);
+        doc.text(String(row[3]), 140, y);
+        y += 7;
+      });
+
+      y += 6;
+
+      // ── Section : Calcul ─────────────────────────────────────────────────────
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(...M);
+      doc.text('CALCUL DES INDEMNÍTÉS', LM, y);
+      doc.line(LM, y + 2, RM, y + 2);
+      y += 7;
+
+      // Taux horaire
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(...M);
+      doc.text(`Taux horaire : ${this.results.salaireHoraireFormula}`, LM, y);
+      y += 10;
+
+      // Tableau autoTable
+      const rows = [];
+
+      // Tranches
+      this.results.breakdown.forEach(l => {
+        rows.push([`  ${l.label}`, l.formula, `${this.fmt(l.amount)} MAD`]);
+      });
+      rows.push([{ content: `Indemníté légale (Art. 52)`, styles: { fontStyle:'bold' } }, '', { content: `${this.fmt(this.results.indemniteLegale)} MAD`, styles: { fontStyle:'bold' } }]);
+
+      // Préavis
+      rows.push([`Indemníté de préavis (Art. 43)`, this.results.preFormula, `${this.fmt(this.results.indemnitePreavis)} MAD`]);
+
+      // Salaires non payés
+      if (this.results.unpaidAmount > 0)
+        rows.push([`Salaires non payés (${this.results.unpaidDays}j)`, this.results.unpaidFormula, `${this.fmt(this.results.unpaidAmount)} MAD`]);
+
+      // Congés non pris
+      if (this.results.leaveAmount > 0)
+        rows.push([`Congés non pris (${this.results.unusedLeave}j)`, this.results.leaveFormula, `${this.fmt(this.results.leaveAmount)} MAD`]);
+
+      // D&I
+      if (this.results.dommages > 0)
+        rows.push([`Dommages et intérêts (Art. 41)`, this.results.domFormula, `${this.fmt(this.results.dommages)} MAD`]);
+
+      doc.autoTable({
+        startY: y,
+        head: [['Indemníté', 'Formule', 'Montant']],
+        body: rows,
+        margin: { left: LM, right: 18 },
+        styles: { font:'helvetica', fontSize:8.5, cellPadding:3.5, textColor: K, lineColor: L, lineWidth: 0.2 },
+        headStyles: { fillColor: K, textColor: W, fontStyle:'bold', fontSize:8 },
+        alternateRowStyles: { fillColor: [250, 249, 245] },
+        columnStyles: {
+          0: { cellWidth: 76 },
+          1: { cellWidth: 68, textColor: M, fontSize: 7.5 },
+          2: { cellWidth: 30, halign:'right', fontStyle:'bold' },
+        },
+      });
+
+      y = doc.lastAutoTable.finalY + 6;
+
+      // ── Total ────────────────────────────────────────────────────────────────
+      doc.setFillColor(...G);
+      doc.roundedRect(LM, y, PW, 14, 2, 2, 'F');
+      doc.setTextColor(246, 243, 236);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.text('TOTAL BRUT ESTIMÉ', LM + 5, y + 9);
+      doc.setFontSize(13);
+      doc.text(`${this.fmt(this.results.total)} MAD`, RM - 4, y + 9.5, { align:'right' });
+
+      y += 22;
+
+      // ── Références légales ───────────────────────────────────────────────────
+      if (y > 240) { doc.addPage(); y = 20; }
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(...M);
+      doc.text('RÉFÉRENCES LÉGALES', LM, y);
+      doc.setDrawColor(...L);
+      doc.line(LM, y + 2, RM, y + 2);
+      y += 7;
+
+      const legalRefs = [
+        'Art. 41 — Dommages et intérêts en cas de licenciement abusif (plafond 36 mois)',
+        'Art. 43 — Obligation de préavis selon l’ancienneté et la catégorie',
+        'Art. 52 — Barème de l’indemníté légale : 96h → 240h / an selon tranches',
+        'Art. 53 — Base de calcul : salaire le plus favorable (52 semaines ou 3 mois)',
+        'Décret 2-04-469 — Délais de préavis par catégorie professionnelle',
+      ];
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(...K);
+      legalRefs.forEach(r => { doc.text(`•  ${r}`, LM + 2, y); y += 5; });
+
+      y += 6;
+
+      // ── Footer ───────────────────────────────────────────────────────────────
+      doc.setDrawColor(...L);
+      doc.line(LM, y, RM, y);
+      y += 5;
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(7.5);
+      doc.setTextColor(...M);
+      doc.text('⚠  Document établi à titre indicatif uniquement. Les montants peuvent varier selon la situation réelle du salarié.', LM, y);
+      y += 5;
+      doc.text('Consultez un avocat spécialisé en droit social marocain pour votre situation spécifique.', LM, y);
+      y += 5;
+      if (this.currentUser) {
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Établi par : ${this.currentUser.email}  —  ${dateStr} à ${timeStr}`, LM, y);
+        y += 5;
+      }
+      doc.setTextColor(150, 155, 150);
+      doc.text('Moulinette Licenciement · github.com/benji199118/moulinette-licenciement', LM, y);
+
+      // ── Sauvegarde ───────────────────────────────────────────────────────────
+      const safeName = (this.dossier.nomSalarie || 'dossier').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      doc.save(`licenciement-${safeName}-${ref.toLowerCase()}.pdf`);
+    },
+
     // ─── PROCEDURE STEPS ─────────────────────────────────────────────────────
     procedureSteps() {
       const d = {
@@ -532,6 +742,15 @@ const translations = {
     docs_title: 'Documents types',
     docs_sub: 'Modèles conformes au Code du Travail marocain',
     footer: '⚖️ Basé sur la Loi 65-99 (Code du Travail Marocain) · À titre indicatif uniquement · Consultez un avocat pour toute situation particulière.',
+    // PDF
+    pdf_btn: 'Télécharger PDF',
+    dossier_opt: 'Optionnel',
+    dossier_nom: 'Nom du salarié',
+    dossier_nom_ph: 'Mohamed Benali',
+    dossier_poste: 'Poste occupé',
+    dossier_poste_ph: 'Responsable comptabilité',
+    dossier_ref: 'Référence interne',
+    dossier_ref_ph: 'LIC-2026-042',
     // Date d'embauche
     hire_date_label: 'Date de début de contrat',
     end_date_label: 'Date de licenciement (par défaut : aujourd\'hui)',
@@ -647,6 +866,15 @@ const translations = {
     docs_title: 'نماذج الوثائق',
     docs_sub: 'نماذج مطابقة لقانون الشغل المغربي',
     footer: '⚖️ مستند إلى القانون 65-99 (قانون الشغل المغربي) · للاستئناس فقط · استشر محامياً متخصصاً لأي حالة خاصة.',
+    // PDF
+    pdf_btn: 'تحميل PDF',
+    dossier_opt: 'اختياري',
+    dossier_nom: 'اسم الموظف',
+    dossier_nom_ph: 'محمد بنعلي',
+    dossier_poste: 'المنصب',
+    dossier_poste_ph: 'مسؤول المحاسبة',
+    dossier_ref: 'المرجع الداخلي',
+    dossier_ref_ph: 'LIC-2026-042',
     // Date d'embauche
     hire_date_label: 'تاريخ بداية العقد',
     end_date_label: 'تاريخ الفصل (افتراضياً : اليوم)',
