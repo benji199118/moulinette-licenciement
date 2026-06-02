@@ -323,15 +323,25 @@ img, svg { display: block; max-width: 100%; }
 }
 @media (max-width: 640px) { .ml-user-pill__email { display: none; } }
 .ml-user-pill__logout {
-  background: none; border: none;
+  background: none;
+  border: none;
+  width: 24px; height: 24px;
+  border-radius: 999px;
+  display: grid; place-items: center;
+  cursor: pointer;
   color: var(--ml-ink-faint);
-  cursor: pointer; font-size: 14px;
-  padding: 2px 2px 2px 4px;
-  border-left: 1px solid var(--ml-line);
-  transition: color .15s;
+  font-size: 11px;
+  font-family: var(--f-sans);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
   line-height: 1;
 }
-.ml-user-pill__logout:hover { color: var(--ml-rouge); }
+.ml-user-pill__logout:hover {
+  background: var(--ml-rouge-soft);
+  color: var(--ml-rouge);
+}
 
 /* Tabs */
 .ml-tabs {
@@ -975,7 +985,12 @@ img, svg { display: block; max-width: 100%; }
         <div x-show="currentUser" class="ml-user-pill">
           <span class="ml-user-pill__avatar" x-text="currentUser ? currentUser.email[0].toUpperCase() : ''"></span>
           <span class="ml-user-pill__email ml-mono" x-text="currentUser ? currentUser.email : ''"></span>
-          <button @click="signOut()" class="ml-user-pill__logout" title="Se déconnecter">⏻</button>
+          <button @click="signOut()" class="ml-user-pill__logout" title="Se déconnecter">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4.5 6H11M8.5 3.5L11 6l-2.5 2.5"/>
+              <path d="M7 1.5H2a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h5"/>
+            </svg>
+          </button>
         </div>
       </div>
     </div>
