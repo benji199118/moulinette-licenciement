@@ -1401,9 +1401,12 @@ img, svg { display: block; max-width: 100%; }
           </button>
         </div>
 
+        <!-- Séparateur -->
+        <div class="no-print" style="height: 1px; background: var(--ml-line); margin: 36px 0;"></div>
+
         <!-- Sauvegarder dossier (Supabase) -->
         <button @click="saveDossier()" :disabled="savingDossier"
-          class="ml-btn ml-btn--accent ml-btn--block no-print" style="margin-top: 28px;"
+          class="ml-btn ml-btn--accent ml-btn--block ml-btn--lg no-print"
           :style="dossierSaved ? 'background: var(--ml-green-2); border-color: var(--ml-green-2);' : ''">
           <template x-if="!savingDossier && !dossierSaved">
             <span style="display:inline-flex; align-items:center; gap:8px;">
@@ -1816,6 +1819,6 @@ img, svg { display: block; max-width: 100%; }
 <!-- jsPDF + AutoTable — génération PDF côté client -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-<script src="app.js?v=10"></script>
+<script src="app.js?v=12"></script>
 </body>
 </html>

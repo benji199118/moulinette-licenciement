@@ -465,6 +465,19 @@ function app() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
+      // ── Sanitizer : jsPDF (helvetica) ne supporte pas emojis / flèches / puces.
+      //    On garde les accents français (é è à ç…), on remplace le reste. ──────
+      const san = (s) => String(s)
+        .replace(/[‒-―]/g, '-')        // tirets longs – — → -
+        .replace(/→/g, '->')                 // flèche →
+        .replace(/[•·]/g, '-')          // puces • ·
+        .replace(/[‘’]/g, "'")          // apostrophes courbes ' '
+        .replace(/[“”]/g, '"')          // guillemets courbes " "
+        .replace(/í/g, 'i').replace(/Í/g, 'I')   // í/Í parasite → i/I
+        .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}️⃣]/gu, '') // emojis
+        .replace(/[ \t]+$/g, '');                  // espaces de fin
+      const T = (str, x, yy, opts) => doc.text(san(str), x, yy, opts);
+
       // ── Constantes ──────────────────────────────────────────────────────────
       const G  = [15, 77, 58];    // moroccan green
       const GS = [220, 232, 224]; // green soft
@@ -491,22 +504,22 @@ function app() {
       doc.setTextColor(...K);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
-      doc.text('M', LM + 6.5, 16.5, { align: 'center' });
+      T('M', LM + 6.5, 16.5, { align: 'center' });
 
       // Titre
       doc.setTextColor(246, 243, 236);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
-      doc.text('MOULINETTE LICENCIEMENT', LM + 17, 14.5);
+      T('MOULINETTE LICENCIEMENT', LM + 17, 14.5);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
-      doc.text('Code du Travail Marocain — Loi 65-99', LM + 17, 20);
+      T('Code du Travail Marocain — Loi 65-99', LM + 17, 20);
 
       // Réf + date (droite)
       doc.setTextColor(200, 230, 210);
       doc.setFontSize(7.5);
-      doc.text(`Réf. ${ref}`, RM, 14, { align: 'right' });
-      doc.text(`${dateStr}  ${timeStr}`, RM, 20, { align: 'right' });
+      T(`Réf. ${ref}`, RM, 14, { align: 'right' });
+      T(`${dateStr}  ${timeStr}`, RM, 20, { align: 'right' });
 
       y = 40;
 
@@ -518,7 +531,7 @@ function app() {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7.5);
       doc.setTextColor(...M);
-      doc.text('DOSSIER DE LICENCIEMENT', LM, y);
+      T('DOSSIER DE LICENCIEMENT', LM, y);
       doc.setDrawColor(...L);
       doc.line(LM, y + 2, RM, y + 2);
       y += 8;
@@ -537,13 +550,13 @@ function app() {
       doc.setFontSize(8.5);
       infoGrid.forEach(row => {
         doc.setFont('helvetica', 'bold');  doc.setTextColor(...M);
-        doc.text(row[0] + ' :', LM, y);
+        T(row[0] + ' :', LM, y);
         doc.setFont('helvetica', 'normal'); doc.setTextColor(...K);
-        doc.text(String(row[1]), LM + 32, y);
+        T(String(row[1]), LM + 32, y);
         doc.setFont('helvetica', 'bold');  doc.setTextColor(...M);
-        doc.text(row[2] + ' :', 108, y);
+        T(row[2] + ' :', 108, y);
         doc.setFont('helvetica', 'normal'); doc.setTextColor(...K);
-        doc.text(String(row[3]), 140, y);
+        T(String(row[3]), 140, y);
         y += 7;
       });
 
@@ -553,7 +566,7 @@ function app() {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7.5);
       doc.setTextColor(...M);
-      doc.text('CALCUL DES INDEMNÍTÉS', LM, y);
+      T('CALCUL DES INDEMNÍTÉS', LM, y);
       doc.line(LM, y + 2, RM, y + 2);
       y += 7;
 
@@ -561,7 +574,7 @@ function app() {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       doc.setTextColor(...M);
-      doc.text(`Taux horaire : ${this.results.salaireHoraireFormula}`, LM, y);
+      T(`Taux horaire : ${this.results.salaireHoraireFormula}`, LM, y);
       y += 10;
 
       // Tableau autoTable
@@ -590,8 +603,8 @@ function app() {
 
       doc.autoTable({
         startY: y,
-        head: [['Indemníté', 'Formule', 'Montant']],
-        body: rows,
+        head: [['Indemníté', 'Formule', 'Montant'].map(s=>s.replace(/í/g,'i'))],
+        body: rows.map(r => r.map(c => typeof c === 'string' ? san(c) : { ...c, content: san(c.content) })),
         margin: { left: LM, right: 18 },
         styles: { font:'helvetica', fontSize:8.5, cellPadding:3.5, textColor: K, lineColor: L, lineWidth: 0.2 },
         headStyles: { fillColor: K, textColor: W, fontStyle:'bold', fontSize:8 },
@@ -611,9 +624,9 @@ function app() {
       doc.setTextColor(246, 243, 236);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
-      doc.text('TOTAL BRUT ESTIMÉ', LM + 5, y + 9);
+      T('TOTAL BRUT ESTIMÉ', LM + 5, y + 9);
       doc.setFontSize(13);
-      doc.text(`${this.fmt(this.results.total)} MAD`, RM - 4, y + 9.5, { align:'right' });
+      T(`${this.fmt(this.results.total)} MAD`, RM - 4, y + 9.5, { align:'right' });
 
       y += 22;
 
@@ -623,7 +636,7 @@ function app() {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7.5);
       doc.setTextColor(...M);
-      doc.text('RÉFÉRENCES LÉGALES', LM, y);
+      T('RÉFÉRENCES LÉGALES', LM, y);
       doc.setDrawColor(...L);
       doc.line(LM, y + 2, RM, y + 2);
       y += 7;
@@ -638,7 +651,7 @@ function app() {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       doc.setTextColor(...K);
-      legalRefs.forEach(r => { doc.text(`•  ${r}`, LM + 2, y); y += 5; });
+      legalRefs.forEach(r => { T(`-  ${r}`, LM + 2, y); y += 5; });
 
       y += 6;
 
@@ -649,17 +662,17 @@ function app() {
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(7.5);
       doc.setTextColor(...M);
-      doc.text('⚠  Document établi à titre indicatif uniquement. Les montants peuvent varier selon la situation réelle du salarié.', LM, y);
+      T('⚠  Document établi à titre indicatif uniquement. Les montants peuvent varier selon la situation réelle du salarié.', LM, y);
       y += 5;
-      doc.text('Consultez un avocat spécialisé en droit social marocain pour votre situation spécifique.', LM, y);
+      T('Consultez un avocat spécialisé en droit social marocain pour votre situation spécifique.', LM, y);
       y += 5;
       if (this.currentUser) {
         doc.setFont('helvetica', 'normal');
-        doc.text(`Établi par : ${this.currentUser.email}  —  ${dateStr} à ${timeStr}`, LM, y);
+        T(`Établi par : ${this.currentUser.email}  —  ${dateStr} à ${timeStr}`, LM, y);
         y += 5;
       }
       doc.setTextColor(150, 155, 150);
-      doc.text('Moulinette Licenciement · github.com/benji199118/moulinette-licenciement', LM, y);
+      T('Moulinette Licenciement · github.com/benji199118/moulinette-licenciement', LM, y);
 
       // ── Sauvegarde ───────────────────────────────────────────────────────────
       const safeName = (this.dossier.nomSalarie || 'dossier').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
