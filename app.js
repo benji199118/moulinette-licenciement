@@ -37,6 +37,9 @@ function app() {
     loadingDossiers: false,
     savingDossier: false,
     dossierSaved: false,
+    dossierSearch: '',
+    dossierStatusFilter: 'all',
+    dossierSort: 'recent',
 
     tabs: [
       { id: 'calc',      icon: '🧮', labelKey: 'nav_calc' },
@@ -364,8 +367,44 @@ function app() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
+    // Liste filtrée + triée
+    filteredDossiers() {
+      let list = this.dossiers;
+
+      // Filtre statut
+      if (this.dossierStatusFilter !== 'all') {
+        list = list.filter(d => d.status === this.dossierStatusFilter);
+      }
+
+      // Recherche texte (nom, poste, réf)
+      const q = this.dossierSearch.trim().toLowerCase();
+      if (q) {
+        list = list.filter(d =>
+          (d.nom_salarie || '').toLowerCase().includes(q) ||
+          (d.poste || '').toLowerCase().includes(q) ||
+          (d.ref || '').toLowerCase().includes(q)
+        );
+      }
+
+      // Tri
+      list = [...list];
+      if (this.dossierSort === 'recent')      list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      else if (this.dossierSort === 'old')    list.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      else if (this.dossierSort === 'amount')  list.sort((a, b) => (b.total || 0) - (a.total || 0));
+      else if (this.dossierSort === 'name')    list.sort((a, b) => (a.nom_salarie || '').localeCompare(b.nom_salarie || ''));
+
+      return list;
+    },
+
+    // Budget des dossiers affichés (filtrés)
     dossiersBudget() {
-      return this.dossiers.reduce((sum, d) => sum + (d.total || 0), 0);
+      return this.filteredDossiers().reduce((sum, d) => sum + (d.total || 0), 0);
+    },
+
+    // Compteur par statut (pour les chips)
+    statusCount(status) {
+      if (status === 'all') return this.dossiers.length;
+      return this.dossiers.filter(d => d.status === status).length;
     },
 
     dossierStatusLabel(status) {
@@ -871,6 +910,17 @@ const translations = {
     dossier_delete_confirm: 'Supprimer ce dossier définitivement ?',
     dossier_open: 'Ouvrir',
     dossier_unnamed: 'Sans nom',
+    dossier_search_ph: 'Rechercher un salarié, poste, référence…',
+    filter_all: 'Tous',
+    filter_draft: 'Brouillon',
+    filter_in_progress: 'En cours',
+    filter_closed: 'Clôturé',
+    sort_recent: 'Plus récents',
+    sort_old: 'Plus anciens',
+    sort_amount: 'Montant ↓',
+    sort_name: 'Nom A-Z',
+    dossiers_no_match: 'Aucun dossier ne correspond à votre recherche.',
+    dossiers_showing: 'affichés',
     // PDF
     pdf_btn: 'Télécharger PDF',
     dossier_opt: 'Optionnel',
@@ -1011,6 +1061,17 @@ const translations = {
     dossier_delete_confirm: 'حذف هذا الملف نهائياً ؟',
     dossier_open: 'فتح',
     dossier_unnamed: 'بدون اسم',
+    dossier_search_ph: 'ابحث عن موظف، منصب، مرجع…',
+    filter_all: 'الكل',
+    filter_draft: 'مسودة',
+    filter_in_progress: 'قيد المعالجة',
+    filter_closed: 'مغلق',
+    sort_recent: 'الأحدث',
+    sort_old: 'الأقدم',
+    sort_amount: 'المبلغ ↓',
+    sort_name: 'الاسم أ-ي',
+    dossiers_no_match: 'لا يوجد ملف يطابق بحثك.',
+    dossiers_showing: 'معروض',
     // PDF
     pdf_btn: 'تحميل PDF',
     dossier_opt: 'اختياري',

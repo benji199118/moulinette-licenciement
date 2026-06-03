@@ -1494,8 +1494,42 @@ img, svg { display: block; max-width: 100%; }
         </div>
         <div style="text-align: end;">
           <div class="ml-chip ml-chip--green" style="background: rgba(74,222,128,0.18); color: #4ade80;">
-            <span x-text="dossiers.length"></span>&nbsp;<span x-text="t('dossiers_count')"></span>
+            <span x-text="filteredDossiers().length"></span><span x-show="filteredDossiers().length !== dossiers.length"> / <span x-text="dossiers.length"></span></span>&nbsp;<span x-text="t('dossiers_count')"></span>
           </div>
+        </div>
+      </div>
+
+      <!-- Barre d'outils : recherche + filtres + tri -->
+      <div x-show="dossiers.length > 0" style="margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px;">
+        <!-- Recherche -->
+        <div style="position: relative;">
+          <svg style="position:absolute; inset-inline-start:14px; top:50%; transform:translateY(-50%); color:var(--ml-ink-faint);" width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <circle cx="6.5" cy="6.5" r="4.5"/><path d="M13 13l-3-3"/>
+          </svg>
+          <input type="text" x-model="dossierSearch" class="ml-input"
+            :placeholder="t('dossier_search_ph')" style="padding-inline-start: 38px;">
+        </div>
+
+        <div class="ml-row ml-row--between" style="gap: 12px; flex-wrap: wrap;">
+          <!-- Chips statut -->
+          <div class="ml-row" style="gap: 6px; flex-wrap: wrap;">
+            <template x-for="f in [{k:'all',l:'filter_all'},{k:'draft',l:'filter_draft'},{k:'in_progress',l:'filter_in_progress'},{k:'closed',l:'filter_closed'}]" :key="f.k">
+              <button @click="dossierStatusFilter = f.k"
+                class="ml-chip" style="cursor: pointer; height: 30px;"
+                :style="dossierStatusFilter === f.k ? 'background: var(--ml-ink); color: var(--ml-bg); border-color: var(--ml-ink);' : ''">
+                <span x-text="t(f.l)"></span>
+                <span style="opacity: 0.6;" x-text="statusCount(f.k)"></span>
+              </button>
+            </template>
+          </div>
+
+          <!-- Tri -->
+          <select x-model="dossierSort" class="ml-input" style="width: auto; padding: 7px 12px; font-size: 13px; height: 30px;">
+            <option value="recent" x-text="t('sort_recent')"></option>
+            <option value="old" x-text="t('sort_old')"></option>
+            <option value="amount" x-text="t('sort_amount')"></option>
+            <option value="name" x-text="t('sort_name')"></option>
+          </select>
         </div>
       </div>
 
@@ -1510,9 +1544,14 @@ img, svg { display: block; max-width: 100%; }
         <button @click="activeTab='calc'; wizardStep=1" class="ml-btn ml-btn--primary" x-text="t('dossiers_empty_cta')"></button>
       </div>
 
+      <!-- Aucun résultat (filtres) -->
+      <div x-show="!loadingDossiers && dossiers.length > 0 && filteredDossiers().length === 0"
+        class="ml-card ml-center ml-mute" style="padding: 40px; font-size: 14px;"
+        x-text="t('dossiers_no_match')"></div>
+
       <!-- Dossiers list -->
-      <div x-show="!loadingDossiers && dossiers.length > 0" class="ml-stack" style="gap: 10px;">
-        <template x-for="d in dossiers" :key="d.id">
+      <div x-show="!loadingDossiers && filteredDossiers().length > 0" class="ml-stack" style="gap: 10px;">
+        <template x-for="d in filteredDossiers()" :key="d.id">
           <div class="ml-card" style="padding: 18px 20px; display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center;">
             <div style="min-width: 0;">
               <div class="ml-row" style="gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
@@ -1819,6 +1858,6 @@ img, svg { display: block; max-width: 100%; }
 <!-- jsPDF + AutoTable — génération PDF côté client -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-<script src="app.js?v=12"></script>
+<script src="app.js?v=13"></script>
 </body>
 </html>
