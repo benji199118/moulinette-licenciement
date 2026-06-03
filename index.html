@@ -4,369 +4,366 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Moulinette Licenciement — Calcul d'indemnités · Code du Travail Marocain (Loi 65-99)</title>
-<meta name="description" content="Calculez en quelques secondes l'indemnité légale, le préavis, les dommages-intérêts et le solde de tout compte selon le Code du Travail marocain. Outil RH gratuit, FR/AR.">
+<meta name="description" content="Calculez en quelques secondes l'indemnité légale, le préavis, les dommages-intérêts et le solde de tout compte. Conforme à la Loi 65-99. Pour les RH au Maroc.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth.js"></script>
 <style>
-*, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
+/* ═══════════════ DESIGN SYSTEM (identique à l'app) ═══════════════ */
 :root {
-  --bg:        #f6f3ec;
-  --bg-2:      #efebe1;
-  --card:      #ffffff;
-  --ink:       #0d0f0e;
-  --ink-2:     #2c302e;
-  --ink-mute:  #6b6f6c;
-  --ink-faint: #9b9e9a;
-  --line:      rgba(13,15,14,0.10);
-  --line-s:    rgba(13,15,14,0.18);
-  --green:     #0f4d3a;
-  --green-2:   #1a6b51;
-  --green-s:   #dce8e0;
-  --ochre:     #c97a26;
-  --ochre-s:   #f1deb8;
-  --rouge:     #b6402a;
-  --r:         12px;
-  --r-lg:      22px;
-  --sh-sm:     0 1px 2px rgba(13,15,14,.05), 0 0 0 1px rgba(13,15,14,.04);
-  --sh:        0 1px 2px rgba(13,15,14,.04), 0 8px 24px -8px rgba(13,15,14,.12), 0 0 0 1px rgba(13,15,14,.05);
-  --sh-lg:     0 1px 2px rgba(13,15,14,.04), 0 24px 60px -20px rgba(13,15,14,.25), 0 0 0 1px rgba(13,15,14,.05);
-  --f-sans:    "Inter", -apple-system, system-ui, sans-serif;
-  --f-mono:    "IBM Plex Mono", ui-monospace, monospace;
-  --f-ar:      "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --ml-bg:#f6f3ec; --ml-bg-2:#efebe1; --ml-card:#fff;
+  --ml-ink:#0d0f0e; --ml-ink-2:#2c302e; --ml-ink-mute:#6b6f6c; --ml-ink-faint:#9b9e9a;
+  --ml-line:rgba(13,15,14,.10); --ml-line-s:rgba(13,15,14,.18);
+  --ml-green:#0f4d3a; --ml-green-2:#1a6b51; --ml-green-soft:#dce8e0;
+  --ml-ochre:#c97a26; --ml-ochre-soft:#f1deb8; --ml-rouge:#b6402a;
+  --r:14px; --r-lg:22px;
+  --sh-sm:0 1px 2px rgba(13,15,14,.05),0 0 0 1px rgba(13,15,14,.04);
+  --sh:0 1px 2px rgba(13,15,14,.04),0 8px 24px -8px rgba(13,15,14,.12),0 0 0 1px rgba(13,15,14,.05);
+  --sh-lg:0 1px 2px rgba(13,15,14,.04),0 24px 60px -20px rgba(13,15,14,.25),0 0 0 1px rgba(13,15,14,.05);
+  --f-sans:"Inter",-apple-system,system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+  --f-ar:"IBM Plex Sans Arabic","Noto Sans Arabic",system-ui,sans-serif;
 }
-body {
-  background: var(--bg);
-  color: var(--ink);
-  font-family: var(--f-sans);
-  font-size: 16px;
-  line-height: 1.55;
-  -webkit-font-smoothing: antialiased;
-}
-a { color: inherit; text-decoration: none; }
-button { font: inherit; cursor: pointer; }
-.wrap { max-width: 1160px; margin: 0 auto; padding: 0 32px; }
-@media (max-width: 720px) { .wrap { padding: 0 20px; } }
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--ml-bg);color:var(--ml-ink);font-family:var(--f-sans);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+a{color:inherit;text-decoration:none;}
+button{font:inherit;cursor:pointer;}
+img,svg{display:block;max-width:100%;}
 
-.mono { font-family: var(--f-mono); }
-.num { font-variant-numeric: tabular-nums; }
-.mute { color: var(--ink-mute); }
+.wrap{max-width:1200px;margin:0 auto;padding:0 32px;}
+@media(max-width:720px){.wrap{padding:0 20px;}}
+
+/* Type */
+.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ml-ink-mute);margin:0;display:inline-flex;align-items:center;gap:8px;}
+.eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ml-green);}
+.display{font-family:var(--f-sans);font-weight:600;font-size:clamp(40px,6.4vw,76px);line-height:1.02;letter-spacing:-0.04em;margin:0;}
+.display em{font-style:italic;font-weight:500;color:var(--ml-green);}
+.h2{font-family:var(--f-sans);font-weight:600;font-size:clamp(28px,3.6vw,46px);line-height:1.08;letter-spacing:-0.03em;margin:0;}
+.h2 em{font-style:italic;font-weight:500;color:var(--ml-green);}
+.lead{font-size:18px;line-height:1.55;color:var(--ml-ink-2);margin:0;max-width:56ch;}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums;}
+.mute{color:var(--ml-ink-mute);}
 
 /* Buttons */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  height: 46px; padding: 0 22px;
-  border-radius: 999px;
-  border: 1px solid var(--line-s);
-  background: var(--card);
-  color: var(--ink);
-  font-weight: 500; font-size: 15px;
-  letter-spacing: -0.01em;
-  transition: transform .15s, background .15s, border-color .15s, color .15s;
-}
-.btn:hover { transform: translateY(-1px); border-color: var(--ink); }
-.btn--accent { background: var(--green); color: #f6f3ec; border-color: var(--green); }
-.btn--accent:hover { background: var(--green-2); border-color: var(--green-2); }
-.btn--ink { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-.btn--ink:hover { background: var(--green); border-color: var(--green); color: #f6f3ec; }
-.btn--lg { height: 54px; padding: 0 28px; font-size: 16px; }
-.btn--sm { height: 36px; padding: 0 16px; font-size: 13.5px; }
-.arrow { transition: transform .2s; }
-.btn:hover .arrow { transform: translateX(3px); }
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 20px;border-radius:999px;border:1px solid var(--ml-line-s);background:var(--ml-card);color:var(--ml-ink);font-weight:500;font-size:14.5px;letter-spacing:-0.005em;transition:transform .15s,background .15s,border-color .15s,color .15s;}
+.btn:hover{transform:translateY(-1px);border-color:var(--ml-ink);}
+.btn--primary{background:var(--ml-ink);color:var(--ml-bg);border-color:var(--ml-ink);}
+.btn--primary:hover{background:var(--ml-green);border-color:var(--ml-green);color:#f6f3ec;}
+.btn--accent{background:var(--ml-green);color:#f6f3ec;border-color:var(--ml-green);}
+.btn--accent:hover{background:var(--ml-green-2);border-color:var(--ml-green-2);}
+.btn--lg{height:54px;padding:0 26px;font-size:16px;}
+.btn--sm{height:36px;padding:0 14px;font-size:13px;}
+.arrow{display:inline-block;transition:transform .2s;}
+.btn:hover .arrow{transform:translateX(3px);}
 
-/* Eyebrow */
-.eyebrow {
-  font-family: var(--f-mono);
-  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--ink-mute);
-  display: inline-flex; align-items: center; gap: 8px;
-}
-.eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+/* Chip */
+.chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 11px;border-radius:999px;background:var(--ml-card);border:1px solid var(--ml-line);font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ml-ink-2);}
+.chip--green{background:var(--ml-green-soft);border-color:transparent;color:var(--ml-green);}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ml-green);}
+.dot--pulse{animation:pulse 2.2s ease-in-out infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(15,77,58,.5);}70%{box-shadow:0 0 0 8px rgba(15,77,58,0);}100%{box-shadow:0 0 0 0 rgba(15,77,58,0);}}
 
 /* Nav */
-.nav {
-  position: sticky; top: 0; z-index: 50;
-  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  background: rgba(246,243,236,0.8);
-  border-bottom: 1px solid var(--line);
-}
-.nav__inner { display: flex; align-items: center; gap: 16px; padding: 14px 0; }
-.logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -0.02em; }
-.logo__mark { width: 30px; height: 30px; border-radius: 8px; background: var(--ink); color: var(--bg); display: grid; place-items: center; font-weight: 700; font-size: 15px; }
-.logo__sub { color: var(--ink-mute); font-weight: 400; font-size: 13px; }
-.nav__spacer { flex: 1; }
+.nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:color-mix(in srgb,var(--ml-bg) 82%,transparent);border-bottom:1px solid var(--ml-line);}
+.nav__inner{display:flex;align-items:center;gap:24px;padding:14px 0;}
+.logo{display:inline-flex;align-items:center;gap:10px;font-weight:500;letter-spacing:-0.02em;font-size:16px;}
+.logo__mark{width:28px;height:28px;border-radius:7px;background:var(--ml-ink);color:var(--ml-bg);display:grid;place-items:center;font-weight:700;font-size:14px;letter-spacing:-0.02em;}
+.logo__sub{color:var(--ml-ink-mute);font-weight:400;font-size:12px;}
+.nav__links{display:flex;gap:24px;font-size:14px;color:var(--ml-ink-2);}
+.nav__links a:hover{color:var(--ml-green);}
+.nav__spacer{flex:1;}
+.nav__right{display:flex;align-items:center;gap:10px;}
+@media(max-width:880px){.nav__links{display:none;}}
 
 /* Hero */
-.hero { padding: 72px 0 64px; position: relative; overflow: hidden; }
-.hero::before { content: ""; position: absolute; left: -140px; top: 30%; width: 360px; height: 360px; border-radius: 50%; background: radial-gradient(circle, rgba(15,77,58,0.10), transparent 65%); pointer-events: none; }
-.hero::after { content: ""; position: absolute; right: -90px; top: -80px; width: 320px; height: 320px; border-radius: 50%; background: radial-gradient(circle, rgba(201,122,38,0.12), transparent 65%); pointer-events: none; }
-.hero__grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; position: relative; }
-@media (max-width: 940px) { .hero__grid { grid-template-columns: 1fr; gap: 40px; } }
-.hero__copy { display: flex; flex-direction: column; gap: 24px; }
-.display {
-  font-family: var(--f-sans); font-weight: 600;
-  font-size: clamp(38px, 5.6vw, 68px);
-  line-height: 1.02; letter-spacing: -0.04em; margin: 0;
-}
-.display em { font-style: italic; font-weight: 500; color: var(--green); }
-.lead { font-size: 18px; line-height: 1.55; color: var(--ink-2); margin: 0; max-width: 54ch; }
-.hero__cta { display: flex; gap: 12px; flex-wrap: wrap; }
-.hero__meta { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: var(--ink-mute); align-items: center; }
-.hero__meta strong { color: var(--ink); font-weight: 500; }
-.chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 11px; border-radius: 999px; background: var(--green-s); color: var(--green); font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
-.chip__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2.2s ease-in-out infinite; }
-@keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(15,77,58,.5);} 70%{box-shadow:0 0 0 8px rgba(15,77,58,0);} 100%{box-shadow:0 0 0 0 rgba(15,77,58,0);} }
+.hero{position:relative;padding:64px 0 88px;overflow:hidden;}
+.hero__grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;}
+@media(max-width:980px){.hero__grid{grid-template-columns:1fr;gap:44px;}}
+.hero__copy{display:flex;flex-direction:column;gap:24px;}
+.hero__cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+.hero__meta{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--ml-ink-mute);align-items:center;}
+.hero__meta strong{color:var(--ml-ink);font-weight:500;}
+.hero::before{content:"";position:absolute;left:-120px;top:40%;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(15,77,58,.10),transparent 65%);pointer-events:none;}
+.hero::after{content:"";position:absolute;right:-80px;top:-100px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(201,122,38,.12),transparent 65%);pointer-events:none;}
 
 /* Calc preview card */
-.calc {
-  background: var(--card); border-radius: var(--r-lg); box-shadow: var(--sh-lg); overflow: hidden;
-  transform: perspective(1800px) rotateY(-3deg) rotateX(1deg);
-}
-.calc__head { padding: 13px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; background: var(--bg-2); }
-.calc__dots { display: flex; gap: 6px; }
-.calc__dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line-s); }
-.calc__title { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; color: var(--ink-mute); flex: 1; text-align: center; }
-.calc__body { padding: 20px 22px 6px; }
-.calc__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; margin-bottom: 16px; }
-.fld { display: flex; flex-direction: column; gap: 5px; }
-.fld__l { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mute); }
-.fld__v { padding: 9px 11px; border: 1px solid var(--line-s); border-radius: 8px; font-size: 13.5px; background: var(--bg); }
-.fld__v--accent { background: var(--green-s); color: var(--green); border-color: transparent; font-weight: 500; }
-.calc__total { background: var(--ink); color: var(--bg); padding: 20px 22px; display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
-.calc__total small { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(246,243,236,0.6); display: block; margin-bottom: 5px; }
-.calc__amount { font-weight: 600; font-size: 40px; line-height: 1; letter-spacing: -0.035em; }
-.calc__amount span { font-family: var(--f-mono); font-size: 12px; color: rgba(246,243,236,0.7); margin-left: 5px; }
-.calc__break { padding: 14px 22px 18px; display: flex; flex-direction: column; gap: 9px; font-size: 13px; }
-.calc__line { display: flex; justify-content: space-between; color: var(--ink-2); }
-.calc__line .mono { color: var(--ink); }
-.calc__line sup { font-size: 9px; color: var(--ink-faint); }
-.calc-frame { position: relative; }
-.anno { position: absolute; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; box-shadow: var(--sh-sm); font-size: 12px; display: flex; align-items: center; gap: 8px; }
-.anno__i { width: 24px; height: 24px; border-radius: 7px; background: var(--green-s); color: var(--green); display: grid; place-items: center; font-weight: 600; font-style: italic; }
-.anno--tl { top: -16px; left: -24px; }
-.anno--br { bottom: -14px; right: -20px; }
-@media (max-width: 940px) { .anno--tl { left: 0; } .anno--br { right: 0; } .calc { transform: none; } }
+.calc{background:var(--ml-card);border-radius:var(--r-lg);box-shadow:var(--sh-lg);overflow:hidden;position:relative;transform:perspective(1800px) rotateY(-2deg) rotateX(1deg);}
+.calc__head{padding:13px 16px;border-bottom:1px solid var(--ml-line);display:flex;align-items:center;gap:10px;background:var(--ml-bg-2);}
+.calc__dots{display:flex;gap:6px;}
+.calc__dot{width:10px;height:10px;border-radius:50%;background:var(--ml-line-s);}
+.calc__title{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;color:var(--ml-ink-mute);flex:1;text-align:center;}
+.calc__body{padding:20px 22px 6px;}
+.calc__grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;margin-bottom:16px;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field__l{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ml-ink-mute);}
+.field__v{padding:9px 11px;border:1px solid var(--ml-line-s);border-radius:8px;font-size:13.5px;background:var(--ml-bg);}
+.field__v--accent{background:var(--ml-green-soft);color:var(--ml-green);border-color:transparent;font-weight:500;}
+.calc__total{background:var(--ml-ink);color:var(--ml-bg);padding:20px 22px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;}
+.calc__total small{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:rgba(246,243,236,.6);display:block;margin-bottom:5px;}
+.calc__amount{font-weight:600;font-size:40px;line-height:1;letter-spacing:-0.04em;}
+.calc__cur{font-family:var(--f-mono);font-size:12px;color:rgba(246,243,236,.7);margin-left:6px;}
+.calc__break{padding:14px 22px 18px;display:flex;flex-direction:column;gap:9px;font-size:13px;}
+.calc__line{display:flex;justify-content:space-between;color:var(--ml-ink-2);}
+.calc__line .mono{color:var(--ml-ink);}
+.calc__line sup{font-size:9px;color:var(--ml-ink-faint);margin-left:3px;}
+.calc-frame{position:relative;}
+.anno{position:absolute;background:var(--ml-card);border:1px solid var(--ml-line);border-radius:10px;padding:9px 12px;box-shadow:var(--sh-sm);font-size:12px;display:flex;align-items:center;gap:8px;}
+.anno__i{width:26px;height:26px;border-radius:7px;background:var(--ml-green-soft);color:var(--ml-green);display:grid;place-items:center;font-style:italic;font-weight:600;font-size:15px;}
+.anno--tl{top:-16px;left:-24px;}
+.anno--br{bottom:-14px;right:-20px;}
+@media(max-width:980px){.anno--tl{left:0;}.anno--br{right:0;}}
+@media(max-width:560px){.anno{display:none;}}
 
 /* Stat band */
-.stats { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.stats__inner { display: grid; grid-template-columns: repeat(4, 1fr); padding: 28px 0; }
-.stat { padding: 4px 24px; border-right: 1px solid var(--line); }
-.stat:last-child { border-right: 0; }
-.stat__n { font-weight: 600; font-size: 34px; line-height: 1; letter-spacing: -0.03em; margin-bottom: 8px; }
-.stat__n em { font-style: italic; color: var(--green); }
-.stat__n .u { font-family: var(--f-mono); font-size: 12px; color: var(--ink-mute); margin-left: 4px; }
-.stat__l { font-size: 13px; color: var(--ink-mute); line-height: 1.4; }
-@media (max-width: 720px) { .stats__inner { grid-template-columns: 1fr 1fr; } .stat { border-bottom: 1px solid var(--line); padding: 16px 18px; } .stat:nth-child(2) { border-right: 0; } .stat:nth-last-child(-n+2) { border-bottom: 0; } }
+.stats{border-top:1px solid var(--ml-line);border-bottom:1px solid var(--ml-line);background:var(--ml-bg);}
+.stats__inner{display:grid;grid-template-columns:repeat(4,1fr);padding:26px 0;}
+.stat{padding:6px 24px;border-right:1px solid var(--ml-line);}
+.stat:last-child{border-right:0;}
+.stat__n{font-weight:600;font-size:34px;line-height:1;letter-spacing:-0.03em;margin-bottom:6px;}
+.stat__n em{font-style:italic;color:var(--ml-green);}
+.stat__n .u{font-family:var(--f-mono);font-size:12px;color:var(--ml-ink-mute);margin-left:4px;}
+.stat__l{font-size:12.5px;color:var(--ml-ink-mute);line-height:1.4;}
+@media(max-width:880px){.stats__inner{grid-template-columns:1fr 1fr;}.stat{border-bottom:1px solid var(--ml-line);padding:16px 18px;}.stat:nth-child(2){border-right:0;}.stat:nth-last-child(-n+2){border-bottom:0;}}
 
 /* Section */
-.section { padding: 88px 0; }
-.section--alt { background: var(--bg-2); }
-.section__head { text-align: center; margin-bottom: 48px; display: flex; flex-direction: column; gap: 14px; align-items: center; }
-.h2 { font-weight: 600; font-size: clamp(28px, 3.6vw, 44px); line-height: 1.08; letter-spacing: -0.03em; margin: 0; max-width: 20ch; }
-.h2 em { font-style: italic; font-weight: 500; color: var(--green); }
+.section{padding:96px 0;}
+.section--alt{background:var(--ml-bg-2);}
+.section__head{text-align:center;margin-bottom:48px;display:flex;flex-direction:column;gap:12px;align-items:center;}
 
-/* Benefits (3 cards) */
-.benefits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-@media (max-width: 880px) { .benefits { grid-template-columns: 1fr; } }
-.benefit { background: var(--card); border-radius: var(--r); padding: 28px; box-shadow: var(--sh-sm); display: flex; flex-direction: column; gap: 12px; transition: transform .2s, box-shadow .2s; }
-.benefit:hover { transform: translateY(-3px); box-shadow: var(--sh); }
-.benefit__i { width: 44px; height: 44px; border-radius: 11px; background: var(--green-s); color: var(--green); display: grid; place-items: center; font-size: 22px; }
-.benefit__t { font-weight: 600; font-size: 19px; letter-spacing: -0.02em; margin: 0; }
-.benefit__d { font-size: 14.5px; color: var(--ink-mute); margin: 0; line-height: 1.55; }
+/* Steps */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.step{background:var(--ml-card);border-radius:var(--r);padding:24px;box-shadow:var(--sh-sm);display:flex;flex-direction:column;gap:12px;}
+.step__n{font-style:italic;font-weight:600;font-size:34px;line-height:1;color:var(--ml-green);}
+.step__t{font-size:18px;font-weight:600;letter-spacing:-0.01em;margin:0;}
+.step__d{font-size:14px;color:var(--ml-ink-mute);margin:0;}
+@media(max-width:880px){.steps{grid-template-columns:1fr;}}
+
+/* Benefits (3 raisons de s'inscrire) */
+.benefits{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.benefit{background:var(--ml-card);border-radius:var(--r);padding:28px;box-shadow:var(--sh-sm);display:flex;flex-direction:column;gap:14px;transition:transform .2s,box-shadow .2s;}
+.benefit:hover{transform:translateY(-2px);box-shadow:var(--sh);}
+.benefit__i{width:42px;height:42px;border-radius:11px;background:var(--ml-green-soft);color:var(--ml-green);display:grid;place-items:center;}
+.benefit__t{font-size:19px;font-weight:600;letter-spacing:-0.02em;margin:0;}
+.benefit__t em{font-style:italic;font-weight:500;color:var(--ml-green);}
+.benefit__d{font-size:14px;color:var(--ml-ink-mute);margin:0;line-height:1.55;}
+@media(max-width:880px){.benefits{grid-template-columns:1fr;}}
 
 /* CTA band */
-.cta { background: var(--ink); color: var(--bg); border-radius: var(--r-lg); padding: 56px 48px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px; }
-.cta .h2 { color: var(--bg); }
-.cta .h2 em { color: var(--ochre); }
-.cta__sub { color: rgba(246,243,236,0.72); font-size: 17px; max-width: 50ch; margin: 0; }
+.ctaband{background:var(--ml-ink);color:var(--ml-bg);border-radius:var(--r-lg);padding:56px 48px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:20px;}
+.ctaband .h2{color:var(--ml-bg);}
+.ctaband .h2 em{color:var(--ml-ochre);}
+.ctaband p{color:rgba(246,243,236,.72);max-width:48ch;margin:0;}
+@media(max-width:560px){.ctaband{padding:40px 24px;}}
 
 /* Footer */
-.footer { border-top: 1px solid var(--line); padding: 28px 0; }
-.footer__inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-mute); }
-.footer a:hover { color: var(--green); }
+.foot{border-top:1px solid var(--ml-line);padding:32px 0;}
+.foot__inner{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.foot__c{font-size:12.5px;color:var(--ml-ink-faint);}
 
-/* Reveal animation */
-[data-reveal] { opacity: 0; transform: translateY(16px); transition: opacity .6s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1); }
-[data-reveal].in { opacity: 1; transform: translateY(0); }
+/* reveal */
+[data-reveal]{opacity:0;transform:translateY(14px);transition:opacity .6s cubic-bezier(.16,1,.3,1),transform .6s cubic-bezier(.16,1,.3,1);}
+[data-reveal].in{opacity:1;transform:none;}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
+<!-- ═══════════ NAV ═══════════ -->
 <header class="nav">
   <div class="wrap nav__inner">
     <a href="#" class="logo">
       <span class="logo__mark">M</span>
       <span>Moulinette<span class="logo__sub"> · Licenciement</span></span>
     </a>
+    <nav class="nav__links">
+      <a href="#how">Comment ça marche</a>
+      <a href="#benefits">Pourquoi un compte</a>
+      <a href="#legal">Loi 65-99</a>
+    </nav>
     <div class="nav__spacer"></div>
-    <a href="login.html" class="btn btn--sm" id="nav-login">Se connecter</a>
-    <a href="login.html" class="btn btn--ink btn--sm" id="nav-cta">Essayer gratuitement <span class="arrow">→</span></a>
+    <div class="nav__right">
+      <a href="login.html" class="btn btn--sm">Se connecter</a>
+      <a href="#" id="cta-nav" class="btn btn--primary btn--sm">
+        Essayer gratuitement <span class="arrow">→</span>
+      </a>
+    </div>
   </div>
 </header>
 
-<!-- HERO -->
+<!-- ═══════════ HERO ═══════════ -->
 <section class="hero">
   <div class="wrap">
     <div class="hero__grid">
+
       <div class="hero__copy" data-reveal>
-        <span class="eyebrow">Code du Travail Marocain · Loi 65-99</span>
+        <p class="eyebrow">Code du Travail Marocain · Loi 65-99</p>
         <h1 class="display">Le calcul d'indemnités<br>de licenciement, <em>fait droit.</em></h1>
         <p class="lead">
-          L'outil moderne des RH marocains pour calculer en quelques secondes
+          Un outil moderne pour les RH au Maroc : calculez en quelques secondes
           l'indemnité légale, le préavis, les dommages-intérêts et le solde de
-          tout compte — conforme au Code du Travail, en français et en arabe.
+          tout compte — conforme à la Loi 65-99, en français et en arabe.
         </p>
         <div class="hero__cta">
-          <a href="login.html" class="btn btn--accent btn--lg" id="hero-cta">Essayer gratuitement <span class="arrow">→</span></a>
-          <a href="#how" class="btn btn--lg">Voir comment ça marche</a>
+          <a href="#" id="cta-hero" class="btn btn--accent btn--lg">
+            Démarrer un calcul <span class="arrow">→</span>
+          </a>
+          <a href="#how" class="btn btn--lg">Voir un exemple</a>
         </div>
         <div class="hero__meta">
-          <span class="chip"><span class="chip__dot"></span>À jour · 2026</span>
+          <span class="chip chip--green"><span class="dot dot--pulse"></span>À jour · 2026</span>
           <span><strong>Gratuit</strong> · sans engagement</span>
           <span><strong>Export PDF</strong> horodaté</span>
         </div>
       </div>
 
-      <!-- Animated calc preview -->
       <div class="calc-frame" data-reveal>
         <div class="calc">
           <div class="calc__head">
             <span class="calc__dots"><span class="calc__dot"></span><span class="calc__dot"></span><span class="calc__dot"></span></span>
             <span class="calc__title">moulinette · dossier #M2026-0142</span>
-            <span class="chip" style="height:22px;font-size:10px;"><span class="chip__dot"></span>EN DIRECT</span>
+            <span class="chip chip--green" style="height:20px;font-size:9px;"><span class="dot"></span>EN DIRECT</span>
           </div>
           <div class="calc__body">
             <div class="calc__grid">
-              <div class="fld"><span class="fld__l">Date d'embauche</span><span class="fld__v">12 / 03 / 2014</span></div>
-              <div class="fld"><span class="fld__l">Date de licenciement</span><span class="fld__v">02 / 05 / 2026</span></div>
-              <div class="fld"><span class="fld__l">Ancienneté retenue</span><span class="fld__v fld__v--accent mono">12 a · 1 m</span></div>
-              <div class="fld"><span class="fld__l">Salaire mensuel</span><span class="fld__v mono">8 400 MAD</span></div>
+              <div class="field"><span class="field__l">Date d'embauche</span><span class="field__v">12 / 03 / 2014</span></div>
+              <div class="field"><span class="field__l">Date de licenciement</span><span class="field__v">02 / 05 / 2026</span></div>
+              <div class="field"><span class="field__l">Ancienneté retenue</span><span class="field__v field__v--accent mono">12 ans · 1 mois</span></div>
+              <div class="field"><span class="field__l">Salaire mensuel</span><span class="field__v mono">8 400 MAD</span></div>
             </div>
           </div>
           <div class="calc__total">
             <div>
               <small>Total dû au salarié</small>
-              <span class="calc__amount num" id="anim-total">0<span>MAD</span></span>
+              <span class="calc__amount mono" id="hero-amount">0<span class="calc__cur">MAD</span></span>
             </div>
-            <span class="chip" style="background:rgba(246,243,236,.1);color:rgba(246,243,236,.7);">BRUT</span>
+            <span class="chip" style="background:rgba(246,243,236,.12);color:rgba(246,243,236,.7);border:0;">BRUT</span>
           </div>
           <div class="calc__break">
-            <div class="calc__line"><span>Indemnité légale <sup>art. 52</sup></span><span class="mono num">68 040 MAD</span></div>
-            <div class="calc__line"><span>Préavis (3 mois) <sup>art. 43</sup></span><span class="mono num">25 200 MAD</span></div>
-            <div class="calc__line"><span>Dommages-intérêts <sup>art. 41</sup></span><span class="mono num">49 140 MAD</span></div>
+            <div class="calc__line"><span>Indemnité légale <sup>art. 52</sup></span><span class="mono">68 040 MAD</span></div>
+            <div class="calc__line"><span>Préavis (3 mois) <sup>art. 43</sup></span><span class="mono">25 200 MAD</span></div>
+            <div class="calc__line"><span>Dommages-intérêts <sup>art. 41</sup></span><span class="mono">49 140 MAD</span></div>
+            <div class="calc__line"><span>Congés payés non pris</span><span class="mono">7 140 MAD</span></div>
           </div>
         </div>
         <div class="anno anno--tl"><span class="anno__i">§</span><div><div style="font-weight:500;">Articles cités</div><div class="mute" style="font-size:11px;">art. 41 · 43 · 52</div></div></div>
         <div class="anno anno--br"><span class="anno__i">↓</span><div><div style="font-weight:500;">Export PDF prêt</div><div class="mute" style="font-size:11px;">FR / عربية · horodaté</div></div></div>
       </div>
+
     </div>
   </div>
 </section>
 
-<!-- STATS -->
+<!-- ═══════════ STAT BAND ═══════════ -->
 <section class="stats">
   <div class="wrap stats__inner">
     <div class="stat"><div class="stat__n"><em>65-99</em></div><div class="stat__l">Loi de référence<br>Code du Travail</div></div>
-    <div class="stat"><div class="stat__n num">12<span class="u">ART.</span></div><div class="stat__l">Articles couverts<br>art. 39 à 72</div></div>
-    <div class="stat"><div class="stat__n num">90<span class="u">SEC.</span></div><div class="stat__l">Temps moyen<br>pour un dossier</div></div>
-    <div class="stat"><div class="stat__n num">2<span class="u">LANG.</span></div><div class="stat__l">Français &amp; <span style="font-family:var(--f-ar)">عربية</span><br>interface + export</div></div>
+    <div class="stat"><div class="stat__n mono">5<span class="u">ÉTAPES</span></div><div class="stat__l">Un calcul complet<br>en moins d'une minute</div></div>
+    <div class="stat"><div class="stat__n mono">2<span class="u">LANGUES</span></div><div class="stat__l">Français &amp; <span style="font-family:var(--f-ar);">عربية</span><br>interface et PDF</div></div>
+    <div class="stat"><div class="stat__n mono">100<span class="u">%</span></div><div class="stat__l">Sourcé article<br>par article</div></div>
   </div>
 </section>
 
-<!-- BENEFITS — 3 raisons de s'inscrire -->
+<!-- ═══════════ HOW IT WORKS ═══════════ -->
 <section class="section" id="how">
   <div class="wrap">
     <div class="section__head">
-      <span class="eyebrow">Pourquoi créer un compte</span>
-      <h2 class="h2">Tout ce qu'il faut pour <em>un dossier impeccable.</em></h2>
+      <p class="eyebrow">Comment ça marche</p>
+      <h2 class="h2">Du dossier au PDF, <em>en trois étapes.</em></h2>
+    </div>
+    <div class="steps">
+      <div class="step" data-reveal><span class="step__n">01</span><h3 class="step__t">Renseignez le contrat</h3><p class="step__d">Dates d'embauche et de rupture, salaire, congés acquis. L'ancienneté se calcule automatiquement à l'année et au mois.</p></div>
+      <div class="step" data-reveal><span class="step__n">02</span><h3 class="step__t">Choisissez le motif</h3><p class="step__d">Faute grave, non grave, économique, abusif. Chaque motif applique la bonne formule et les bons plafonds légaux.</p></div>
+      <div class="step" data-reveal><span class="step__n">03</span><h3 class="step__t">Exportez la note</h3><p class="step__d">PDF horodaté avec le détail du calcul, les articles cités et vos informations dossier — prêt pour la DG ou l'avocat.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ BENEFITS (pourquoi un compte) ═══════════ -->
+<section class="section section--alt" id="benefits">
+  <div class="wrap">
+    <div class="section__head">
+      <p class="eyebrow">Pourquoi créer un compte</p>
+      <h2 class="h2">Pensé pour les RH qui gèrent <em>plusieurs dossiers.</em></h2>
     </div>
     <div class="benefits">
-      <div class="benefit" data-reveal>
-        <div class="benefit__i">∑</div>
-        <h3 class="benefit__t">Calcul détaillé, sourcé</h3>
-        <p class="benefit__d">Indemnité légale, préavis, dommages-intérêts, salaires non payés, congés non pris. Chaque montant est accompagné de sa formule et de l'article exact du Code du Travail.</p>
-      </div>
-      <div class="benefit" data-reveal>
-        <div class="benefit__i">📁</div>
-        <h3 class="benefit__t">Vos dossiers, partout</h3>
-        <p class="benefit__d">Sauvegardez chaque dossier RH dans votre espace sécurisé. Retrouvez-les depuis n'importe quel poste, suivez leur statut et visualisez votre budget total provisionné.</p>
-      </div>
-      <div class="benefit" data-reveal>
-        <div class="benefit__i">↓</div>
-        <h3 class="benefit__t">Export PDF horodaté</h3>
-        <p class="benefit__d">Générez une note de calcul propre, avec en-tête, référence dossier et date — prête à présenter à la direction ou à transmettre à votre avocat.</p>
-      </div>
+      <article class="benefit" data-reveal>
+        <span class="benefit__i"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5a1 1 0 011-1h4l2 2h6a1 1 0 011 1v8a1 1 0 01-1 1H4a1 1 0 01-1-1V5z"/></svg></span>
+        <h3 class="benefit__t">Tous vos dossiers <em>au même endroit.</em></h3>
+        <p class="benefit__d">Sauvegardez chaque calcul nommé (salarié, poste, référence). Retrouvez-les depuis n'importe quel poste, avec le budget total provisionné.</p>
+      </article>
+      <article class="benefit" data-reveal>
+        <span class="benefit__i"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 1v12M6 9l4 4 4-4"/><path d="M3 14v2a1 1 0 001 1h12a1 1 0 001-1v-2"/></svg></span>
+        <h3 class="benefit__t">Export PDF <em>horodaté.</em></h3>
+        <p class="benefit__d">Un document professionnel signé par horodatage, avec vos informations dossier — prêt à présenter à la direction ou à intégrer un échange avec l'avocat.</p>
+      </article>
+      <article class="benefit" data-reveal>
+        <span class="benefit__i"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4L10 14.3 5.2 16.7l.9-5.4L2.2 7.7l5.4-.8z"/></svg></span>
+        <h3 class="benefit__t">Suivi <em>du statut.</em></h3>
+        <p class="benefit__d">Marquez chaque dossier en Brouillon, En cours ou Clôturé. Gardez une vue claire de tous vos licenciements en parallèle.</p>
+      </article>
     </div>
   </div>
 </section>
 
-<!-- CTA -->
-<section class="section section--alt">
+<!-- ═══════════ LEGAL / CTA ═══════════ -->
+<section class="section" id="legal">
   <div class="wrap">
-    <div class="cta" data-reveal>
-      <span class="eyebrow" style="color:rgba(246,243,236,.6);">Prêt à commencer</span>
-      <h2 class="h2">Votre premier dossier <em>en 90 secondes.</em></h2>
-      <p class="cta__sub">Créez votre compte gratuitement et calculez les indemnités de votre premier licenciement dès maintenant — aucune carte bancaire requise.</p>
-      <a href="login.html" class="btn btn--accent btn--lg" id="cta-btn">Essayer gratuitement <span class="arrow">→</span></a>
+    <div class="ctaband" data-reveal>
+      <p class="eyebrow" style="color:rgba(246,243,236,.6);">Loi 65-99 · Code du Travail Marocain</p>
+      <h2 class="h2">Prêt à calculer <em>votre premier dossier ?</em></h2>
+      <p>Gratuit, sans engagement. Créez un compte en 30 secondes et accédez à tous vos dossiers, où que vous soyez.</p>
+      <a href="#" id="cta-band" class="btn btn--accent btn--lg">Essayer gratuitement <span class="arrow">→</span></a>
     </div>
   </div>
 </section>
 
-<!-- FOOTER -->
-<footer class="footer">
-  <div class="wrap footer__inner">
-    <span>⚖️ Moulinette · Loi 65-99 · Maroc · outil à titre indicatif uniquement</span>
-    <span class="mono" style="font-size:11px;">Consultez un avocat pour toute situation particulière</span>
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer class="foot">
+  <div class="wrap foot__inner">
+    <div class="logo"><span class="logo__mark">M</span><span>Moulinette<span class="logo__sub"> · Licenciement</span></span></div>
+    <p class="foot__c">⚖️ Basé sur la Loi 65-99 · À titre indicatif uniquement · Consultez un avocat pour toute situation particulière.</p>
   </div>
 </footer>
 
 <script>
-// Si déjà connecté → les CTA pointent vers l'app
+// ─── CTA : si connecté → app.html, sinon → login.html ───
 (async () => {
-  const session = await getSession();
-  if (session) {
-    ['nav-cta','hero-cta','cta-btn'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) { el.href = 'app.html'; el.innerHTML = 'Ouvrir l\'app <span class="arrow">→</span>'; }
-    });
-    const nl = document.getElementById('nav-login');
-    if (nl) { nl.href = 'app.html'; nl.textContent = 'Mon espace'; }
-  }
+  let dest = 'login.html';
+  try {
+    const session = await getSession();
+    if (session) dest = 'app.html';
+  } catch (e) {}
+  ['cta-nav','cta-hero','cta-band'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('href', dest);
+  });
 })();
 
-// Compteur animé du total
+// ─── Compteur animé du montant hero ───
 (() => {
-  const el = document.getElementById('anim-total');
-  const target = 142380;
-  let started = false;
-  const run = () => {
-    if (started) return; started = true;
-    const dur = 1400, t0 = performance.now();
-    const tick = (t) => {
-      const p = Math.min((t - t0) / dur, 1);
-      const eased = 1 - Math.pow(1 - p, 3);
-      const val = Math.round(target * eased);
-      el.innerHTML = val.toLocaleString('fr-MA') + '<span>MAD</span>';
-      if (p < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  };
-  // démarre quand visible
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) run(); });
-  }, { threshold: 0.5 });
-  io.observe(el);
+  const el = document.getElementById('hero-amount');
+  const target = 149520; // 68040 + 25200 + 49140 + 7140
+  const dur = 1400, t0 = performance.now();
+  const fmt = n => Math.round(n).toLocaleString('fr-MA');
+  function tick(t){
+    const p = Math.min((t - t0) / dur, 1);
+    const e = 1 - Math.pow(1 - p, 3);
+    el.innerHTML = fmt(target * e) + '<span class="calc__cur">MAD</span>';
+    if (p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
 })();
 
-// Reveal on scroll
-const ro = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); ro.unobserve(e.target); } });
-}, { threshold: 0.15 });
-document.querySelectorAll('[data-reveal]').forEach(el => ro.observe(el));
+// ─── Reveal au scroll ───
+(() => {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); obs.unobserve(en.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('[data-reveal]').forEach(el => obs.observe(el));
+})();
 </script>
 </body>
 </html>
