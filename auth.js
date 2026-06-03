@@ -4,8 +4,8 @@
 //  Settings → API → Project URL + anon public key
 // ════════════════════════════════════════════════════════
 
-const SUPABASE_URL  = 'REMPLACE_PAR_TON_PROJECT_URL';   // ex: https://xxxxx.supabase.co
-const SUPABASE_KEY  = 'REMPLACE_PAR_TA_ANON_KEY';       // longue clé JWT
+const SUPABASE_URL  = 'https://yxzdvwvarfkdczchrpwz.supabase.co'
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4emR2d3ZhcmZrZGN6Y2hycHd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0Mjg5NzAsImV4cCI6MjA5NjAwNDk3MH0.7sFKo_IPIDnWJdaw1Z2XALfbVpBuNReAZp5hSo5PJ8c'
 
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -26,7 +26,7 @@ async function signUp(email, password) {
 
 async function signOut() {
   await sb.auth.signOut();
-  window.location.href = 'login.html';
+  window.location.href = 'index.html';
 }
 
 async function resetPassword(email) {

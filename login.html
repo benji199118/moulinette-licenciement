@@ -376,7 +376,7 @@ footer {
 // ─── Check if already logged in → redirect ───────────────
 (async () => {
   const session = await getSession();
-  if (session) window.location.href = 'index.html';
+  if (session) window.location.href = 'app.html';
 
   // Handle password reset redirect from email link
   const hash = window.location.hash;
@@ -458,7 +458,7 @@ async function handleLogin(e) {
     document.getElementById('btn-login').innerHTML = 'Se connecter <span>→</span>';
     setLoading('btn-login', false);
   } else {
-    window.location.href = 'index.html';
+    window.location.href = 'app.html';
   }
 }
 
