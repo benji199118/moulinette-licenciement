@@ -32,8 +32,15 @@ function app() {
     // ④ Infos dossier (pour PDF)
     dossier: { nomSalarie: '', poste: '', ref: '' },
 
+    // ⑤ Dossiers Supabase (persistant cross-device)
+    dossiers: [],
+    loadingDossiers: false,
+    savingDossier: false,
+    dossierSaved: false,
+
     tabs: [
       { id: 'calc',      icon: '🧮', labelKey: 'nav_calc' },
+      { id: 'dossiers',  icon: '📁', labelKey: 'nav_dossiers' },
       { id: 'procedure', icon: '📋', labelKey: 'nav_procedure' },
       { id: 'types',     icon: '📂', labelKey: 'nav_types' },
       { id: 'refs',      icon: '⚖️',  labelKey: 'nav_refs' },
@@ -47,6 +54,7 @@ function app() {
       if (!session) return; // requireAuth() redirige, on stoppe ici
       this.currentUser = session.user;
       this.loadHistory();
+      this.loadDossiers();
       this.$nextTick(() => this.loadFromUrl());
     },
 
@@ -278,6 +286,98 @@ function app() {
       localStorage.removeItem('lic_history');
       this.history = [];
       this.showHistory = false;
+    },
+
+    // ─── ⑤ DOSSIERS SUPABASE (cross-device) ──────────────────────────────────
+    async saveDossier() {
+      if (!this.results || !this.currentUser) return;
+      this.savingDossier = true;
+      const payload = {
+        nom_salarie: this.dossier.nomSalarie || null,
+        poste:       this.dossier.poste || null,
+        ref:         this.dossier.ref || null,
+        type:        this.form.type,
+        category:    this.form.category,
+        seniority:   this.form.seniority,
+        salary:      this.form.salary,
+        total:       Math.round(this.results.total),
+        status:      'draft',
+        data: {
+          form: { ...this.form },
+          dossier: { ...this.dossier },
+        },
+      };
+      const { error } = await sb.from('dossiers').insert(payload);
+      this.savingDossier = false;
+      if (error) {
+        console.error('saveDossier', error);
+        alert(this.t('dossier_save_error') + '\n' + error.message);
+        return;
+      }
+      this.dossierSaved = true;
+      setTimeout(() => { this.dossierSaved = false; }, 2500);
+      this.loadDossiers();
+    },
+
+    async loadDossiers() {
+      if (!this.currentUser) return;
+      this.loadingDossiers = true;
+      const { data, error } = await sb
+        .from('dossiers')
+        .select('*')
+        .order('created_at', { ascending: false });
+      this.loadingDossiers = false;
+      if (error) { console.error('loadDossiers', error); return; }
+      this.dossiers = data || [];
+    },
+
+    async deleteDossier(id) {
+      if (!confirm(this.t('dossier_delete_confirm'))) return;
+      const { error } = await sb.from('dossiers').delete().eq('id', id);
+      if (error) { console.error('deleteDossier', error); return; }
+      this.dossiers = this.dossiers.filter(d => d.id !== id);
+    },
+
+    async cycleDossierStatus(d) {
+      const order = ['draft', 'in_progress', 'closed'];
+      const next = order[(order.indexOf(d.status) + 1) % order.length];
+      const { error } = await sb.from('dossiers').update({ status: next }).eq('id', d.id);
+      if (error) { console.error('status', error); return; }
+      d.status = next;
+    },
+
+    restoreDossier(d) {
+      const f = d.data?.form || {};
+      this.form.type        = d.type;
+      this.form.category    = d.category;
+      this.form.seniority   = d.seniority;
+      this.form.salary      = d.salary;
+      this.form.hireDate    = f.hireDate || '';
+      this.form.endDate     = f.endDate || '';
+      this.form.unpaidDays  = f.unpaidDays || 0;
+      this.form.unusedLeave = f.unusedLeave || 0;
+      this.dossier = d.data?.dossier || {
+        nomSalarie: d.nom_salarie || '', poste: d.poste || '', ref: d.ref || '',
+      };
+      this.calculateAndNext();
+      this.activeTab = 'calc';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    dossiersBudget() {
+      return this.dossiers.reduce((sum, d) => sum + (d.total || 0), 0);
+    },
+
+    dossierStatusLabel(status) {
+      const map = {
+        fr: { draft: 'Brouillon', in_progress: 'En cours', closed: 'Clôturé' },
+        ar: { draft: 'مسودة',     in_progress: 'قيد المعالجة', closed: 'مغلق' },
+      };
+      return (map[this.lang] || map.fr)[status] || status;
+    },
+
+    dossierDate(d) {
+      return new Date(d.created_at).toLocaleDateString(this.lang === 'ar' ? 'ar-MA' : 'fr-MA');
     },
 
     // ─── ② PARTAGE PAR URL ───────────────────────────────────────────────────
@@ -742,6 +842,22 @@ const translations = {
     docs_title: 'Documents types',
     docs_sub: 'Modèles conformes au Code du Travail marocain',
     footer: '⚖️ Basé sur la Loi 65-99 (Code du Travail Marocain) · À titre indicatif uniquement · Consultez un avocat pour toute situation particulière.',
+    // Dossiers Supabase
+    nav_dossiers: 'Mes dossiers',
+    dossiers_title_pre: 'Vos dossiers',
+    dossiers_title_em: 'en un coup d\'œil.',
+    dossiers_sub: 'Tous vos calculs sauvegardés, accessibles depuis n\'importe quel poste.',
+    dossiers_empty_title: 'Aucun dossier sauvegardé',
+    dossiers_empty_sub: 'Lancez un calcul puis cliquez sur « Sauvegarder le dossier » pour le retrouver ici.',
+    dossiers_empty_cta: 'Nouveau calcul',
+    dossiers_count: 'dossiers',
+    dossiers_budget: 'Budget total provisionné',
+    dossier_save_btn: 'Sauvegarder le dossier',
+    dossier_saved: '✓ Dossier sauvegardé',
+    dossier_save_error: 'Erreur lors de la sauvegarde du dossier.',
+    dossier_delete_confirm: 'Supprimer ce dossier définitivement ?',
+    dossier_open: 'Ouvrir',
+    dossier_unnamed: 'Sans nom',
     // PDF
     pdf_btn: 'Télécharger PDF',
     dossier_opt: 'Optionnel',
@@ -866,6 +982,22 @@ const translations = {
     docs_title: 'نماذج الوثائق',
     docs_sub: 'نماذج مطابقة لقانون الشغل المغربي',
     footer: '⚖️ مستند إلى القانون 65-99 (قانون الشغل المغربي) · للاستئناس فقط · استشر محامياً متخصصاً لأي حالة خاصة.',
+    // Dossiers Supabase
+    nav_dossiers: 'ملفاتي',
+    dossiers_title_pre: 'ملفاتك',
+    dossiers_title_em: 'في لمحة.',
+    dossiers_sub: 'جميع حساباتك المحفوظة، متاحة من أي جهاز.',
+    dossiers_empty_title: 'لا توجد ملفات محفوظة',
+    dossiers_empty_sub: 'أنشئ حساباً ثم اضغط « حفظ الملف » لتجده هنا.',
+    dossiers_empty_cta: 'حساب جديد',
+    dossiers_count: 'ملفات',
+    dossiers_budget: 'الميزانية الإجمالية المخصصة',
+    dossier_save_btn: 'حفظ الملف',
+    dossier_saved: '✓ تم حفظ الملف',
+    dossier_save_error: 'خطأ أثناء حفظ الملف.',
+    dossier_delete_confirm: 'حذف هذا الملف نهائياً ؟',
+    dossier_open: 'فتح',
+    dossier_unnamed: 'بدون اسم',
     // PDF
     pdf_btn: 'تحميل PDF',
     dossier_opt: 'اختياري',

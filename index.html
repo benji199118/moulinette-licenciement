@@ -1401,6 +1401,22 @@ img, svg { display: block; max-width: 100%; }
           </button>
         </div>
 
+        <!-- Sauvegarder dossier (Supabase) -->
+        <button @click="saveDossier()" :disabled="savingDossier"
+          class="ml-btn ml-btn--accent ml-btn--block no-print" style="margin-top: 10px;"
+          :style="dossierSaved ? 'background: var(--ml-green-2); border-color: var(--ml-green-2);' : ''">
+          <template x-if="!savingDossier && !dossierSaved">
+            <span style="display:inline-flex; align-items:center; gap:8px;">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+                <path d="M11 12H3a1 1 0 01-1-1V3a1 1 0 011-1h6l3 3v6a1 1 0 01-1 1z"/><path d="M9 12V8H5v4M5 2v3h3"/>
+              </svg>
+              <span x-text="t('dossier_save_btn')"></span>
+            </span>
+          </template>
+          <template x-if="savingDossier"><span class="ml-spin">⏳</span></template>
+          <template x-if="dossierSaved && !savingDossier"><span x-text="t('dossier_saved')"></span></template>
+        </button>
+
         <!-- Historique -->
         <div x-show="history.length > 0" class="no-print" style="margin-top: 28px;">
           <button @click="showHistory = !showHistory"
@@ -1450,6 +1466,89 @@ img, svg { display: block; max-width: 100%; }
       </div>
     </div>
 
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TAB · MES DOSSIERS (Supabase)
+  ══════════════════════════════════════════ -->
+  <div x-show="activeTab==='dossiers'" x-cloak class="ml-fadein">
+    <div class="ml-section__head">
+      <p class="ml-eyebrow"><span x-text="t('app_sub')"></span></p>
+      <h2 class="ml-h2"><span x-text="t('dossiers_title_pre')"></span> <em x-text="t('dossiers_title_em')"></em></h2>
+      <p class="ml-lead ml-center" x-text="t('dossiers_sub')"></p>
+    </div>
+
+    <div class="ml-mw-lg">
+
+      <!-- Budget summary band -->
+      <div x-show="dossiers.length > 0" class="ml-card ml-card--ink" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <div class="ml-total__small" x-text="t('dossiers_budget')"></div>
+          <div style="font-weight: 600; font-size: 32px; letter-spacing: -0.03em; margin-top: 4px;">
+            <span x-text="fmt(dossiersBudget())"></span>
+            <span class="ml-mono" style="font-size: 15px; color: rgba(246,243,236,0.6);">MAD</span>
+          </div>
+        </div>
+        <div style="text-align: end;">
+          <div class="ml-chip ml-chip--green" style="background: rgba(74,222,128,0.18); color: #4ade80;">
+            <span x-text="dossiers.length"></span>&nbsp;<span x-text="t('dossiers_count')"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div x-show="loadingDossiers" class="ml-center ml-mute" style="padding: 40px;">⏳</div>
+
+      <!-- Empty state -->
+      <div x-show="!loadingDossiers && dossiers.length === 0" class="ml-card ml-card--lg ml-center" style="padding: 56px 32px;">
+        <div style="font-size: 44px; margin-bottom: 16px; opacity: 0.4;">📁</div>
+        <h3 class="ml-h3" style="margin-bottom: 8px;" x-text="t('dossiers_empty_title')"></h3>
+        <p class="ml-mute" style="font-size: 14px; max-width: 38ch; margin: 0 auto 24px;" x-text="t('dossiers_empty_sub')"></p>
+        <button @click="activeTab='calc'; wizardStep=1" class="ml-btn ml-btn--primary" x-text="t('dossiers_empty_cta')"></button>
+      </div>
+
+      <!-- Dossiers list -->
+      <div x-show="!loadingDossiers && dossiers.length > 0" class="ml-stack" style="gap: 10px;">
+        <template x-for="d in dossiers" :key="d.id">
+          <div class="ml-card" style="padding: 18px 20px; display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center;">
+            <div style="min-width: 0;">
+              <div class="ml-row" style="gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
+                <span style="font-weight: 600; font-size: 15px;" x-text="d.nom_salarie || t('dossier_unnamed')"></span>
+                <button @click="cycleDossierStatus(d)"
+                  class="ml-chip"
+                  :style="d.status==='closed' ? 'background: var(--ml-green-soft); color: var(--ml-green); border-color: transparent; cursor:pointer;' : d.status==='in_progress' ? 'background: var(--ml-ochre-soft); color: #6b4515; border-color: transparent; cursor:pointer;' : 'cursor:pointer;'"
+                  x-text="dossierStatusLabel(d.status)"></button>
+              </div>
+              <div class="ml-row ml-mono" style="gap: 10px; flex-wrap: wrap; font-size: 11px; color: var(--ml-ink-mute);">
+                <span x-show="d.poste" x-text="d.poste"></span>
+                <span x-show="d.poste">·</span>
+                <span x-text="t('label_'+d.type)"></span>
+                <span>·</span>
+                <span x-text="d.seniority + (lang==='ar' ? ' سنة' : ' ans')"></span>
+                <span>·</span>
+                <span x-text="dossierDate(d)"></span>
+                <span x-show="d.ref">·</span>
+                <span x-show="d.ref" x-text="d.ref"></span>
+              </div>
+              <div style="font-weight: 600; font-size: 19px; color: var(--ml-green); margin-top: 8px; letter-spacing: -0.02em;">
+                <span x-text="fmt(d.total)"></span>
+                <span class="ml-mono" style="font-size: 12px; color: var(--ml-ink-mute);">MAD</span>
+              </div>
+            </div>
+            <div class="ml-row" style="gap: 6px;">
+              <button @click="restoreDossier(d)" class="ml-btn ml-btn--sm ml-btn--primary" x-text="t('dossier_open')"></button>
+              <button @click="deleteDossier(d.id)" class="ml-btn ml-btn--sm ml-btn--icon" title="Supprimer"
+                style="color: var(--ml-rouge);">
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2.5 4h9M5 4V2.5h4V4M5.5 6.5v4M8.5 6.5v4M3.5 4l.5 8a1 1 0 001 1h4a1 1 0 001-1l.5-8"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </template>
+      </div>
+
+    </div>
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -1717,6 +1816,6 @@ img, svg { display: block; max-width: 100%; }
 <!-- jsPDF + AutoTable — génération PDF côté client -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-<script src="app.js?v=9"></script>
+<script src="app.js?v=10"></script>
 </body>
 </html>
