@@ -579,11 +579,11 @@ function app() {
 
       // Logo carré
       doc.setFillColor(...W);
-      doc.roundedRect(LM, 8, 13, 13, 2, 2, 'F');
+      doc.roundedRect(LM, 8, 16, 13, 2, 2, 'F');
       doc.setTextColor(...K);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
-      T('M', LM + 6.5, 16.5, { align: 'center' });
+      doc.setFontSize(7);
+      T('IP', LM + 8, 16.5, { align: 'center' });
 
       // Titre
       doc.setTextColor(246, 243, 236);
