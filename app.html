@@ -63,23 +63,77 @@
 
 /* ── Dark mode override ────────────────────────────────────────── */
 .dark {
-  --ml-bg:         #0d0f0e;
-  --ml-bg-2:       #141716;
-  --ml-card:       #181b19;
-  --ml-ink:        #f6f3ec;
-  --ml-ink-2:      #d6d3cc;
-  --ml-ink-mute:   #9a9d98;
-  --ml-ink-faint:  #6b6f6c;
-  --ml-line:        rgba(246, 243, 236, 0.10);
-  --ml-line-strong: rgba(246, 243, 236, 0.20);
-  --ml-green:      #4ade80;
+  --ml-bg:         #0a0c0b;
+  --ml-bg-2:       #111413;
+  --ml-card:       #161918;
+  --ml-ink:        #f0ede6;
+  --ml-ink-2:      #ccc9c2;
+  --ml-ink-mute:   #8a8d8a;
+  --ml-ink-faint:  #5a5d5a;
+  --ml-line:        rgba(240, 237, 230, 0.08);
+  --ml-line-strong: rgba(240, 237, 230, 0.14);
+  --ml-green:      #3dd68c;
   --ml-green-2:    #22c55e;
-  --ml-green-soft: rgba(74,222,128,0.14);
+  --ml-green-soft: rgba(61,214,140,0.12);
   --ml-ochre:      #f5b16a;
-  --ml-ochre-soft: rgba(245,177,106,0.16);
+  --ml-ochre-soft: rgba(245,177,106,0.13);
   --ml-rouge:      #f87171;
-  --ml-rouge-soft: rgba(248,113,113,0.14);
+  --ml-rouge-soft: rgba(248,113,113,0.13);
 }
+
+/* ── Dark mode: corrections spécifiques ────────────────────────── */
+
+/* Budget band: en dark ne pas inverser (ink → crème), utiliser une carte sombre premium */
+.dark .ml-card--ink {
+  background: linear-gradient(135deg, #1a2e24 0%, #131f18 100%);
+  border: 1px solid rgba(61,214,140,0.18);
+  box-shadow: 0 0 0 1px rgba(61,214,140,0.08), 0 8px 32px -8px rgba(0,0,0,0.4);
+  color: var(--ml-ink);
+}
+.dark .ml-card--ink .ml-total__small { color: rgba(61,214,140,0.7); }
+.dark .ml-card--ink .ml-mute { color: var(--ml-ink-mute); }
+
+/* Inputs : fond légèrement surélevé en dark */
+.dark .ml-input {
+  background: var(--ml-bg-2);
+  border-color: var(--ml-line-strong);
+  color: var(--ml-ink);
+}
+.dark .ml-input:focus {
+  border-color: var(--ml-green);
+  box-shadow: 0 0 0 3px rgba(61,214,140,0.15);
+  background: #1a2018;
+}
+
+/* Select */
+.dark select.ml-input {
+  background: var(--ml-bg-2);
+  color: var(--ml-ink);
+}
+
+/* Chips filtre actif en dark */
+.dark .ml-chip { border-color: var(--ml-line-strong); }
+
+/* Cards en dark : hover plus prononcé */
+.dark .ml-card--hover:hover {
+  box-shadow: 0 0 0 1px rgba(61,214,140,0.2), 0 12px 32px -8px rgba(0,0,0,0.5);
+  transform: translateY(-2px);
+}
+
+/* Dossier cards en dark */
+.dark .ml-card {
+  background: var(--ml-card);
+  border: 1px solid var(--ml-line);
+}
+
+/* Total card (hero résultats) en dark */
+.dark .ml-total {
+  background: linear-gradient(135deg, #1a2e24 0%, #0f1a12 100%);
+  border: 1px solid rgba(61,214,140,0.2);
+}
+.dark .ml-total__small { color: rgba(61,214,140,0.65); }
+.dark .ml-total__currency { color: rgba(61,214,140,0.55); }
+.dark .ml-total__tag { background: rgba(61,214,140,0.1); color: rgba(240,237,230,0.8); }
 
 /* ── Resets ────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
@@ -1531,47 +1585,63 @@ img, svg { display: block; max-width: 100%; }
     <div x-show="!isGuest" class="ml-mw-lg">
 
       <!-- Budget summary band -->
-      <div x-show="dossiers.length > 0" class="ml-card ml-card--ink" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+      <div x-show="dossiers.length > 0" class="ml-card ml-card--ink" style="margin-bottom: 20px; padding: 28px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
         <div>
           <div class="ml-total__small" x-text="t('dossiers_budget')"></div>
-          <div style="font-weight: 600; font-size: 32px; letter-spacing: -0.03em; margin-top: 4px;">
-            <span x-text="fmt(dossiersBudget())"></span>
-            <span class="ml-mono" style="font-size: 15px; color: rgba(246,243,236,0.6);">MAD</span>
+          <div style="font-weight: 600; font-size: 36px; letter-spacing: -0.04em; margin-top: 6px; line-height: 1; display: flex; align-items: baseline; gap: 8px;">
+            <span x-text="fmt(dossiersBudget())" style="font-variant-numeric: tabular-nums;"></span>
+            <span class="ml-mono" style="font-size: 14px; opacity: 0.5; font-weight: 400;">MAD</span>
           </div>
         </div>
-        <div style="text-align: end;">
-          <div class="ml-chip ml-chip--green" style="background: rgba(74,222,128,0.18); color: #4ade80;">
-            <span x-text="filteredDossiers().length"></span><span x-show="filteredDossiers().length !== dossiers.length"> / <span x-text="dossiers.length"></span></span>&nbsp;<span x-text="t('dossiers_count')"></span>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+          <div class="ml-chip" style="background: rgba(61,214,140,0.15); color: #3dd68c; border-color: rgba(61,214,140,0.25);">
+            <span class="ml-chip__dot" style="background: #3dd68c;"></span>
+            <span x-text="filteredDossiers().length"></span>
+            <span x-show="filteredDossiers().length !== dossiers.length" class="ml-mono" style="opacity: 0.5;"> / <span x-text="dossiers.length"></span></span>
+            &nbsp;<span x-text="t('dossiers_count')"></span>
           </div>
         </div>
       </div>
 
       <!-- Barre d'outils : recherche + filtres + tri -->
-      <div x-show="dossiers.length > 0" style="margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px;">
+      <div x-show="dossiers.length > 0" style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
+
         <!-- Recherche -->
         <div style="position: relative;">
-          <svg style="position:absolute; inset-inline-start:14px; top:50%; transform:translateY(-50%); color:var(--ml-ink-faint);" width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <svg style="position:absolute; inset-inline-start:16px; top:50%; transform:translateY(-50%); color:var(--ml-ink-faint); pointer-events:none;" width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
             <circle cx="6.5" cy="6.5" r="4.5"/><path d="M13 13l-3-3"/>
           </svg>
           <input type="text" x-model="dossierSearch" class="ml-input"
-            :placeholder="t('dossier_search_ph')" style="padding-inline-start: 38px;">
+            :placeholder="t('dossier_search_ph')"
+            style="padding-inline-start: 44px; height: 46px; font-size: 14.5px; border-radius: var(--r);">
+          <!-- Clear button -->
+          <button x-show="dossierSearch"
+            @click="dossierSearch=''"
+            style="position:absolute; inset-inline-end:12px; top:50%; transform:translateY(-50%); background:var(--ml-bg-2); border:1px solid var(--ml-line-strong); border-radius:999px; width:22px; height:22px; display:grid; place-items:center; cursor:pointer; color:var(--ml-ink-mute); font-size:11px; line-height:1;">✕</button>
         </div>
 
-        <div class="ml-row ml-row--between" style="gap: 12px; flex-wrap: wrap;">
+        <!-- Filtres + Tri sur la même ligne -->
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+
           <!-- Chips statut -->
-          <div class="ml-row" style="gap: 6px; flex-wrap: wrap;">
+          <div style="display: flex; gap: 5px; flex-wrap: wrap; background: var(--ml-bg-2); border: 1px solid var(--ml-line); border-radius: 999px; padding: 3px;">
             <template x-for="f in [{k:'all',l:'filter_all'},{k:'draft',l:'filter_draft'},{k:'in_progress',l:'filter_in_progress'},{k:'closed',l:'filter_closed'}]" :key="f.k">
               <button @click="dossierStatusFilter = f.k"
-                class="ml-chip" style="cursor: pointer; height: 30px;"
-                :style="dossierStatusFilter === f.k ? 'background: var(--ml-ink); color: var(--ml-bg); border-color: var(--ml-ink);' : ''">
+                style="cursor: pointer; height: 28px; padding: 0 12px; border-radius: 999px; border: none; font-size: 12.5px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; transition: all .15s; font-family: inherit; white-space: nowrap;"
+                :style="dossierStatusFilter === f.k
+                  ? 'background: var(--ml-ink); color: var(--ml-bg); box-shadow: 0 1px 3px rgba(0,0,0,0.15);'
+                  : 'background: transparent; color: var(--ml-ink-mute);'">
                 <span x-text="t(f.l)"></span>
-                <span style="opacity: 0.6;" x-text="statusCount(f.k)"></span>
+                <span class="ml-mono" style="font-size: 11px;"
+                  :style="dossierStatusFilter === f.k ? 'opacity:0.65;' : 'opacity:0.5;'"
+                  x-text="statusCount(f.k)"></span>
               </button>
             </template>
           </div>
 
           <!-- Tri -->
-          <select x-model="dossierSort" class="ml-input" style="width: auto; padding: 7px 12px; font-size: 13px; height: 30px;">
+          <select x-model="dossierSort" class="ml-input ml-mono"
+            style="width: auto; padding: 7px 14px; font-size: 12px; height: 34px; border-radius: 999px; letter-spacing: 0.03em;">
             <option value="recent" x-text="t('sort_recent')"></option>
             <option value="old" x-text="t('sort_old')"></option>
             <option value="amount" x-text="t('sort_amount')"></option>
@@ -1597,40 +1667,54 @@ img, svg { display: block; max-width: 100%; }
         x-text="t('dossiers_no_match')"></div>
 
       <!-- Dossiers list -->
-      <div x-show="!loadingDossiers && filteredDossiers().length > 0" class="ml-stack" style="gap: 10px;">
+      <div x-show="!loadingDossiers && filteredDossiers().length > 0" class="ml-stack" style="gap: 8px;">
         <template x-for="d in filteredDossiers()" :key="d.id">
-          <div class="ml-card" style="padding: 18px 20px; display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center;">
+          <div class="ml-card ml-card--hover"
+            style="padding: 18px 22px; display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; border: 1px solid var(--ml-line); box-shadow: none; transition: border-color .15s, transform .15s, box-shadow .15s;">
             <div style="min-width: 0;">
-              <div class="ml-row" style="gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
-                <span style="font-weight: 600; font-size: 15px;" x-text="d.nom_salarie || t('dossier_unnamed')"></span>
+              <!-- Header : nom + statut -->
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                <span style="font-weight: 600; font-size: 15px; letter-spacing: -0.01em;" x-text="d.nom_salarie || t('dossier_unnamed')"></span>
                 <button @click="cycleDossierStatus(d)"
                   class="ml-chip"
-                  :style="d.status==='closed' ? 'background: var(--ml-green-soft); color: var(--ml-green); border-color: transparent; cursor:pointer;' : d.status==='in_progress' ? 'background: var(--ml-ochre-soft); color: #6b4515; border-color: transparent; cursor:pointer;' : 'cursor:pointer;'"
+                  :style="d.status==='closed'
+                    ? 'background: var(--ml-green-soft); color: var(--ml-green); border-color: transparent; cursor:pointer;'
+                    : d.status==='in_progress'
+                    ? 'background: var(--ml-ochre-soft); color: var(--ml-ochre); border-color: transparent; cursor:pointer;'
+                    : 'cursor:pointer;'"
                   x-text="dossierStatusLabel(d.status)"></button>
               </div>
-              <div class="ml-row ml-mono" style="gap: 10px; flex-wrap: wrap; font-size: 11px; color: var(--ml-ink-mute);">
-                <span x-show="d.poste" x-text="d.poste"></span>
-                <span x-show="d.poste">·</span>
+              <!-- Méta -->
+              <div class="ml-mono" style="display: flex; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--ml-ink-faint); align-items: center;">
+                <span x-show="d.poste" x-text="d.poste" style="color: var(--ml-ink-mute);"></span>
+                <span x-show="d.poste" style="opacity:0.4;">·</span>
                 <span x-text="t('label_'+d.type)"></span>
-                <span>·</span>
+                <span style="opacity:0.4;">·</span>
                 <span x-text="d.seniority + (lang==='ar' ? ' سنة' : ' ans')"></span>
-                <span>·</span>
+                <span style="opacity:0.4;">·</span>
                 <span x-text="dossierDate(d)"></span>
-                <span x-show="d.ref">·</span>
-                <span x-show="d.ref" x-text="d.ref"></span>
+                <template x-if="d.ref">
+                  <span style="display:contents;">
+                    <span style="opacity:0.4;">·</span>
+                    <span style="background: var(--ml-bg-2); padding: 1px 7px; border-radius: 4px;" x-text="d.ref"></span>
+                  </span>
+                </template>
               </div>
-              <div style="font-weight: 600; font-size: 19px; color: var(--ml-green); margin-top: 8px; letter-spacing: -0.02em;">
-                <span x-text="fmt(d.total)"></span>
-                <span class="ml-mono" style="font-size: 12px; color: var(--ml-ink-mute);">MAD</span>
+              <!-- Montant -->
+              <div style="margin-top: 10px; display: flex; align-items: baseline; gap: 5px;">
+                <span style="font-weight: 700; font-size: 22px; color: var(--ml-green); letter-spacing: -0.03em; font-variant-numeric: tabular-nums;" x-text="fmt(d.total)"></span>
+                <span class="ml-mono" style="font-size: 11px; color: var(--ml-ink-faint); font-weight: 400;">MAD</span>
               </div>
             </div>
-            <div class="ml-row" style="gap: 6px;">
+            <!-- Actions -->
+            <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-end;">
               <button @click="restoreDossier(d)" class="ml-btn ml-btn--sm ml-btn--primary" x-text="t('dossier_open')"></button>
-              <button @click="deleteDossier(d.id)" class="ml-btn ml-btn--sm ml-btn--icon" title="Supprimer"
-                style="color: var(--ml-rouge);">
-                <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <button @click="deleteDossier(d.id)" class="ml-btn ml-btn--ghost ml-btn--sm"
+                style="color: var(--ml-rouge); font-size: 11.5px; height: 28px; padding: 0 10px;">
+                <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M2.5 4h9M5 4V2.5h4V4M5.5 6.5v4M8.5 6.5v4M3.5 4l.5 8a1 1 0 001 1h4a1 1 0 001-1l.5-8"/>
                 </svg>
+                <span x-text="lang==='ar' ? 'حذف' : 'Suppr.'"></span>
               </button>
             </div>
           </div>
@@ -1968,6 +2052,6 @@ img, svg { display: block; max-width: 100%; }
 <!-- jsPDF + AutoTable — génération PDF côté client -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-<script src="app.js?v=14"></script>
+<script src="app.js?v=15"></script>
 </body>
 </html>
