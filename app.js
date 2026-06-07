@@ -32,6 +32,12 @@ function app() {
     // ④ Infos dossier (pour PDF)
     dossier: { nomSalarie: '', poste: '', ref: '' },
 
+    // Freemium — mode invité
+    isGuest: false,
+    trialCount: 0,
+    showTrialWall: false,
+    TRIAL_LIMIT: 2,
+
     // ⑤ Dossiers Supabase (persistant cross-device)
     dossiers: [],
     loadingDossiers: false,
@@ -50,15 +56,27 @@ function app() {
       { id: 'dates',     icon: '📅', labelKey: 'nav_dates' },
     ],
 
-    // Lifecycle — auth guard + chargement initial
+    // Lifecycle — mode connecté ou invité (2 essais gratuits)
     async init() {
-      // Vérifie la session — redirige vers login.html si pas connecté
-      const session = await requireAuth();
-      if (!session) return; // requireAuth() redirige, on stoppe ici
-      this.currentUser = session.user;
-      this.loadHistory();
-      this.loadDossiers();
+      const session = await getSession();
+      if (session) {
+        // Utilisateur connecté — accès complet
+        this.currentUser = session.user;
+        this.isGuest = false;
+        this.loadHistory();
+        this.loadDossiers();
+      } else {
+        // Invité — 2 calculs gratuits, pas de dossiers
+        this.isGuest = true;
+        this.trialCount = parseInt(localStorage.getItem('lic_trial_count') || '0');
+        this.loadHistory();
+      }
       this.$nextTick(() => this.loadFromUrl());
+    },
+
+    // Essais restants pour le badge
+    trialRemaining() {
+      return Math.max(0, this.TRIAL_LIMIT - this.trialCount);
     },
 
     setLang(code) { this.lang = code; },
@@ -155,6 +173,12 @@ function app() {
 
     // ─── CALCULATOR ──────────────────────────────────────────────────────────
     calculateAndNext() {
+      // Vérification quota invité
+      if (this.isGuest && this.trialCount >= this.TRIAL_LIMIT) {
+        this.showTrialWall = true;
+        return;
+      }
+
       const { salary, seniority, category, type } = this.form;
       if (!salary || seniority < 1) return;
 
@@ -251,6 +275,12 @@ function app() {
       };
       this.wizardStep = 5;
       this.saveToHistory();
+
+      // Incrémenter le compteur d'essais invité
+      if (this.isGuest) {
+        this.trialCount++;
+        localStorage.setItem('lic_trial_count', String(this.trialCount));
+      }
     },
 
     // ─── ① HISTORIQUE LOCALSTORAGE (isolé par utilisateur) ──────────────────
@@ -301,6 +331,7 @@ function app() {
 
     // ─── ⑤ DOSSIERS SUPABASE (cross-device) ──────────────────────────────────
     async saveDossier() {
+      if (this.isGuest) { this.showTrialWall = true; return; }
       if (!this.results || !this.currentUser) return;
       this.savingDossier = true;
       const payload = {
@@ -508,6 +539,7 @@ function app() {
 
     // ─── ④ GÉNÉRATION PDF ────────────────────────────────────────────────────
     generatePDF() {
+      if (this.isGuest) { this.showTrialWall = true; return; }
       if (!this.results || !window.jspdf) return;
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ unit: 'mm', format: 'a4' });

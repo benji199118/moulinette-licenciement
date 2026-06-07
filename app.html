@@ -982,7 +982,23 @@ img, svg { display: block; max-width: 100%; }
           <button @click="setLang('ar')" :class="lang==='ar' ? 'is-active' : ''" lang="ar">عربية</button>
         </div>
 
-        <!-- User pill + logout -->
+        <!-- Badge invité (essais restants) -->
+        <div x-show="isGuest" class="ml-row" style="gap: 8px;">
+          <span class="ml-chip"
+            :class="trialRemaining() > 0 ? 'ml-chip--ochre' : 'ml-chip--rouge'"
+            style="cursor: default;">
+            <span class="ml-chip__dot"></span>
+            <span x-text="trialRemaining() > 0
+              ? trialRemaining() + (lang==='ar' ? ' اختبار مجاني' : ' essai' + (trialRemaining() > 1 ? 's' : '') + ' gratuit' + (trialRemaining() > 1 ? 's' : ''))
+              : (lang==='ar' ? 'انتهت التجارب المجانية' : 'Limite atteinte')">
+            </span>
+          </span>
+          <a href="login.html?tab=signup" class="ml-btn ml-btn--accent ml-btn--sm">
+            <span x-text="lang==='ar' ? 'إنشاء حساب' : 'Créer un compte'"></span>
+          </a>
+        </div>
+
+        <!-- User pill + logout (utilisateur connecté) -->
         <div x-show="currentUser" class="ml-user-pill">
           <span class="ml-user-pill__avatar" x-text="currentUser ? currentUser.email[0].toUpperCase() : ''"></span>
           <span class="ml-user-pill__email ml-mono" x-text="currentUser ? currentUser.email : ''"></span>
@@ -1481,7 +1497,38 @@ img, svg { display: block; max-width: 100%; }
       <p class="ml-lead ml-center" x-text="t('dossiers_sub')"></p>
     </div>
 
-    <div class="ml-mw-lg">
+    <!-- État verrouillé pour les invités -->
+    <div x-show="isGuest" class="ml-mw-md ml-fadein">
+      <div class="ml-card ml-card--lg ml-center" style="padding: 56px 32px;">
+        <div style="width: 64px; height: 64px; border-radius: 18px; background: var(--ml-bg-2); display: grid; place-items: center; font-size: 28px; margin: 0 auto 20px;">🔒</div>
+        <h3 class="ml-h3" style="margin-bottom: 10px;" x-text="lang==='ar' ? 'ميزة خاصة بالأعضاء' : 'Fonctionnalité réservée aux membres'"></h3>
+        <p class="ml-mute" style="font-size: 14px; max-width: 38ch; margin: 0 auto 28px;" x-text="lang==='ar' ? 'أنشئ حسابك المجاني لحفظ ملفاتك والوصول إليها من أي جهاز.' : 'Créez votre compte gratuit pour sauvegarder vos dossiers et les retrouver depuis n\'importe quel poste.'"></p>
+        <div class="ml-stack" style="gap: 10px; max-width: 300px; margin: 0 auto 28px;">
+          <div style="display: flex; gap: 10px; align-items: center; padding: 12px 16px; background: var(--ml-green-soft); border-radius: 10px; text-align: start;">
+            <span style="color: var(--ml-green); font-weight: 700; flex-shrink: 0;">✓</span>
+            <span style="font-size: 13.5px; color: var(--ml-ink-2);" x-text="lang==='ar' ? 'حسابات ومستندات غير محدودة' : 'Calculs & dossiers illimités'"></span>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; padding: 12px 16px; background: var(--ml-green-soft); border-radius: 10px; text-align: start;">
+            <span style="color: var(--ml-green); font-weight: 700; flex-shrink: 0;">✓</span>
+            <span style="font-size: 13.5px; color: var(--ml-ink-2);" x-text="lang==='ar' ? 'PDF موثق بتاريخ وتوقيت' : 'PDF horodaté à votre nom'"></span>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; padding: 12px 16px; background: var(--ml-green-soft); border-radius: 10px; text-align: start;">
+            <span style="color: var(--ml-green); font-weight: 700; flex-shrink: 0;">✓</span>
+            <span style="font-size: 13.5px; color: var(--ml-ink-2);" x-text="lang==='ar' ? 'وصول من أي جهاز في أي وقت' : 'Accès multi-poste, synchronisé'"></span>
+          </div>
+        </div>
+        <a href="login.html?tab=signup" class="ml-btn ml-btn--accent ml-btn--lg" style="margin-bottom: 10px; display: inline-flex;">
+          <span x-text="lang==='ar' ? 'إنشاء حساب مجاني' : 'Créer mon compte gratuit'"></span>
+          <span class="ml-arrow">→</span>
+        </a>
+        <br>
+        <a href="login.html" class="ml-btn ml-btn--ghost ml-btn--sm" style="margin-top: 8px;">
+          <span x-text="lang==='ar' ? 'لدي حساب بالفعل' : 'J\'ai déjà un compte'"></span>
+        </a>
+      </div>
+    </div>
+
+    <div x-show="!isGuest" class="ml-mw-lg">
 
       <!-- Budget summary band -->
       <div x-show="dossiers.length > 0" class="ml-card ml-card--ink" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
@@ -1590,7 +1637,7 @@ img, svg { display: block; max-width: 100%; }
         </template>
       </div>
 
-    </div>
+    </div><!-- /!isGuest -->
   </div>
 
   <!-- ══════════════════════════════════════════
@@ -1848,6 +1895,69 @@ img, svg { display: block; max-width: 100%; }
 
 </main>
 
+<!-- ════════════ TRIAL WALL MODAL ════════════ -->
+<div x-show="showTrialWall" x-cloak
+  style="position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px;"
+  @keydown.escape.window="showTrialWall = false">
+  <!-- Backdrop -->
+  <div @click="showTrialWall = false"
+    style="position: absolute; inset: 0; background: rgba(13,15,14,0.72); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"></div>
+
+  <!-- Carte modale -->
+  <div class="ml-card ml-card--xl ml-fadein"
+    style="position: relative; max-width: 500px; width: 100%; text-align: center; z-index: 1; padding: 44px 40px;">
+
+    <!-- Logo mark -->
+    <div style="width: 60px; height: 60px; border-radius: 18px; background: var(--ml-green); color: #f6f3ec; display: grid; place-items: center; font-family: var(--f-sans); font-weight: 700; font-size: 24px; margin: 0 auto 22px;">M</div>
+
+    <!-- Titre -->
+    <h2 class="ml-h2" style="margin-bottom: 10px;" x-text="lang==='ar' ? 'انتهت تجاربك المجانية' : 'Vos 2 essais gratuits sont utilisés'"></h2>
+    <p class="ml-lead ml-center" style="font-size: 15px; margin: 0 auto 28px; max-width: 36ch;"
+      x-text="lang==='ar' ? 'أنشئ حسابك المجاني للاستمرار وحفظ ملفاتك.' : 'Créez votre compte gratuit pour continuer — calculs illimités, dossiers sauvegardés, PDF horodaté.'">
+    </p>
+
+    <!-- Avantages -->
+    <div style="display: flex; flex-direction: column; gap: 9px; margin-bottom: 28px; text-align: start;">
+      <template x-for="benefit in (lang==='ar' ? [
+        'حسابات غير محدودة + ملفات محفوظة',
+        'PDF موثق بتاريخ وتوقيت باسمك',
+        'وصول من أي جهاز في أي وقت',
+        'مجاني تماماً — بدون بطاقة بنكية'
+      ] : [
+        'Calculs illimités + dossiers persistants',
+        'PDF horodaté généré à votre nom',
+        'Accès depuis n\'importe quel poste',
+        '100 % gratuit — sans carte bancaire'
+      ])" :key="benefit">
+        <div style="display: flex; gap: 10px; align-items: center; padding: 11px 15px; background: var(--ml-green-soft); border-radius: 10px;">
+          <span style="color: var(--ml-green); font-weight: 700; flex-shrink: 0; font-size: 13px;">✓</span>
+          <span style="font-size: 13.5px; color: var(--ml-ink-2);" x-text="benefit"></span>
+        </div>
+      </template>
+    </div>
+
+    <!-- CTA principal -->
+    <a :href="'login.html?tab=signup'" class="ml-btn ml-btn--accent ml-btn--lg ml-btn--block" style="margin-bottom: 10px; text-decoration: none;">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+        <path d="M7.5 1a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM1.5 14a6 6 0 0 1 12 0"/>
+      </svg>
+      <span x-text="lang==='ar' ? 'إنشاء حساب مجاني — 30 ثانية' : 'Créer mon compte gratuit — 30 sec'"></span>
+      <span class="ml-arrow">→</span>
+    </a>
+
+    <!-- CTA secondaire -->
+    <a href="login.html" class="ml-btn ml-btn--ghost ml-btn--block" style="text-decoration: none;">
+      <span x-text="lang==='ar' ? 'لدي حساب — تسجيل الدخول' : 'J\'ai déjà un compte — Se connecter'"></span>
+    </a>
+
+    <!-- Bouton fermer (pour voir les résultats déjà calculés) -->
+    <button @click="showTrialWall = false"
+      style="position: absolute; top: 14px; inset-inline-end: 14px; width: 28px; height: 28px; border-radius: 999px; border: 1px solid var(--ml-line-strong); background: var(--ml-bg-2); color: var(--ml-ink-mute); display: grid; place-items: center; cursor: pointer; font-size: 13px; transition: all .15s;"
+      title="Fermer">✕</button>
+
+  </div>
+</div>
+
 <!-- ════════════ FOOTER ════════════ -->
 <footer class="no-print" style="border-top: 1px solid var(--ml-line); padding: 28px 0; margin-top: 32px;">
   <div class="ml-wrap ml-center">
@@ -1858,6 +1968,6 @@ img, svg { display: block; max-width: 100%; }
 <!-- jsPDF + AutoTable — génération PDF côté client -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-<script src="app.js?v=13"></script>
+<script src="app.js?v=14"></script>
 </body>
 </html>

@@ -378,6 +378,12 @@ footer {
   const session = await getSession();
   if (session) window.location.href = 'app.html';
 
+  // Auto-switch vers l'onglet signup si ?tab=signup dans l'URL
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('tab') === 'signup') {
+    switchTab('signup');
+  }
+
   // Handle password reset redirect from email link
   const hash = window.location.hash;
   if (hash.includes('type=recovery')) {
