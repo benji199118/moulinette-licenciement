@@ -253,10 +253,16 @@ function app() {
       this.saveToHistory();
     },
 
-    // ─── ① HISTORIQUE LOCALSTORAGE ───────────────────────────────────────────
+    // ─── ① HISTORIQUE LOCALSTORAGE (isolé par utilisateur) ──────────────────
+    _historyKey() {
+      // Clé unique par utilisateur : lic_history_<uid>
+      return this.currentUser ? `lic_history_${this.currentUser.id}` : 'lic_history_guest';
+    },
+
     saveToHistory() {
       if (!this.results || this.form.type === 'faute_grave') return;
-      const stored = JSON.parse(localStorage.getItem('lic_history') || '[]');
+      const key = this._historyKey();
+      const stored = JSON.parse(localStorage.getItem(key) || '[]');
       stored.unshift({
         id: Date.now(),
         date: new Date().toLocaleDateString('fr-MA'),
@@ -267,12 +273,13 @@ function app() {
         total: this.results.total,
       });
       const trimmed = stored.slice(0, 5);
-      localStorage.setItem('lic_history', JSON.stringify(trimmed));
+      localStorage.setItem(key, JSON.stringify(trimmed));
       this.history = trimmed;
     },
 
     loadHistory() {
-      this.history = JSON.parse(localStorage.getItem('lic_history') || '[]');
+      const key = this._historyKey();
+      this.history = JSON.parse(localStorage.getItem(key) || '[]');
     },
 
     restoreFromHistory(entry) {
@@ -286,7 +293,8 @@ function app() {
     },
 
     clearHistory() {
-      localStorage.removeItem('lic_history');
+      const key = this._historyKey();
+      localStorage.removeItem(key);
       this.history = [];
       this.showHistory = false;
     },
