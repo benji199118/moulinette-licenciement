@@ -589,10 +589,10 @@ function app() {
       doc.setTextColor(246, 243, 236);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
-      T('MOULINETTE LICENCIEMENT', LM + 17, 14.5);
+      T('INDEMNPRO', LM + 17, 14.5);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
-      T('Code du Travail Marocain — Loi 65-99', LM + 17, 20);
+      T('IndemnPro — Code du Travail Marocain — Loi 65-99', LM + 17, 20);
 
       // Réf + date (droite)
       doc.setTextColor(200, 230, 210);
@@ -751,7 +751,7 @@ function app() {
         y += 5;
       }
       doc.setTextColor(150, 155, 150);
-      T('Moulinette Licenciement · github.com/benji199118/moulinette-licenciement', LM, y);
+      T('IndemnPro · indemnpro.ma · Loi 65-99', LM, y);
 
       // ── Sauvegarde ───────────────────────────────────────────────────────────
       const safeName = (this.dossier.nomSalarie || 'dossier').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
@@ -858,7 +858,7 @@ function app() {
 // ─── TRANSLATIONS ─────────────────────────────────────────────────────────────
 const translations = {
   fr: {
-    app_title: 'Moulinette Licenciement',
+    app_title: 'IndemnPro',
     app_sub: 'Code du Travail Marocain — Loi 65-99',
     nav_calc: 'Calculateur',
     nav_procedure: 'Procédure',
@@ -1009,7 +1009,7 @@ const translations = {
     dates_timeline_title: 'Échéancier légal',
   },
   ar: {
-    app_title: 'حاسبة إنهاء عقد العمل',
+    app_title: 'IndemnPro',
     app_sub: 'قانون الشغل المغربي — 65-99',
     nav_calc: 'الحاسبة',
     nav_procedure: 'الإجراءات',
