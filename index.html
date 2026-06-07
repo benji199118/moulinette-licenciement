@@ -329,18 +329,12 @@ img,svg{display:block;max-width:100%;}
 </footer>
 
 <script>
-// ─── CTA : si connecté → app.html, sinon → login.html ───
-(async () => {
-  let dest = 'login.html';
-  try {
-    const session = await getSession();
-    if (session) dest = 'app.html';
-  } catch (e) {}
-  ['cta-nav','cta-hero','cta-band'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.setAttribute('href', dest);
-  });
-})();
+// ─── CTA : toujours → app.html (invité ou connecté) ───
+// "Se connecter" reste sur login.html via son href statique
+['cta-nav','cta-hero','cta-band'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.setAttribute('href', 'app.html');
+});
 
 // ─── Compteur animé du montant hero ───
 (() => {
