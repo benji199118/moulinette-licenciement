@@ -1222,6 +1222,37 @@ img, svg { display: block; max-width: 100%; }
       <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step4_title')"></h2>
       <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step4_sub')"></p>
 
+      <!-- Secteur SMIG / SMAG -->
+      <div class="ml-card" style="margin-bottom: 14px;">
+        <div class="ml-field__label" style="font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ml-ink-mute); margin-bottom: 12px;" x-text="t('secteur_label')"></div>
+        <div class="ml-row" style="gap: 10px;">
+          <!-- SMIG -->
+          <button @click="form.secteur = 'SMIG'"
+            :class="form.secteur === 'SMIG'
+              ? 'ml-btn ml-btn--primary'
+              : 'ml-btn ml-btn--ghost'"
+            style="flex: 1; flex-direction: column; align-items: flex-start; padding: 14px 16px; gap: 4px; text-align: start;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 15px;">🏭</span>
+              <span style="font-weight: 600; font-size: 13px;" x-text="t('secteur_smig')"></span>
+            </div>
+            <span style="font-size: 11px; opacity: 0.75; font-family: var(--f-mono);" x-text="t('secteur_smig_desc')"></span>
+          </button>
+          <!-- SMAG -->
+          <button @click="form.secteur = 'SMAG'"
+            :class="form.secteur === 'SMAG'
+              ? 'ml-btn ml-btn--primary'
+              : 'ml-btn ml-btn--ghost'"
+            style="flex: 1; flex-direction: column; align-items: flex-start; padding: 14px 16px; gap: 4px; text-align: start;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 15px;">🌾</span>
+              <span style="font-weight: 600; font-size: 13px;" x-text="t('secteur_smag')"></span>
+            </div>
+            <span style="font-size: 11px; opacity: 0.75; font-family: var(--f-mono);" x-text="t('secteur_smag_desc')"></span>
+          </button>
+        </div>
+      </div>
+
       <!-- Salaire -->
       <div class="ml-card">
         <div class="ml-center" style="margin-bottom: 20px;">
@@ -1231,7 +1262,8 @@ img, svg { display: block; max-width: 100%; }
           </div>
           <div class="ml-mute ml-mono" style="font-size: 11.5px; margin-top: 10px; letter-spacing: 0.08em;">
             <span x-text="t('equiv_hourly')"></span>
-            <span style="color: var(--ml-green); font-weight: 500;" x-text="form.salary ? fmt(form.salary/191)+' MAD/h' : '—'"></span>
+            <span style="color: var(--ml-green); font-weight: 500;"
+              x-text="form.salary ? fmt(form.salary / (form.secteur === 'SMAG' ? 191 : 208)) + ' MAD/h' : '—'"></span>
           </div>
         </div>
         <div class="ml-field">
@@ -2106,6 +2138,6 @@ img, svg { display: block; max-width: 100%; }
 <!-- jsPDF + AutoTable — génération PDF côté client -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-<script src="app.js?v=16"></script>
+<script src="app.js?v=17"></script>
 </body>
 </html>

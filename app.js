@@ -16,6 +16,7 @@ function app() {
       endDate: '',
       unpaidDays: 0,
       unusedLeave: 0,
+      secteur: 'SMIG',  // SMIG = 208h/mois | SMAG = 191h/mois
     },
 
     // ① Historique
@@ -179,10 +180,11 @@ function app() {
         return;
       }
 
-      const { salary, seniority, category, type } = this.form;
+      const { salary, seniority, category, type, secteur } = this.form;
       if (!salary || seniority < 1) return;
 
-      const salaireHoraire = salary / 191;
+      const heuresBase = secteur === 'SMAG' ? 191 : 208;
+      const salaireHoraire = salary / heuresBase;
       let breakdown = [];
       let indemniteLegale = 0;
 
@@ -243,7 +245,7 @@ function app() {
       const seniorityLabel = this.lang === 'ar' ? `${seniority} سنة` : `${seniority} ans`;
 
       // Formules détaillées
-      const salaireHoraireFormula = `${this.fmt(salary)} ÷ 191 = ${this.fmt(salaireHoraire)} MAD/h`;
+      const salaireHoraireFormula = `${this.fmt(salary)} ÷ ${heuresBase}h (${secteur}) = ${this.fmt(salaireHoraire)} MAD/h`;
       const preFormula = this.lang === 'ar'
         ? `${jours >= 25 ? Math.round(preavismois) + ' شهر' : jours + ' يوم'} × ${this.fmt(salary)} درهم`
         : `${jours >= 25 ? Math.round(preavismois) + ' mois' : jours + ' jours'} × ${this.fmt(salary)} MAD`;
@@ -300,6 +302,7 @@ function app() {
         category: this.form.category,
         seniority: this.form.seniority,
         salary: this.form.salary,
+        secteur: this.form.secteur || 'SMIG',
         total: this.results.total,
       });
       const trimmed = stored.slice(0, 5);
@@ -317,6 +320,7 @@ function app() {
       this.form.category = entry.category;
       this.form.seniority = entry.seniority;
       this.form.salary = entry.salary;
+      this.form.secteur = entry.secteur || 'SMIG';
       this.calculateAndNext();
       this.activeTab = 'calc';
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -398,6 +402,7 @@ function app() {
       this.form.endDate     = f.endDate || '';
       this.form.unpaidDays  = f.unpaidDays || 0;
       this.form.unusedLeave = f.unusedLeave || 0;
+      this.form.secteur     = f.secteur || 'SMIG';
       this.dossier = d.data?.dossier || {
         nomSalarie: d.nom_salarie || '', poste: d.poste || '', ref: d.ref || '',
       };
@@ -891,6 +896,11 @@ const translations = {
     salary_placeholder: 'Ex: 5000',
     equiv_hourly: 'Soit environ',
     smig_ref: 'SMIG 2026 : 3 422,72 MAD brut (17,92 MAD/h)',
+    secteur_label: 'Secteur d\'activité',
+    secteur_smig: 'Non agricole (SMIG)',
+    secteur_smig_desc: '208h / mois · Industrie, commerce, services',
+    secteur_smag: 'Agricole (SMAG)',
+    secteur_smag_desc: '191h / mois · Agriculture, sylviculture, élevage',
     back: 'Retour',
     next: 'Suivant',
     calculate: 'Calculer mes indemnités',
@@ -1042,6 +1052,11 @@ const translations = {
     salary_placeholder: 'مثال: 5000',
     equiv_hourly: 'أي ما يعادل',
     smig_ref: 'الحد الأدنى للأجر 2026: 3 422,72 درهم إجمالي',
+    secteur_label: 'قطاع النشاط',
+    secteur_smig: 'غير فلاحي (SMIG)',
+    secteur_smig_desc: '208 ساعة/شهر · صناعة، تجارة، خدمات',
+    secteur_smag: 'فلاحي (SMAG)',
+    secteur_smag_desc: '191 ساعة/شهر · فلاحة، غابات، تربية الماشية',
     back: 'رجوع',
     next: 'التالي',
     calculate: 'احسب تعويضاتي',
