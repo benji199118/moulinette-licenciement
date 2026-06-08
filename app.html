@@ -967,8 +967,9 @@ img, svg { display: block; max-width: 100%; }
   [x-show="wizardStep===2"],
   [x-show="wizardStep===3"],
   [x-show="wizardStep===4"],
-  [x-show="wizardStep < 5"] { display: none !important; }
-  [x-show="wizardStep===5 && results"] { display: block !important; }
+  [x-show="wizardStep===5"],
+  [x-show="wizardStep < 6"] { display: none !important; }
+  [x-show="wizardStep===6 && results"] { display: block !important; }
   [x-show="form.type!=='faute_grave'"] { display: block !important; }
   [x-show="results && results.dommages > 0"] { display: block !important; }
   [x-show="results && results.unpaidAmount > 0"] { display: block !important; }
@@ -1097,20 +1098,63 @@ img, svg { display: block; max-width: 100%; }
     </div>
 
     <!-- Progress -->
-    <div class="ml-progress" x-show="wizardStep < 5">
-      <template x-for="n in [1,2,3,4]" :key="n">
+    <div class="ml-progress" x-show="wizardStep < 6">
+      <template x-for="n in [1,2,3,4,5]" :key="n">
         <div style="display:contents">
           <div class="ml-progress__step"
             :class="wizardStep > n ? 'is-done' : wizardStep === n ? 'is-current' : ''"
             x-text="wizardStep > n ? '✓' : n"></div>
-          <div x-show="n < 4" class="ml-progress__line"
+          <div x-show="n < 5" class="ml-progress__line"
             :class="wizardStep > n ? 'is-done' : ''"></div>
         </div>
       </template>
     </div>
 
-    <!-- STEP 1 · Type -->
+    <!-- STEP 1 · Secteur SMIG / SMAG -->
     <div x-show="wizardStep===1" class="ml-fadein ml-mw-lg">
+      <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step0_title')"></h2>
+      <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step0_sub')"></p>
+      <div class="ml-grid-2">
+
+        <!-- SMIG -->
+        <button @click="form.secteur='SMIG'; nextStep()"
+          :class="form.secteur==='SMIG' ? 'is-selected' : ''"
+          class="ml-option">
+          <div class="ml-row">
+            <span class="ml-option__icon">🏭</span>
+            <span class="ml-chip ml-chip--ochre">208h / mois</span>
+          </div>
+          <div>
+            <p class="ml-option__label" x-text="t('secteur_smig')"></p>
+            <p class="ml-option__desc" x-text="t('secteur_smig_desc')"></p>
+          </div>
+          <div style="margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--ml-line-strong);">
+            <span class="ml-mono" style="font-size: 11px; color: var(--ml-ink-mute);">SMIG 2026 · 3 422,72 MAD/mois</span>
+          </div>
+        </button>
+
+        <!-- SMAG -->
+        <button @click="form.secteur='SMAG'; nextStep()"
+          :class="form.secteur==='SMAG' ? 'is-selected' : ''"
+          class="ml-option">
+          <div class="ml-row">
+            <span class="ml-option__icon">🌾</span>
+            <span class="ml-chip ml-chip--ochre">191h / mois</span>
+          </div>
+          <div>
+            <p class="ml-option__label" x-text="t('secteur_smag')"></p>
+            <p class="ml-option__desc" x-text="t('secteur_smag_desc')"></p>
+          </div>
+          <div style="margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--ml-line-strong);">
+            <span class="ml-mono" style="font-size: 11px; color: var(--ml-ink-mute);">SMAG 2026 · 2 776,64 MAD/mois</span>
+          </div>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- STEP 2 · Type -->
+    <div x-show="wizardStep===2" class="ml-fadein ml-mw-lg">
       <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step1_title')"></h2>
       <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step1_sub')"></p>
       <div class="ml-grid-2">
@@ -1131,8 +1175,8 @@ img, svg { display: block; max-width: 100%; }
       </div>
     </div>
 
-    <!-- STEP 2 · Catégorie -->
-    <div x-show="wizardStep===2" class="ml-fadein ml-mw-md">
+    <!-- STEP 3 · Catégorie -->
+    <div x-show="wizardStep===3" class="ml-fadein ml-mw-md">
       <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step2_title')"></h2>
       <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step2_sub')"></p>
       <div class="ml-grid-3">
@@ -1156,8 +1200,8 @@ img, svg { display: block; max-width: 100%; }
       </div>
     </div>
 
-    <!-- STEP 3 · Ancienneté + Dates -->
-    <div x-show="wizardStep===3" class="ml-fadein ml-mw-md">
+    <!-- STEP 4 · Ancienneté + Dates -->
+    <div x-show="wizardStep===4" class="ml-fadein ml-mw-md">
       <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step3_title')"></h2>
       <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step3_sub')"></p>
 
@@ -1217,41 +1261,10 @@ img, svg { display: block; max-width: 100%; }
       </div>
     </div>
 
-    <!-- STEP 4 · Salaire & compléments -->
-    <div x-show="wizardStep===4" class="ml-fadein ml-mw-md">
+    <!-- STEP 5 · Salaire & compléments -->
+    <div x-show="wizardStep===5" class="ml-fadein ml-mw-md">
       <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step4_title')"></h2>
       <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step4_sub')"></p>
-
-      <!-- Secteur SMIG / SMAG -->
-      <div class="ml-card" style="margin-bottom: 14px;">
-        <div class="ml-field__label" style="font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ml-ink-mute); margin-bottom: 12px;" x-text="t('secteur_label')"></div>
-        <div class="ml-row" style="gap: 10px;">
-          <!-- SMIG -->
-          <button @click="form.secteur = 'SMIG'"
-            :class="form.secteur === 'SMIG'
-              ? 'ml-btn ml-btn--primary'
-              : 'ml-btn ml-btn--ghost'"
-            style="flex: 1; flex-direction: column; align-items: flex-start; padding: 14px 16px; gap: 4px; text-align: start;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 15px;">🏭</span>
-              <span style="font-weight: 600; font-size: 13px;" x-text="t('secteur_smig')"></span>
-            </div>
-            <span style="font-size: 11px; opacity: 0.75; font-family: var(--f-mono);" x-text="t('secteur_smig_desc')"></span>
-          </button>
-          <!-- SMAG -->
-          <button @click="form.secteur = 'SMAG'"
-            :class="form.secteur === 'SMAG'
-              ? 'ml-btn ml-btn--primary'
-              : 'ml-btn ml-btn--ghost'"
-            style="flex: 1; flex-direction: column; align-items: flex-start; padding: 14px 16px; gap: 4px; text-align: start;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 15px;">🌾</span>
-              <span style="font-weight: 600; font-size: 13px;" x-text="t('secteur_smag')"></span>
-            </div>
-            <span style="font-size: 11px; opacity: 0.75; font-family: var(--f-mono);" x-text="t('secteur_smag_desc')"></span>
-          </button>
-        </div>
-      </div>
 
       <!-- Salaire -->
       <div class="ml-card">
@@ -1318,8 +1331,8 @@ img, svg { display: block; max-width: 100%; }
       </div>
     </div>
 
-    <!-- STEP 5 · Résultats -->
-    <div x-show="wizardStep===5 && results" class="ml-fadein">
+    <!-- STEP 6 · Résultats -->
+    <div x-show="wizardStep===6 && results" class="ml-fadein">
 
       <!-- Faute grave warning -->
       <div x-show="form.type==='faute_grave'" class="ml-mw-md">
@@ -2138,6 +2151,6 @@ img, svg { display: block; max-width: 100%; }
 <!-- jsPDF + AutoTable — génération PDF côté client -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-<script src="app.js?v=17"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>

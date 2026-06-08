@@ -91,7 +91,7 @@ function app() {
       return Math.round(n).toLocaleString('fr-MA');
     },
 
-    nextStep() { this.wizardStep = Math.min(this.wizardStep + 1, 5); },
+    nextStep() { this.wizardStep = Math.min(this.wizardStep + 1, 6); },
     prevStep() { this.wizardStep = Math.max(this.wizardStep - 1, 1); },
 
     // ─── DATE D'EMBAUCHE → ancienneté automatique ─────────────────────────────
@@ -275,7 +275,7 @@ function app() {
         unusedLeave, leaveAmount, leaveFormula,
         total, seniorityLabel,
       };
-      this.wizardStep = 5;
+      this.wizardStep = 6;
       this.saveToHistory();
 
       // Incrémenter le compteur d'essais invité
@@ -882,6 +882,8 @@ const translations = {
     refs_title_em: 'article par article.',
     dates_title_pre: 'Calculateur',
     dates_title_em: 'de délais légaux.',
+    step0_title: 'Dans quel secteur travaille le salarié ?',
+    step0_sub: 'Le secteur détermine la base de calcul du taux horaire',
     step1_title: 'Quel est le type de licenciement ?',
     step1_sub: 'Sélectionnez la situation qui correspond à votre cas',
     step2_title: 'Quelle est votre catégorie professionnelle ?',
@@ -1038,6 +1040,8 @@ const translations = {
     refs_title_em: 'مادة بمادة.',
     dates_title_pre: 'حاسبة',
     dates_title_em: 'الآجال القانونية.',
+    step0_title: 'في أي قطاع يعمل الموظف ؟',
+    step0_sub: 'القطاع يحدد أساس احتساب الأجر الساعي',
     step1_title: 'ما هو نوع الفصل ؟',
     step1_sub: 'اختر الوضعية التي تنطبق على حالتك',
     step2_title: 'ما هي فئتك المهنية ؟',
