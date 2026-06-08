@@ -16,7 +16,8 @@ function app() {
       endDate: '',
       unpaidDays: 0,
       unusedLeave: 0,
-      secteur: 'SMIG',  // SMIG = 208h/mois | SMAG = 191h/mois
+      secteur: 'SMIG',      // SMIG = 208h/mois | SMAG = 191h/mois
+      isDelegate: false,    // Délégué du personnel (protection Art. 457-470)
     },
 
     // ① Historique
@@ -180,7 +181,7 @@ function app() {
         return;
       }
 
-      const { salary, seniority, category, type, secteur } = this.form;
+      const { salary, seniority, category, type, secteur, isDelegate } = this.form;
       if (!salary || seniority < 1) return;
 
       const heuresBase = secteur === 'SMAG' ? 191 : 208;
@@ -303,6 +304,7 @@ function app() {
         seniority: this.form.seniority,
         salary: this.form.salary,
         secteur: this.form.secteur || 'SMIG',
+        isDelegate: this.form.isDelegate || false,
         total: this.results.total,
       });
       const trimmed = stored.slice(0, 5);
@@ -320,7 +322,8 @@ function app() {
       this.form.category = entry.category;
       this.form.seniority = entry.seniority;
       this.form.salary = entry.salary;
-      this.form.secteur = entry.secteur || 'SMIG';
+      this.form.secteur     = entry.secteur || 'SMIG';
+      this.form.isDelegate  = entry.isDelegate || false;
       this.calculateAndNext();
       this.activeTab = 'calc';
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -403,6 +406,7 @@ function app() {
       this.form.unpaidDays  = f.unpaidDays || 0;
       this.form.unusedLeave = f.unusedLeave || 0;
       this.form.secteur     = f.secteur || 'SMIG';
+      this.form.isDelegate  = f.isDelegate || false;
       this.dossier = d.data?.dossier || {
         nomSalarie: d.nom_salarie || '', poste: d.poste || '', ref: d.ref || '',
       };
@@ -659,7 +663,27 @@ function app() {
       doc.setFontSize(8);
       doc.setTextColor(...M);
       T(`Taux horaire : ${this.results.salaireHoraireFormula}`, LM, y);
-      y += 10;
+      y += 6;
+
+      // Bannière salarié protégé (délégué du personnel)
+      if (this.form.isDelegate) {
+        const bW = PW;
+        doc.setFillColor(254, 243, 199); // amber-100
+        doc.roundedRect(LM, y, bW, 10, 2, 2, 'F');
+        doc.setDrawColor(245, 158, 11); // amber-500
+        doc.roundedRect(LM, y, bW, 10, 2, 2, 'S');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(146, 64, 14); // amber-800
+        T(san('⚠ SALARIÉ PROTÉGÉ — Délégué du personnel'), LM + 4, y + 4);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        T(san('Licenciement soumis à autorisation préalable de l\'Inspecteur du Travail — Art. 457-470 Loi 65-99'), LM + 4, y + 8);
+        doc.setTextColor(...M);
+        y += 14;
+      } else {
+        y += 4;
+      }
 
       // Tableau autoTable
       const rows = [];
@@ -765,25 +789,41 @@ function app() {
 
     // ─── PROCEDURE STEPS ─────────────────────────────────────────────────────
     procedureSteps() {
-      const d = {
+      const standard = {
         fr: [
-          { title:'Convocation à l\'entretien préalable', desc:'Lettre remise en main propre ou recommandée avec AR. Mentionner le motif envisagé et le droit d\'assistance.', badge:'48h minimum', warning:'Sans cette étape, le licenciement est nul de plein droit.', ref:'Art. 62 & 63 — Loi 65-99' },
-          { title:'Entretien préalable', desc:'Écouter les explications du salarié. Il peut se faire assister par un délégué du personnel. Rédiger un PV signé des deux parties.', badge:null, warning:null, ref:'Art. 62 — Loi 65-99' },
-          { title:'Notification écrite du licenciement', desc:'Lettre recommandée avec AR. Motif précis, circonstancié et non équivoque. À envoyer dans les 48h suivant l\'entretien.', badge:'48h maximum', warning:'Un motif vague peut être requalifié en licenciement abusif.', ref:'Art. 63 — Loi 65-99' },
-          { title:'Exécution du préavis', desc:'Le salarié continue à travailler sauf dispense de l\'employeur (avec maintien du salaire). Aucun préavis en cas de faute grave.', badge:null, warning:null, ref:'Art. 43-51 — Décret 2-04-469' },
-          { title:'Remise des documents de fin de contrat', desc:'Certificat de travail · Reçu pour solde de tout compte · Attestation CNSS · Formulaire IPE (indemnité perte d\'emploi)', badge:null, warning:null, ref:'Art. 72 — Loi 65-99' },
-          { title:'Déclaration de départ sur Damancom', desc:'Obligatoire dans les 30 jours. Permet au salarié d\'activer ses droits à l\'IPE (indemnité chômage).', badge:'30 jours max', warning:null, ref:'CNSS — Damancom.ma' },
+          { title:'Convocation à l\'entretien préalable', desc:'Lettre remise en main propre ou recommandée avec AR. Mentionner le motif envisagé et le droit d\'assistance.', badge:'48h minimum', warning:'Sans cette étape, le licenciement est nul de plein droit.', ref:'Art. 62 & 63 — Loi 65-99', delegate: false },
+          { title:'Entretien préalable', desc:'Écouter les explications du salarié. Il peut se faire assister par un délégué du personnel. Rédiger un PV signé des deux parties.', badge:null, warning:null, ref:'Art. 62 — Loi 65-99', delegate: false },
+          { title:'Notification écrite du licenciement', desc:'Lettre recommandée avec AR. Motif précis, circonstancié et non équivoque. À envoyer dans les 48h suivant l\'entretien.', badge:'48h maximum', warning:'Un motif vague peut être requalifié en licenciement abusif.', ref:'Art. 63 — Loi 65-99', delegate: false },
+          { title:'Exécution du préavis', desc:'Le salarié continue à travailler sauf dispense de l\'employeur (avec maintien du salaire). Aucun préavis en cas de faute grave.', badge:null, warning:null, ref:'Art. 43-51 — Décret 2-04-469', delegate: false },
+          { title:'Remise des documents de fin de contrat', desc:'Certificat de travail · Reçu pour solde de tout compte · Attestation CNSS · Formulaire IPE (indemnité perte d\'emploi)', badge:null, warning:null, ref:'Art. 72 — Loi 65-99', delegate: false },
+          { title:'Déclaration de départ sur Damancom', desc:'Obligatoire dans les 30 jours. Permet au salarié d\'activer ses droits à l\'IPE (indemnité chômage).', badge:'30 jours max', warning:null, ref:'CNSS — Damancom.ma', delegate: false },
         ],
         ar: [
-          { title:'الاستدعاء للمقابلة التمهيدية', desc:'رسالة مسلّمة باليد أو مضمونة مع إشعار بالاستلام. تتضمن السبب المزمع وحق الاستعانة بمساعد.', badge:'48 ساعة على الأقل', warning:'بدون هذه الخطوة، يُعدّ الفصل باطلاً بحكم القانون.', ref:'المادتان 62 و63 — قانون 65-99' },
-          { title:'المقابلة التمهيدية', desc:'الاستماع لتفسيرات الأجير. يحق له الاستعانة بممثل الأجراء. تحرير محضر موقع من الطرفين.', badge:null, warning:null, ref:'المادة 62 — قانون 65-99' },
-          { title:'الإخطار الكتابي بالفصل', desc:'رسالة مضمونة مع إشعار بالاستلام. سبب دقيق وملموس خلال 48 ساعة من المقابلة.', badge:'48 ساعة كحد أقصى', warning:'السبب الغامض قد يُعيد تصنيف الفصل إلى فصل تعسفي.', ref:'المادة 63 — قانون 65-99' },
-          { title:'تنفيذ مهلة الإشعار المسبق', desc:'يستمر الأجير في العمل إلا إذا أعفاه صاحب العمل مع استمرار الراتب. لا إشعار في حالة الخطأ الجسيم.', badge:null, warning:null, ref:'المواد 43-51 — المرسوم 2-04-469' },
-          { title:'تسليم وثائق نهاية العقد', desc:'شهادة العمل · إيصال تسوية الحساب الختامي · شهادة CNSS · استمارة التعويض عن فقدان الشغل (IPE)', badge:null, warning:null, ref:'المادة 72 — قانون 65-99' },
-          { title:'التصريح بالمغادرة على Damancom', desc:'إلزامي في أجل 30 يوماً. يتيح للأجير تفعيل حقوق التعويض عن فقدان الشغل.', badge:'30 يوماً كحد أقصى', warning:null, ref:'CNSS — Damancom.ma' },
+          { title:'الاستدعاء للمقابلة التمهيدية', desc:'رسالة مسلّمة باليد أو مضمونة مع إشعار بالاستلام. تتضمن السبب المزمع وحق الاستعانة بمساعد.', badge:'48 ساعة على الأقل', warning:'بدون هذه الخطوة، يُعدّ الفصل باطلاً بحكم القانون.', ref:'المادتان 62 و63 — قانون 65-99', delegate: false },
+          { title:'المقابلة التمهيدية', desc:'الاستماع لتفسيرات الأجير. يحق له الاستعانة بممثل الأجراء. تحرير محضر موقع من الطرفين.', badge:null, warning:null, ref:'المادة 62 — قانون 65-99', delegate: false },
+          { title:'الإخطار الكتابي بالفصل', desc:'رسالة مضمونة مع إشعار بالاستلام. سبب دقيق وملموس خلال 48 ساعة من المقابلة.', badge:'48 ساعة كحد أقصى', warning:'السبب الغامض قد يُعيد تصنيف الفصل إلى فصل تعسفي.', ref:'المادة 63 — قانون 65-99', delegate: false },
+          { title:'تنفيذ مهلة الإشعار المسبق', desc:'يستمر الأجير في العمل إلا إذا أعفاه صاحب العمل مع استمرار الراتب. لا إشعار في حالة الخطأ الجسيم.', badge:null, warning:null, ref:'المواد 43-51 — المرسوم 2-04-469', delegate: false },
+          { title:'تسليم وثائق نهاية العقد', desc:'شهادة العمل · إيصال تسوية الحساب الختامي · شهادة CNSS · استمارة التعويض عن فقدان الشغل (IPE)', badge:null, warning:null, ref:'المادة 72 — قانون 65-99', delegate: false },
+          { title:'التصريح بالمغادرة على Damancom', desc:'إلزامي في أجل 30 يوماً. يتيح للأجير تفعيل حقوق التعويض عن فقدان الشغل.', badge:'30 يوماً كحد أقصى', warning:null, ref:'CNSS — Damancom.ma', delegate: false },
         ],
       };
-      return d[this.lang] || d['fr'];
+      const delegateExtra = {
+        fr: [
+          { title:'🛡️ Saisine de l\'Inspection du Travail', desc:'Avant tout licenciement, l\'employeur doit demander l\'autorisation de l\'Inspecteur du Travail compétent. Cette étape est impérative et préalable à toute autre démarche.', badge:'OBLIGATOIRE', warning:'Sans cette autorisation, le licenciement est nul et de nul effet. Le délégué peut exiger sa réintégration.', ref:'Art. 457 — Loi 65-99', delegate: true },
+          { title:'🛡️ Réponse de l\'Inspecteur du Travail', desc:'L\'inspecteur dispose d\'un délai pour statuer. En l\'absence de réponse dans le délai légal, l\'autorisation est considérée comme accordée. En cas de refus, le licenciement ne peut être prononcé.', badge:'Délai légal', warning:null, ref:'Art. 458 — Loi 65-99', delegate: true },
+        ],
+        ar: [
+          { title:'🛡️ إخطار مفتشية الشغل', desc:'قبل أي فصل، يجب على صاحب العمل طلب إذن مفتش الشغل المختص. هذه الخطوة إلزامية وسابقة لأي إجراء آخر.', badge:'إلزامي', warning:'بدون هذا الإذن، يُعدّ الفصل باطلاً بطلاناً مطلقاً. يحق للمندوب المطالبة بإعادة الإدماج.', ref:'المادة 457 — قانون 65-99', delegate: true },
+          { title:'🛡️ رد مفتش الشغل', desc:'يتوفر المفتش على أجل قانوني للبت في الطلب. في حالة عدم الرد داخل الأجل، يُعدّ الإذن ضمنياً ممنوحاً. في حالة الرفض، لا يمكن إصدار قرار الفصل.', badge:'الأجل القانوني', warning:null, ref:'المادة 458 — قانون 65-99', delegate: true },
+        ],
+      };
+      const lang = this.lang in standard ? this.lang : 'fr';
+      const steps = standard[lang].slice();
+      if (this.form.isDelegate) {
+        // Insérer les étapes délégué avant les étapes standard (au début)
+        steps.unshift(...delegateExtra[lang]);
+      }
+      return steps;
     },
 
     // ─── DISMISSAL TYPES ─────────────────────────────────────────────────────
@@ -903,6 +943,16 @@ const translations = {
     secteur_smig_desc: '208h / mois · Industrie, commerce, services',
     secteur_smag: 'Agricole (SMAG)',
     secteur_smag_desc: '191h / mois · Agriculture, sylviculture, élevage',
+    delegate_question: 'Ce salarié est-il délégué du personnel ?',
+    delegate_yes: 'Oui, c\'est un délégué du personnel',
+    delegate_yes_desc: 'Élu ou désigné — protection spéciale Art. 457-470',
+    delegate_no: 'Non, salarié ordinaire',
+    delegate_no_desc: 'Pas de mandat de représentation du personnel',
+    delegate_warning_title: '⚠️ Salarié protégé — procédure renforcée',
+    delegate_warning_body: 'Le licenciement d\'un délégué du personnel nécessite une autorisation préalable de l\'Inspecteur du Travail (Art. 457). Sans cette autorisation, le licenciement est nul et le salarié peut exiger sa réintégration.',
+    delegate_grave_title: '🚨 Attention — Faute grave + Délégué du personnel',
+    delegate_grave_body: 'Même en cas de faute grave, le licenciement d\'un délégué est soumis à autorisation de l\'Inspection du Travail. La procédure est plus stricte et le risque de nullité est élevé. Consultez impérativement un juriste.',
+    delegate_badge: 'Salarié protégé',
     back: 'Retour',
     next: 'Suivant',
     calculate: 'Calculer mes indemnités',
@@ -1061,6 +1111,16 @@ const translations = {
     secteur_smig_desc: '208 ساعة/شهر · صناعة، تجارة، خدمات',
     secteur_smag: 'فلاحي (SMAG)',
     secteur_smag_desc: '191 ساعة/شهر · فلاحة، غابات، تربية الماشية',
+    delegate_question: 'هل هذا الأجير مندوب للأجراء ؟',
+    delegate_yes: 'نعم، إنه مندوب للأجراء',
+    delegate_yes_desc: 'منتخب أو معيّن — حماية خاصة المادة 457-470',
+    delegate_no: 'لا، أجير عادي',
+    delegate_no_desc: 'لا يشغل أي منصب تمثيلي',
+    delegate_warning_title: '⚠️ أجير محمي — إجراء معزّز',
+    delegate_warning_body: 'فصل مندوب الأجراء يستوجب إذناً مسبقاً من مفتش الشغل (المادة 457). بدون هذا الإذن، يُعدّ الفصل باطلاً ويحق للمندوب المطالبة بإعادة الإدماج.',
+    delegate_grave_title: '🚨 تنبيه — خطأ جسيم + مندوب الأجراء',
+    delegate_grave_body: 'حتى في حالة الخطأ الجسيم، يخضع فصل المندوب لإذن مفتشية الشغل. الإجراء أكثر صرامة وخطر البطلان مرتفع. يُنصح باستشارة مختص قانوني.',
+    delegate_badge: 'أجير محمي',
     back: 'رجوع',
     next: 'التالي',
     calculate: 'احسب تعويضاتي',

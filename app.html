@@ -1153,7 +1153,7 @@ img, svg { display: block; max-width: 100%; }
       </div>
     </div>
 
-    <!-- STEP 2 · Type -->
+    <!-- STEP 2 · Type + Délégué -->
     <div x-show="wizardStep===2" class="ml-fadein ml-mw-lg">
       <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step1_title')"></h2>
       <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step1_sub')"></p>
@@ -1172,6 +1172,55 @@ img, svg { display: block; max-width: 100%; }
             </div>
           </button>
         </template>
+      </div>
+
+      <!-- Délégué du personnel -->
+      <div class="ml-card" style="margin-top: 20px;">
+        <div style="font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ml-ink-mute); margin-bottom: 14px;" x-text="t('delegate_question')"></div>
+        <div class="ml-row" style="gap: 10px;">
+          <!-- OUI — délégué -->
+          <button @click="form.isDelegate = true"
+            :class="form.isDelegate === true ? 'is-selected' : ''"
+            class="ml-option" style="flex: 1; flex-direction: row; align-items: center; gap: 14px; padding: 16px;">
+            <span class="ml-option__icon" style="font-size: 22px; flex-shrink: 0;">🛡️</span>
+            <div>
+              <p class="ml-option__label" x-text="t('delegate_yes')"></p>
+              <p class="ml-option__desc" x-text="t('delegate_yes_desc')"></p>
+            </div>
+          </button>
+          <!-- NON — ordinaire -->
+          <button @click="form.isDelegate = false"
+            :class="form.isDelegate === false ? 'is-selected' : ''"
+            class="ml-option" style="flex: 1; flex-direction: row; align-items: center; gap: 14px; padding: 16px;">
+            <span class="ml-option__icon" style="font-size: 22px; flex-shrink: 0;">👤</span>
+            <div>
+              <p class="ml-option__label" x-text="t('delegate_no')"></p>
+              <p class="ml-option__desc" x-text="t('delegate_no_desc')"></p>
+            </div>
+          </button>
+        </div>
+
+        <!-- Warning délégué général -->
+        <div x-show="form.isDelegate && form.type !== 'faute_grave'"
+          style="margin-top: 14px; padding: 14px 16px; background: #fffbeb; border: 1px solid #f59e0b; border-radius: 10px; display: flex; gap: 12px; align-items: flex-start;">
+          <span style="font-size: 20px; flex-shrink: 0;">⚠️</span>
+          <div>
+            <p style="font-weight: 600; font-size: 13px; color: #92400e; margin: 0 0 4px;" x-text="t('delegate_warning_title')"></p>
+            <p style="font-size: 12px; color: #78350f; line-height: 1.5; margin: 0;" x-text="t('delegate_warning_body')"></p>
+            <p style="font-size: 11px; color: #92400e; font-family: var(--f-mono); margin: 6px 0 0;">Art. 457-470 — Loi 65-99</p>
+          </div>
+        </div>
+
+        <!-- Warning délégué + faute grave (plus sévère) -->
+        <div x-show="form.isDelegate && form.type === 'faute_grave'"
+          style="margin-top: 14px; padding: 14px 16px; background: #fef2f2; border: 1px solid #ef4444; border-radius: 10px; display: flex; gap: 12px; align-items: flex-start;">
+          <span style="font-size: 20px; flex-shrink: 0;">🚨</span>
+          <div>
+            <p style="font-weight: 600; font-size: 13px; color: #991b1b; margin: 0 0 4px;" x-text="t('delegate_grave_title')"></p>
+            <p style="font-size: 12px; color: #7f1d1d; line-height: 1.5; margin: 0;" x-text="t('delegate_grave_body')"></p>
+            <p style="font-size: 11px; color: #991b1b; font-family: var(--f-mono); margin: 6px 0 0;">Art. 457-470 — Loi 65-99</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1361,6 +1410,10 @@ img, svg { display: block; max-width: 100%; }
             <span class="ml-total__tag" x-text="t('label_'+form.type)"></span>
             <span class="ml-total__tag" x-text="t(form.category)"></span>
             <span class="ml-total__tag" x-text="results ? results.seniorityLabel : ''"></span>
+            <span x-show="form.isDelegate"
+              class="ml-total__tag"
+              style="background: rgba(245,158,11,0.25); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4);"
+              x-text="t('delegate_badge')"></span>
           </div>
         </div>
 
@@ -1832,14 +1885,30 @@ img, svg { display: block; max-width: 100%; }
       <h2 class="ml-h2"><span x-text="t('procedure_title_pre')"></span> <em x-text="t('procedure_title_em')"></em></h2>
     </div>
 
+    <!-- Bannière délégué dans procédure -->
+    <div x-show="form.isDelegate" class="ml-mw-lg" style="margin-bottom: 16px;">
+      <div style="padding: 14px 18px; background: #fffbeb; border: 1.5px solid #f59e0b; border-radius: 12px; display: flex; gap: 12px; align-items: flex-start;">
+        <span style="font-size: 22px;">🛡️</span>
+        <div>
+          <p style="font-weight: 700; font-size: 13px; color: #92400e; margin: 0 0 4px;" x-text="t('delegate_warning_title')"></p>
+          <p style="font-size: 12px; color: #78350f; line-height: 1.5; margin: 0;" x-text="t('delegate_warning_body')"></p>
+          <p style="font-size: 11px; color: #92400e; font-family: var(--f-mono); margin: 6px 0 0;">Art. 457-470 — Loi 65-99</p>
+        </div>
+      </div>
+    </div>
+
     <div class="ml-mw-lg ml-stack" style="gap: 12px; margin-bottom: 48px;">
       <template x-for="(step, i) in procedureSteps()" :key="i">
-        <div class="ml-proc-step">
-          <div class="ml-proc-step__num" x-text="i+1"></div>
+        <div class="ml-proc-step" :style="step.delegate ? 'border-color: #f59e0b; background: #fffbeb;' : ''">
+          <div class="ml-proc-step__num"
+            :style="step.delegate ? 'background: #f59e0b; color: #fff; border-color: #f59e0b;' : ''"
+            x-text="i+1"></div>
           <div>
             <div class="ml-proc-step__title">
               <h4 x-text="step.title"></h4>
-              <span x-show="step.badge" class="ml-chip ml-chip--green" x-text="step.badge"></span>
+              <span x-show="step.badge"
+                :class="step.delegate ? 'ml-chip ml-chip--ochre' : 'ml-chip ml-chip--green'"
+                x-text="step.badge"></span>
             </div>
             <p class="ml-proc-step__desc" x-text="step.desc"></p>
             <div x-show="step.warning" class="ml-proc-step__warning">
@@ -2151,6 +2220,6 @@ img, svg { display: block; max-width: 100%; }
 <!-- jsPDF + AutoTable — génération PDF côté client -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-<script src="app.js?v=18"></script>
+<script src="app.js?v=19"></script>
 </body>
 </html>
