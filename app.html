@@ -1122,14 +1122,14 @@ img, svg { display: block; max-width: 100%; }
           class="ml-option">
           <div class="ml-row">
             <span class="ml-option__icon">🏭</span>
-            <span class="ml-chip ml-chip--ochre">208h / mois</span>
+            <span class="ml-chip ml-chip--ochre">191h / mois</span>
           </div>
           <div>
             <p class="ml-option__label" x-text="t('secteur_smig')"></p>
             <p class="ml-option__desc" x-text="t('secteur_smig_desc')"></p>
           </div>
           <div style="margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--ml-line-strong);">
-            <span class="ml-mono" style="font-size: 11px; color: var(--ml-ink-mute);">SMIG 2026 · 3 422,72 MAD/mois</span>
+            <span class="ml-mono" style="font-size: 11px; color: var(--ml-ink-mute);">SMIG 2026 · 3 422,72 MAD/mois · 17,92 MAD/h</span>
           </div>
         </button>
 
@@ -1139,14 +1139,14 @@ img, svg { display: block; max-width: 100%; }
           class="ml-option">
           <div class="ml-row">
             <span class="ml-option__icon">🌾</span>
-            <span class="ml-chip ml-chip--ochre">191h / mois</span>
+            <span class="ml-chip ml-chip--ochre">208h / mois</span>
           </div>
           <div>
             <p class="ml-option__label" x-text="t('secteur_smag')"></p>
             <p class="ml-option__desc" x-text="t('secteur_smag_desc')"></p>
           </div>
           <div style="margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--ml-line-strong);">
-            <span class="ml-mono" style="font-size: 11px; color: var(--ml-ink-mute);">SMAG 2026 · 2 776,64 MAD/mois</span>
+            <span class="ml-mono" style="font-size: 11px; color: var(--ml-ink-mute);">SMAG 2026 · 2 014,56 MAD/mois · 9,69 MAD/h</span>
           </div>
         </button>
 
@@ -1325,7 +1325,7 @@ img, svg { display: block; max-width: 100%; }
           <div class="ml-mute ml-mono" style="font-size: 11.5px; margin-top: 10px; letter-spacing: 0.08em;">
             <span x-text="t('equiv_hourly')"></span>
             <span style="color: var(--ml-green); font-weight: 500;"
-              x-text="form.salary ? fmt(form.salary / (form.secteur === 'SMAG' ? 191 : 208)) + ' MAD/h' : '—'"></span>
+              x-text="form.salary ? fmt(form.salary / (form.secteur === 'SMAG' ? 208 : 191)) + ' MAD/h' : '—'"></span>
           </div>
         </div>
         <div class="ml-field">
@@ -2220,6 +2220,6 @@ img, svg { display: block; max-width: 100%; }
 <!-- jsPDF + AutoTable — génération PDF côté client -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-<script src="app.js?v=20"></script>
+<script src="app.js?v=21"></script>
 </body>
 </html>

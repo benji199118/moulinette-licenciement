@@ -16,7 +16,7 @@ function app() {
       endDate: '',
       unpaidDays: 0,
       unusedLeave: 0,
-      secteur: 'SMIG',      // SMIG = 208h/mois | SMAG = 191h/mois
+      secteur: 'SMIG',      // SMIG = 191h/mois (2288h/an ÷ 12) | SMAG = 208h/mois (2496h/an ÷ 12)
       isDelegate: false,    // Délégué du personnel (protection Art. 457-470)
     },
 
@@ -184,7 +184,9 @@ function app() {
       const { salary, seniority, category, type, secteur, isDelegate } = this.form;
       if (!salary || seniority < 1) return;
 
-      const heuresBase = secteur === 'SMAG' ? 191 : 208;
+      // SMIG (non-agricole) = 191h/mois (Art.184 Code Travail, 2288h/an)
+      // SMAG (agricole)     = 208h/mois (Décret 2-04-426, 2496h/an)
+      const heuresBase = secteur === 'SMAG' ? 208 : 191;
       const salaireHoraire = salary / heuresBase;
       let breakdown = [];
       let indemniteLegale = 0;
@@ -640,7 +642,7 @@ function app() {
       // Infos dossier
       const typeLabels = { faute_grave:'Faute grave', faute_non_grave:'Faute non grave', economique:'Licenciement economique', abusif:'Licenciement abusif' };
       const catLabels  = { cadre:'Cadre', employe:'Employe', ouvrier:'Ouvrier' };
-      const secteurLabel = this.form.secteur === 'SMAG' ? 'Agricole (SMAG - 191h)' : 'Non agricole (SMIG - 208h)';
+      const secteurLabel = this.form.secteur === 'SMAG' ? 'Agricole (SMAG - 208h)' : 'Non agricole (SMIG - 191h)';
 
       y = sectionTitle('INFORMATIONS DU DOSSIER', y);
 
@@ -867,7 +869,7 @@ function app() {
           { article:'Art. 39',  title:'Fautes graves',                 content:'Liste des fautes considérées comme graves justifiant un licenciement immédiat sans indemnité ni préavis.' },
           { article:'Art. 41',  title:'Dommages et intérêts',          content:'En cas de licenciement abusif : 1,5 mois de salaire par année d\'ancienneté, plafonné à 36 mois. Recours au tribunal du travail dans un délai de 90 jours.' },
           { article:'Art. 43',  title:'Obligation de préavis',         content:'Délai de préavis obligatoire sauf faute grave. Durée variable selon l\'ancienneté et la catégorie professionnelle.' },
-          { article:'Art. 52',  title:'Barème de l\'indemnité',        content:'1-5 ans : 96h/an · 6-10 ans : 144h/an · 11-15 ans : 192h/an · > 15 ans : 240h/an. Calculée sur salaire horaire = salaire mensuel ÷ 191h.' },
+          { article:'Art. 52',  title:'Barème de l\'indemnité',        content:'1-5 ans : 96h/an · 6-10 ans : 144h/an · 11-15 ans : 192h/an · > 15 ans : 240h/an. Base : SMIG = salaire ÷ 191h (Art. 184) · SMAG = salaire ÷ 208h (Décret 2-04-426).' },
           { article:'Art. 53',  title:'Base de calcul',                content:'Le salaire de référence est le plus favorable entre la moyenne des 52 dernières semaines et celle des 3 derniers mois.' },
           { article:'Art. 61',  title:'Procédure disciplinaire',       content:'Toute sanction doit être précédée d\'un entretien préalable. Le salarié a le droit d\'être informé et de se défendre.' },
           { article:'Art. 62',  title:'Entretien préalable',           content:'Convocation au moins 48h avant l\'entretien. Le salarié peut se faire assister par un délégué du personnel.' },
@@ -947,9 +949,9 @@ const translations = {
     smig_ref: 'SMIG 2026 : 3 422,72 MAD brut (17,92 MAD/h)',
     secteur_label: 'Secteur d\'activité',
     secteur_smig: 'Non agricole (SMIG)',
-    secteur_smig_desc: '208h / mois · Industrie, commerce, services',
+    secteur_smig_desc: '191h / mois · Industrie, commerce, services (Art. 184 — 2288h/an)',
     secteur_smag: 'Agricole (SMAG)',
-    secteur_smag_desc: '191h / mois · Agriculture, sylviculture, élevage',
+    secteur_smag_desc: '208h / mois · Agriculture, sylviculture, élevage (Décret 2-04-426 — 2496h/an)',
     delegate_question: 'Ce salarié est-il délégué du personnel ?',
     delegate_yes: 'Oui, c\'est un délégué du personnel',
     delegate_yes_desc: 'Élu ou désigné — protection spéciale Art. 457-470',
@@ -1115,9 +1117,9 @@ const translations = {
     smig_ref: 'الحد الأدنى للأجر 2026: 3 422,72 درهم إجمالي',
     secteur_label: 'قطاع النشاط',
     secteur_smig: 'غير فلاحي (SMIG)',
-    secteur_smig_desc: '208 ساعة/شهر · صناعة، تجارة، خدمات',
+    secteur_smig_desc: '191 ساعة/شهر · صناعة، تجارة، خدمات (المادة 184 — 2288 ساعة/سنة)',
     secteur_smag: 'فلاحي (SMAG)',
-    secteur_smag_desc: '191 ساعة/شهر · فلاحة، غابات، تربية الماشية',
+    secteur_smag_desc: '208 ساعة/شهر · فلاحة، غابات، تربية الماشية (مرسوم 2-04-426 — 2496 ساعة/سنة)',
     delegate_question: 'هل هذا الأجير مندوب للأجراء ؟',
     delegate_yes: 'نعم، إنه مندوب للأجراء',
     delegate_yes_desc: 'منتخب أو معيّن — حماية خاصة المادة 457-470',
