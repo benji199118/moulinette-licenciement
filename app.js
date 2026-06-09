@@ -116,7 +116,7 @@ function app() {
       if (m < 0) { y--; m += 12; }
       const yStr = y > 0 ? `${y} an${y > 1 ? 's' : ''}` : '';
       const mStr = m > 0 ? ` et ${m} mois` : '';
-      return (yStr + mStr) || \"Moins d'1 mois\";
+      return (yStr + mStr) || "Moins d'1 mois";
     },
 
     // ─── WIZARD OPTIONS ──────────────────────────────────────────────────────
@@ -762,24 +762,49 @@ function app() {
 
     // ─── PROCEDURE STEPS ─────────────────────────────────────────────────────
     procedureSteps() {
-      const standard = {
-        fr: [
-          { title:'Convocation à l\'entretien préalable', desc:'Lettre remise en main propre ou recommandée avec AR. Mentionner le motif envisagé et le droit d\'assistance.', badge:'48h minimum', warning:'Sans cette étape, le licenciement est nul de plein droit.', ref:'Art. 62 & 63 — Loi 65-99', delegate: false },
-          { title:'Entretien préalable', desc:'Écouter les explications du salarié. Il peut se faire assister par un délégué du personnel. Rédiger un PV signé des deux parties.', badge:null, warning:null, ref:'Art. 62 — Loi 65-99', delegate: false },
-          { title:'Notification écrite du licenciement', desc:'Lettre recommandée avec AR. Motif précis, circonstancié et non équivoque. À envoyer dans les 48h suivant l\'entretien.', badge:'48h maximum', warning:'Un motif vague peut être requalifié en licenciement abusif.', ref:'Art. 63 — Loi 65-99', delegate: false },
-          { title:'Exécution du préavis', desc:'Le salarié continue à travailler sauf dispense de l\'employeur (avec maintien du salaire). Aucun préavis en cas de faute grave.', badge:null, warning:null, ref:'Art. 43-51 — Décret 2-04-469', delegate: false },
-          { title:'Remise des documents de fin de contrat', desc:'Certificat de travail · Reçu pour solde de tout compte · Attestation CNSS · Formulaire IPE (indemnité perte d\'emploi)', badge:null, warning:null, ref:'Art. 72 — Loi 65-99', delegate: false },
-          { title:'Déclaration de départ sur Damancom', desc:'Obligatoire dans les 30 jours. Permet au salarié d\'activer ses droits à l\'IPE (indemnité chômage).', badge:'30 jours max', warning:null, ref:'CNSS — Damancom.ma', delegate: false },
-        ]
-      };
-      return d['fr'];
+      const standard = [
+        { title:'Convocation à l\'entretien préalable', desc:'Lettre remise en main propre ou recommandée avec AR. Mentionner le motif envisagé et le droit d\'assistance.', badge:'48h minimum', warning:'Sans cette étape, le licenciement est nul de plein droit.', ref:'Art. 62 & 63 — Loi 65-99', delegate: false },
+        { title:'Entretien préalable', desc:'Écouter les explications du salarié. Il peut se faire assister par un délégué du personnel. Rédiger un PV signé des deux parties.', badge:null, warning:null, ref:'Art. 62 — Loi 65-99', delegate: false },
+        { title:'Notification écrite du licenciement', desc:'Lettre recommandée avec AR. Motif précis, circonstancié et non équivoque. À envoyer dans les 48h suivant l\'entretien.', badge:'48h maximum', warning:'Un motif vague peut être requalifié en licenciement abusif.', ref:'Art. 63 — Loi 65-99', delegate: false },
+        { title:'Exécution du préavis', desc:'Le salarié continue à travailler sauf dispense de l\'employeur (avec maintien du salaire). Aucun préavis en cas de faute grave.', badge:null, warning:null, ref:'Art. 43-51 — Décret 2-04-469', delegate: false },
+        { title:'Remise des documents de fin de contrat', desc:'Certificat de travail · Reçu pour solde de tout compte · Attestation CNSS · Formulaire IPE (indemnité perte d\'emploi)', badge:null, warning:null, ref:'Art. 72 — Loi 65-99', delegate: false },
+        { title:'Déclaration de départ sur Damancom', desc:'Obligatoire dans les 30 jours. Permet au salarié d\'activer ses droits à l\'IPE (indemnité chômage).', badge:'30 jours max', warning:null, ref:'CNSS — Damancom.ma', delegate: false },
+      ];
+      const delegateExtra = [
+        { title:'Saisine de l\'Inspection du Travail', desc:'Avant tout licenciement, l\'employeur doit demander l\'autorisation de l\'Inspecteur du Travail compétent. Cette étape est impérative et préalable à toute autre démarche.', badge:'OBLIGATOIRE', warning:'Sans cette autorisation, le licenciement est nul et de nul effet. Le délégué peut exiger sa réintégration.', ref:'Art. 457 — Loi 65-99', delegate: true },
+        { title:'Réponse de l\'Inspecteur du Travail', desc:'L\'inspecteur dispose d\'un délai pour statuer. En l\'absence de réponse dans le délai légal, l\'autorisation est considérée comme accordée. En cas de refus, le licenciement ne peut être prononcé.', badge:'Délai légal', warning:null, ref:'Art. 458 — Loi 65-99', delegate: true },
+      ];
+      const steps = standard.slice();
+      if (this.form.isDelegate) {
+        steps.unshift(...delegateExtra);
+      }
+      return steps;
+    },
+
+    dismissalTypes() {
+      return [
+        { id:'grave', icon:'🚨', color:'#ef4444', badge:'Faute grave', title:'Licenciement pour faute grave', desc:'Manquement grave rendant impossible le maintien dans l\'entreprise.', points:['Pas d\'indemnité légale','Pas de préavis','Rupture immédiate','Procédure préalable obligatoire'], warning:'L\'employeur doit prouver la faute. En cas de doute, le juge tranche en faveur du salarié.', ref:'Art. 39 & 61 — Loi 65-99' },
+        { id:'non_grave', icon:'⚠️', color:'#f97316', badge:'Faute non grave', title:'Licenciement pour faute non grave', desc:'Insuffisance professionnelle, comportement répréhensible ou faute légère répétée.', points:['Indemnité légale obligatoire (Art. 52)','Préavis obligatoire','Procédure préalable requise','Motif précis obligatoire'], warning:null, ref:'Art. 52-63 — Loi 65-99' },
+        { id:'economique', icon:'📉', color:'#3b82f6', badge:'Économique', title:'Licenciement économique', desc:'Suppression de poste pour raisons économiques, technologiques ou de restructuration.', points:['Autorisation de l\'Agent gouvernemental','Consultation des délégués du personnel','Indemnité légale obligatoire','Priorité de réembauche (1 an)'], warning:'Nécessite impérativement une autorisation administrative préalable.', ref:'Art. 66-71 — Loi 65-99' },
+        { id:'abusif', icon:'⚖️', color:'#a855f7', badge:'Abusif', title:'Licenciement abusif', desc:'Sans motif valable ou sans respect de la procédure légale.', points:['Indemnité légale + D&I (Art. 41)','D&I = 1,5 mois/an plafonné 36 mois','Recours au tribunal du travail','Délai de recours : 90 jours'], warning:null, ref:'Art. 41 & 63 — Loi 65-99' },
+      ];
     },
 
     fautesGraves() {
-      const d = {
-        fr: ['Délit portant atteinte à l\'honneur ou à la probité','Vol ou tentative de vol','Abus de confiance','Ivresse ou consommation de stupéfiants pendant le travail','Violence, voie de fait ou injures graves','Refus délibéré d\'exécuter un travail','Absence injustifiée > 4 jours ou 8 demi-journées / 12 mois','Dégradation volontaire des équipements','Faute causant un dommage matériel considérable','Inobservation grave des règles de sécurité','Incitation à la débauche','Divulgation de secret professionnel'];
-      };
-      return d['fr'];
+      return [
+        'Délit portant atteinte à l\'honneur ou à la probité',
+        'Vol ou tentative de vol',
+        'Abus de confiance',
+        'Ivresse ou consommation de stupéfiants pendant le travail',
+        'Violence, voie de fait ou injures graves',
+        'Refus délibéré d\'exécuter un travail',
+        'Absence injustifiée > 4 jours ou 8 demi-journées / 12 mois',
+        'Dégradation volontaire des équipements',
+        'Faute causant un dommage matériel considérable',
+        'Inobservation grave des règles de sécurité',
+        'Incitation à la débauche',
+        'Divulgation de secret professionnel',
+      ];
     },
 
     // ─── LEGAL REFS ──────────────────────────────────────────────────────────
@@ -797,7 +822,7 @@ function app() {
           { article:'Art. 66-71', title:'Licenciement économique',     content:'Soumis à l\'autorisation préalable de l\'agent gouvernemental chargé du travail, après consultation des délégués.' },
           { article:'Art. 72',  title:'Documents de fin de contrat',   content:'L\'employeur remet obligatoirement : certificat de travail, solde de tout compte, attestation CNSS.' },
           { article:'Décret 2-04-469', title:'Délais de préavis',      content:'Cadres : 1/2/3 mois. Employés : 8 jours/1 mois/2 mois. Ouvriers : 8 jours/8 jours/1 mois. Selon tranches < 1an / 1-5ans / > 5ans.' },
-        ];
+        ],
       };
       return d['fr'];
     },
