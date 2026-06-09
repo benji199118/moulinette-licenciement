@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html x-data="app()" :dir="lang==='ar'?'rtl':'ltr'" :lang="lang" :class="darkMode ? 'dark' : ''" class="scroll-smooth">
+<html x-data="app()" dir="ltr" lang="fr" :class="darkMode ? 'dark' : ''" class="scroll-smooth">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IndemnPro | المغرب — Loi 65-99</title>
+<title>IndemnPro | Loi 65-99</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <!-- Supabase CDN — doit charger AVANT auth.js et Alpine -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="auth.js"></script>
@@ -58,7 +58,6 @@
   --f-serif: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; /* utilisé pour display, italic = emphase */
   --f-sans:  "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --f-mono:  "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  --f-ar:    "IBM Plex Sans Arabic", "Noto Sans Arabic", system-ui, sans-serif;
 }
 
 /* ── Dark mode override ────────────────────────────────────────── */
@@ -152,10 +151,6 @@ body {
   min-height: 100vh;
   transition: background .3s, color .3s;
 }
-[lang="ar"] body, [lang="ar"] * { font-family: var(--f-ar); }
-[lang="ar"] .ml-mono, [lang="ar"] .ml-num { font-family: var(--f-mono); }
-[lang="ar"] .ml-serif { font-family: var(--f-ar); }
-
 a { color: inherit; text-decoration: none; }
 button { font: inherit; cursor: pointer; }
 input, select, textarea { font: inherit; color: inherit; }
@@ -286,8 +281,6 @@ img, svg { display: block; max-width: 100%; }
 .ml-chip--rouge { background: var(--ml-rouge-soft); border-color: transparent; color: var(--ml-rouge); }
 .ml-chip--ink   { background: var(--ml-ink); border-color: transparent; color: var(--ml-bg); }
 .ml-chip__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.7; }
-[lang="ar"] .ml-chip { font-family: var(--f-ar); letter-spacing: 0; text-transform: none; font-size: 12px; }
-
 /* ── Nav ───────────────────────────────────────────────────────── */
 .ml-nav {
   position: sticky; top: 0; z-index: 50;
@@ -335,9 +328,7 @@ img, svg { display: block; max-width: 100%; }
   font-family: var(--f-mono);
 }
 .ml-lang button.is-active { background: var(--ml-ink); color: var(--ml-bg); }
-.ml-lang button[lang="ar"] { font-family: var(--f-ar); font-size: 13px; letter-spacing: 0; }
-
-/* Theme toggle */
+.ml-lang button/* Theme toggle */
 .ml-theme {
   width: 38px; height: 38px;
   border-radius: 999px;
@@ -504,7 +495,6 @@ img, svg { display: block; max-width: 100%; }
   text-transform: uppercase;
   color: var(--ml-ink-mute);
 }
-[lang="ar"] .ml-field__label { font-family: var(--f-ar); letter-spacing: 0; text-transform: none; font-size: 12px; }
 .ml-input {
   padding: 12px 14px;
   border: 1px solid var(--ml-line-strong);
@@ -566,7 +556,6 @@ img, svg { display: block; max-width: 100%; }
   color: var(--ml-ink-faint);
   margin-top: 6px;
 }
-[lang="ar"] .ml-amount__formula { font-family: var(--f-mono); }
 .ml-amount__value {
   font-family: var(--f-mono);
   font-size: 22px;
@@ -622,8 +611,6 @@ img, svg { display: block; max-width: 100%; }
   text-transform: uppercase;
   color: var(--ml-ink-mute);
 }
-[lang="ar"] .ml-breakdown__head { font-family: var(--f-ar); letter-spacing: 0; text-transform: none; font-size: 12px; }
-
 /* Total card (hero) */
 .ml-total {
   background: var(--ml-ink);
@@ -640,7 +627,6 @@ img, svg { display: block; max-width: 100%; }
   text-transform: uppercase;
   color: rgba(246,243,236,0.55);
 }
-[lang="ar"] .ml-total__small { font-family: var(--f-ar); letter-spacing: 0; text-transform: none; font-size: 13px; }
 .ml-total__amount {
   font-family: var(--f-sans);
   font-weight: 600;
@@ -667,8 +653,6 @@ img, svg { display: block; max-width: 100%; }
   background: rgba(246,243,236,0.10);
   color: rgba(246,243,236,0.85);
 }
-[lang="ar"] .ml-total__tag { font-family: var(--f-ar); letter-spacing: 0; text-transform: none; font-size: 13px; }
-
 /* ── Timeline (dates tab) ──────────────────────────────────────── */
 .ml-timeline { display: flex; flex-direction: column; gap: 0; }
 .ml-tl-step {
@@ -729,8 +713,6 @@ img, svg { display: block; max-width: 100%; }
 .ml-tl-step__badge--warn  { background: var(--ml-ochre-soft);  color: #6b4515; border-color: transparent; }
 .dark .ml-tl-step__badge--warn { color: var(--ml-ochre); }
 .ml-tl-step__badge--danger{ background: var(--ml-rouge-soft);  color: var(--ml-rouge);  border-color: transparent; }
-[lang="ar"] .ml-tl-step__badge { font-family: var(--f-ar); letter-spacing: 0; }
-
 /* ── Refs (legal articles) ─────────────────────────────────────── */
 .ml-ref {
   border: 1px solid var(--ml-line);
@@ -807,8 +789,6 @@ img, svg { display: block; max-width: 100%; }
   font-size: 11px;
   color: var(--ml-ink-mute);
 }
-[lang="ar"] .ml-type__ref { font-family: var(--f-ar); }
-
 /* ── Procedure steps ───────────────────────────────────────────── */
 .ml-proc-step {
   background: var(--ml-card);
@@ -844,8 +824,6 @@ img, svg { display: block; max-width: 100%; }
   font-size: 11px;
   color: var(--ml-ink-mute);
 }
-[lang="ar"] .ml-proc-step__ref { font-family: var(--f-ar); }
-
 /* ── Bareme grid (Art. 52) ─────────────────────────────────────── */
 .ml-bareme {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
@@ -864,8 +842,6 @@ img, svg { display: block; max-width: 100%; }
 .ml-bareme__years { font-family: var(--f-mono); font-size: 11px; color: var(--ml-ink-mute); text-transform: uppercase; letter-spacing: 0.08em; }
 .ml-bareme__rate  { font-family: var(--f-mono); font-weight: 500; font-size: 22px; color: var(--ml-green); margin: 6px 0; line-height: 1; }
 .ml-bareme__art   { font-family: var(--f-mono); font-size: 10.5px; color: var(--ml-ink-faint); }
-[lang="ar"] .ml-bareme__years, [lang="ar"] .ml-bareme__art { font-family: var(--f-ar); }
-
 /* ── Préavis table ─────────────────────────────────────────────── */
 .ml-table {
   width: 100%; border-collapse: collapse; font-size: 14px;
@@ -881,7 +857,6 @@ img, svg { display: block; max-width: 100%; }
   color: var(--ml-ink-mute);
   border-bottom: 1px solid var(--ml-line-strong);
 }
-[lang="ar"] .ml-table th { font-family: var(--f-ar); letter-spacing: 0; text-transform: none; }
 .ml-table td {
   padding: 14px;
   border-bottom: 1px solid var(--ml-line);
@@ -1023,7 +998,7 @@ img, svg { display: block; max-width: 100%; }
         <span class="ml-logo__mark">IP</span>
         <span>
           <span x-text="t('app_title')"></span>
-          <span class="ml-logo__sub" x-show="lang === 'fr'"> · Loi 65-99</span>
+          <span class="ml-logo__sub"> · Loi 65-99</span>
         </span>
       </a>
       <div class="ml-nav__spacer"></div>
@@ -1033,10 +1008,6 @@ img, svg { display: block; max-width: 100%; }
           :title="darkMode ? 'Mode clair' : 'Mode sombre'">
           <span x-text="darkMode ? '☀' : '☾'"></span>
         </button>
-        <div class="ml-lang">
-          <button @click="setLang('fr')" :class="lang==='fr' ? 'is-active' : ''" lang="fr">FR</button>
-          <button @click="setLang('ar')" :class="lang==='ar' ? 'is-active' : ''" lang="ar">عربية</button>
-        </div>
 
         <!-- Badge invité (essais restants) -->
         <div x-show="isGuest" class="ml-row" style="gap: 8px;">
@@ -1045,12 +1016,12 @@ img, svg { display: block; max-width: 100%; }
             style="cursor: default;">
             <span class="ml-chip__dot"></span>
             <span x-text="trialRemaining() > 0
-              ? trialRemaining() + (lang==='ar' ? ' اختبار مجاني' : ' essai' + (trialRemaining() > 1 ? 's' : '') + ' gratuit' + (trialRemaining() > 1 ? 's' : ''))
-              : (lang==='ar' ? 'انتهت التجارب المجانية' : 'Limite atteinte')">
+              ? trialRemaining() + ' essai' + (trialRemaining() > 1 ? 's' : '') + ' gratuit' + (trialRemaining() > 1 ? 's' : '')
+              : 'Limite atteinte'">
             </span>
           </span>
           <a href="login.html?tab=signup" class="ml-btn ml-btn--accent ml-btn--sm">
-            <span x-text="lang==='ar' ? 'إنشاء حساب' : 'Créer un compte'"></span>
+            <span>Créer un compte</span>
           </a>
         </div>
 
@@ -1243,7 +1214,7 @@ img, svg { display: block; max-width: 100%; }
       </div>
       <div class="ml-row ml-center" style="justify-content: center; margin-top: 28px;">
         <button @click="prevStep()" class="ml-btn ml-btn--ghost">
-          <span x-text="lang==='ar' ? '→' : '←'"></span>
+          <span>←</span>
           <span x-text="t('back')"></span>
         </button>
       </div>
@@ -1299,13 +1270,13 @@ img, svg { display: block; max-width: 100%; }
 
       <div class="ml-row ml-row--between" style="margin-top: 28px;">
         <button @click="prevStep()" class="ml-btn ml-btn--ghost">
-          <span x-text="lang==='ar' ? '→' : '←'"></span>
+          <span>←</span>
           <span x-text="t('back')"></span>
         </button>
         <button @click="nextStep()" :disabled="!form.seniority || form.seniority < 1"
           class="ml-btn ml-btn--primary">
           <span x-text="t('next')"></span>
-          <span class="ml-arrow" x-text="lang==='ar' ? '←' : '→'"></span>
+          <span class="ml-arrow" x-text="'→'"></span>
         </button>
       </div>
     </div>
@@ -1363,13 +1334,13 @@ img, svg { display: block; max-width: 100%; }
         <p x-show="form.salary && (form.unpaidDays > 0 || form.unusedLeave > 0)"
           class="ml-mute ml-center ml-mono" style="font-size: 12px;">
           <span x-text="t('daily_rate') + ' :'"></span>
-          <span style="color: var(--ml-green); font-weight: 500;" x-text="form.salary ? fmt(form.salary/26) + ' MAD/' + (lang==='ar'?'يوم':'jour') : ''"></span>
+          <span style="color: var(--ml-green); font-weight: 500;" x-text="form.salary ? fmt(form.salary/26) + ' MAD/jour' : ''"></span>
         </p>
       </div>
 
       <div class="ml-row ml-row--between" style="margin-top: 28px;">
         <button @click="prevStep()" class="ml-btn ml-btn--ghost">
-          <span x-text="lang==='ar' ? '→' : '←'"></span>
+          <span>←</span>
           <span x-text="t('back')"></span>
         </button>
         <button @click="calculateAndNext()" :disabled="!form.salary || form.salary < 1"
@@ -1478,7 +1449,7 @@ img, svg { display: block; max-width: 100%; }
                   <p class="ml-amount__label" x-text="t('unpaid_indemnity')"></p>
                   <p class="ml-amount__sub">
                     <span x-text="results ? results.unpaidDays : 0"></span>
-                    <span x-text="lang==='ar' ? 'يوم' : 'jours'"></span>
+                    <span x-text="'jours'"></span>
                   </p>
                   <p class="ml-amount__formula" x-text="results ? results.unpaidFormula : ''"></p>
                 </div>
@@ -1608,7 +1579,7 @@ img, svg { display: block; max-width: 100%; }
                     <span class="ml-hist__date" x-text="entry.date"></span>
                     <span class="ml-chip ml-chip--green" style="height: 20px; font-size: 10px;" x-text="t('label_'+entry.type)"></span>
                     <span class="ml-chip" style="height: 20px; font-size: 10px;" x-text="t(entry.category)"></span>
-                    <span class="ml-chip" style="height: 20px; font-size: 10px;" x-text="entry.seniority + (lang==='ar' ? ' سنة' : ' ans')"></span>
+                    <span class="ml-chip" style="height: 20px; font-size: 10px;" x-text="entry.seniority + ' ans'"></span>
                   </div>
                   <div class="ml-hist__total" x-text="fmt(entry.total) + ' MAD'"></div>
                 </div>
@@ -1654,29 +1625,29 @@ img, svg { display: block; max-width: 100%; }
     <div x-show="isGuest" class="ml-mw-md ml-fadein">
       <div class="ml-card ml-card--lg ml-center" style="padding: 56px 32px;">
         <div style="width: 64px; height: 64px; border-radius: 18px; background: var(--ml-bg-2); display: grid; place-items: center; font-size: 28px; margin: 0 auto 20px;">🔒</div>
-        <h3 class="ml-h3" style="margin-bottom: 10px;" x-text="lang==='ar' ? 'ميزة خاصة بالأعضاء' : 'Fonctionnalité réservée aux membres'"></h3>
-        <p class="ml-mute" style="font-size: 14px; max-width: 38ch; margin: 0 auto 28px;" x-text="lang==='ar' ? 'أنشئ حسابك المجاني لحفظ ملفاتك والوصول إليها من أي جهاز.' : 'Créez votre compte gratuit pour sauvegarder vos dossiers et les retrouver depuis n\'importe quel poste.'"></p>
+        <h3 class="ml-h3" style="margin-bottom: 10px;" x-text="'Fonctionnalité réservée aux membres'"></h3>
+        <p class="ml-mute" style="font-size: 14px; max-width: 38ch; margin: 0 auto 28px;" x-text="'Créez votre compte gratuit pour sauvegarder vos dossiers et les retrouver depuis n'importe quel poste.'"></p>
         <div class="ml-stack" style="gap: 10px; max-width: 300px; margin: 0 auto 28px;">
           <div style="display: flex; gap: 10px; align-items: center; padding: 12px 16px; background: var(--ml-green-soft); border-radius: 10px; text-align: start;">
             <span style="color: var(--ml-green); font-weight: 700; flex-shrink: 0;">✓</span>
-            <span style="font-size: 13.5px; color: var(--ml-ink-2);" x-text="lang==='ar' ? 'حسابات ومستندات غير محدودة' : 'Calculs & dossiers illimités'"></span>
+            <span style="font-size: 13.5px; color: var(--ml-ink-2);" x-text="'Calculs & dossiers illimités'"></span>
           </div>
           <div style="display: flex; gap: 10px; align-items: center; padding: 12px 16px; background: var(--ml-green-soft); border-radius: 10px; text-align: start;">
             <span style="color: var(--ml-green); font-weight: 700; flex-shrink: 0;">✓</span>
-            <span style="font-size: 13.5px; color: var(--ml-ink-2);" x-text="lang==='ar' ? 'PDF موثق بتاريخ وتوقيت' : 'PDF horodaté à votre nom'"></span>
+            <span style="font-size: 13.5px; color: var(--ml-ink-2);" x-text="'PDF horodaté à votre nom'"></span>
           </div>
           <div style="display: flex; gap: 10px; align-items: center; padding: 12px 16px; background: var(--ml-green-soft); border-radius: 10px; text-align: start;">
             <span style="color: var(--ml-green); font-weight: 700; flex-shrink: 0;">✓</span>
-            <span style="font-size: 13.5px; color: var(--ml-ink-2);" x-text="lang==='ar' ? 'وصول من أي جهاز في أي وقت' : 'Accès multi-poste, synchronisé'"></span>
+            <span style="font-size: 13.5px; color: var(--ml-ink-2);" x-text="'Accès multi-poste, synchronisé'"></span>
           </div>
         </div>
         <a href="login.html?tab=signup" class="ml-btn ml-btn--accent ml-btn--lg" style="margin-bottom: 10px; display: inline-flex;">
-          <span x-text="lang==='ar' ? 'إنشاء حساب مجاني' : 'Créer mon compte gratuit'"></span>
+          <span>Créer mon compte gratuit</span>
           <span class="ml-arrow">→</span>
         </a>
         <br>
         <a href="login.html" class="ml-btn ml-btn--ghost ml-btn--sm" style="margin-top: 8px;">
-          <span x-text="lang==='ar' ? 'لدي حساب بالفعل' : 'J\'ai déjà un compte'"></span>
+          <span>J'ai déjà un compte</span>
         </a>
       </div>
     </div>
@@ -1723,7 +1694,7 @@ img, svg { display: block; max-width: 100%; }
             class="ml-mono"
             style="font-size: 11px; color: var(--ml-ink-faint); white-space: nowrap; flex-shrink: 0;">
             <span x-text="filteredDossiers().length"></span>
-            <span x-text="lang==='ar' ? ' نتيجة' : ' résultat' + (filteredDossiers().length > 1 ? 's' : '')"></span>
+            <span x-text="' résultat' + (filteredDossiers().length > 1 ? 's' : '')"></span>
           </span>
 
           <!-- Clear -->
@@ -1842,7 +1813,7 @@ img, svg { display: block; max-width: 100%; }
                 <span x-show="d.poste" style="opacity:0.4;">·</span>
                 <span x-text="t('label_'+d.type)"></span>
                 <span style="opacity:0.4;">·</span>
-                <span x-text="d.seniority + (lang==='ar' ? ' سنة' : ' ans')"></span>
+                <span x-text="d.seniority + ' ans'"></span>
                 <span style="opacity:0.4;">·</span>
                 <span x-text="dossierDate(d)"></span>
                 <template x-if="d.ref">
@@ -1866,7 +1837,7 @@ img, svg { display: block; max-width: 100%; }
                 <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M2.5 4h9M5 4V2.5h4V4M5.5 6.5v4M8.5 6.5v4M3.5 4l.5 8a1 1 0 001 1h4a1 1 0 001-1l.5-8"/>
                 </svg>
-                <span x-text="lang==='ar' ? 'حذف' : 'Suppr.'"></span>
+                <span>Suppr.</span>
               </button>
             </div>
           </div>
@@ -2160,27 +2131,22 @@ img, svg { display: block; max-width: 100%; }
     style="position: relative; max-width: 500px; width: 100%; text-align: center; z-index: 1; padding: 44px 40px;">
 
     <!-- Logo mark -->
-    <div style="width: 60px; height: 60px; border-radius: 18px; background: var(--ml-green); color: #f6f3ec; display: grid; place-items: center; font-family: var(--f-sans); font-weight: 700; font-size: 24px; margin: 0 auto 22px;">M</div>
+    <div style="width: 60px; height: 60px; border-radius: 18px; background: var(--ml-green); color: #f6f3ec; display: grid; place-items: center; font-family: var(--f-sans); font-weight: 700; font-size: 20px; letter-spacing: -0.02em; margin: 0 auto 22px;">IP</div>
 
     <!-- Titre -->
-    <h2 class="ml-h2" style="margin-bottom: 10px;" x-text="lang==='ar' ? 'انتهت تجاربك المجانية' : 'Vos 2 essais gratuits sont utilisés'"></h2>
+    <h2 class="ml-h2" style="margin-bottom: 10px;" x-text="'Vos 2 essais gratuits sont utilisés'"></h2>
     <p class="ml-lead ml-center" style="font-size: 15px; margin: 0 auto 28px; max-width: 36ch;"
-      x-text="lang==='ar' ? 'أنشئ حسابك المجاني للاستمرار وحفظ ملفاتك.' : 'Créez votre compte gratuit pour continuer — calculs illimités, dossiers sauvegardés, PDF horodaté.'">
+      x-text="'Créez votre compte gratuit pour sauvegarder vos dossiers et les retrouver depuis n\'importe quel poste.'">
     </p>
 
     <!-- Avantages -->
     <div style="display: flex; flex-direction: column; gap: 9px; margin-bottom: 28px; text-align: start;">
-      <template x-for="benefit in (lang==='ar' ? [
-        'حسابات غير محدودة + ملفات محفوظة',
-        'PDF موثق بتاريخ وتوقيت باسمك',
-        'وصول من أي جهاز في أي وقت',
-        'مجاني تماماً — بدون بطاقة بنكية'
-      ] : [
+      <template x-for="benefit in [
         'Calculs illimités + dossiers persistants',
         'PDF horodaté généré à votre nom',
         'Accès depuis n\'importe quel poste',
         '100 % gratuit — sans carte bancaire'
-      ])" :key="benefit">
+      ]" :key="benefit">
         <div style="display: flex; gap: 10px; align-items: center; padding: 11px 15px; background: var(--ml-green-soft); border-radius: 10px;">
           <span style="color: var(--ml-green); font-weight: 700; flex-shrink: 0; font-size: 13px;">✓</span>
           <span style="font-size: 13.5px; color: var(--ml-ink-2);" x-text="benefit"></span>
@@ -2193,13 +2159,13 @@ img, svg { display: block; max-width: 100%; }
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
         <path d="M7.5 1a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM1.5 14a6 6 0 0 1 12 0"/>
       </svg>
-      <span x-text="lang==='ar' ? 'إنشاء حساب مجاني — 30 ثانية' : 'Créer mon compte gratuit — 30 sec'"></span>
+      <span>Créer mon compte gratuit — 30 sec</span>
       <span class="ml-arrow">→</span>
     </a>
 
     <!-- CTA secondaire -->
     <a href="login.html" class="ml-btn ml-btn--ghost ml-btn--block" style="text-decoration: none;">
-      <span x-text="lang==='ar' ? 'لدي حساب — تسجيل الدخول' : 'J\'ai déjà un compte — Se connecter'"></span>
+      <span>J'ai déjà un compte — Se connecter</span>
     </a>
 
     <!-- Bouton fermer (pour voir les résultats déjà calculés) -->
@@ -2220,6 +2186,6 @@ img, svg { display: block; max-width: 100%; }
 <!-- jsPDF + AutoTable — génération PDF côté client -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-<script src="app.js?v=21"></script>
+<script src="app.js?v=22"></script>
 </body>
 </html>

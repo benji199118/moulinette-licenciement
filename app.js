@@ -114,10 +114,9 @@ function app() {
       let m = end.getMonth() - hire.getMonth();
       if (end.getDate() < hire.getDate()) m--;
       if (m < 0) { y--; m += 12; }
-      const isAr = this.lang === 'ar';
-      const yStr = y > 0 ? (isAr ? `${y} سنة` : `${y} an${y > 1 ? 's' : ''}`) : '';
-      const mStr = m > 0 ? (isAr ? ` و ${m} شهر` : ` et ${m} mois`) : '';
-      return (yStr + mStr) || (isAr ? 'أقل من شهر' : 'Moins d\'1 mois');
+      const yStr = y > 0 ? `${y} an${y > 1 ? 's' : ''}` : '';
+      const mStr = m > 0 ? ` et ${m} mois` : '';
+      return (yStr + mStr) || \"Moins d'1 mois\";
     },
 
     // ─── WIZARD OPTIONS ──────────────────────────────────────────────────────
@@ -128,15 +127,9 @@ function app() {
           { value:'faute_non_grave', icon:'⚠️', label:'Faute non grave',         desc:'Insuffisance pro, faute légère répétée...',       badge:'Indemnité légale', badgeClass:'bg-orange-500/15 text-orange-400' },
           { value:'economique',      icon:'📉', label:'Licenciement économique',  desc:'Restructuration, difficultés économiques...',     badge:'Autorisation requise', badgeClass:'bg-blue-500/15 text-blue-400' },
           { value:'abusif',          icon:'⚖️', label:'Licenciement abusif',      desc:'Sans motif valable ou sans procédure légale',     badge:'D&I + Indemnité', badgeClass:'bg-purple-500/15 text-purple-400' },
-        ],
-        ar: [
-          { value:'faute_grave',     icon:'🚨', label:'خطأ جسيم',              desc:'سرقة، عنف، سكر، غياب غير مبرر...', badge:'بدون تعويض', badgeClass:'bg-red-500/15 text-red-400' },
-          { value:'faute_non_grave', icon:'⚠️', label:'خطأ غير جسيم',         desc:'قصور مهني، خطأ بسيط متكرر...',     badge:'تعويض قانوني', badgeClass:'bg-orange-500/15 text-orange-400' },
-          { value:'economique',      icon:'📉', label:'فصل اقتصادي',           desc:'إعادة هيكلة، صعوبات اقتصادية...',  badge:'إذن مسبق مطلوب', badgeClass:'bg-blue-500/15 text-blue-400' },
-          { value:'abusif',          icon:'⚖️', label:'فصل تعسفي',             desc:'بدون سبب مشروع أو بدون إجراءات', badge:'تعويضات الضرر + قانوني', badgeClass:'bg-purple-500/15 text-purple-400' },
-        ],
+        ]
       };
-      return d[this.lang] || d['fr'];
+      return d['fr'];
     },
 
     categoryOptions() {
@@ -145,14 +138,9 @@ function app() {
           { value:'cadre',    icon:'👔', label:'Cadre',    desc:'Préavis 1-3 mois' },
           { value:'employe',  icon:'💼', label:'Employé',  desc:'Préavis 8j - 2 mois' },
           { value:'ouvrier',  icon:'🔧', label:'Ouvrier',  desc:'Préavis 8j - 1 mois' },
-        ],
-        ar: [
-          { value:'cadre',    icon:'👔', label:'إطار',    desc:'إشعار مسبق 1-3 أشهر' },
-          { value:'employe',  icon:'💼', label:'موظف',   desc:'إشعار 8 أيام - شهران' },
-          { value:'ouvrier',  icon:'🔧', label:'عامل',   desc:'إشعار 8 أيام - شهر' },
-        ],
+        ]
       };
-      return d[this.lang] || d['fr'];
+      return d['fr'];
     },
 
     baremeRows() {
@@ -162,15 +150,9 @@ function app() {
           { years:'6 – 10 ans',   rate:'144h / an' },
           { years:'11 – 15 ans',  rate:'192h / an' },
           { years:'> 15 ans',     rate:'240h / an' },
-        ],
-        ar: [
-          { years:'1 – 5 سنوات',  rate:'96 ساعة / سنة' },
-          { years:'6 – 10 سنوات', rate:'144 ساعة / سنة' },
-          { years:'11 – 15 سنة',  rate:'192 ساعة / سنة' },
-          { years:'> 15 سنة',     rate:'240 ساعة / سنة' },
-        ],
+        ]
       };
-      return d[this.lang] || d['fr'];
+      return d['fr'];
     },
 
     // ─── CALCULATOR ──────────────────────────────────────────────────────────
@@ -203,12 +185,8 @@ function app() {
           const years = Math.min(seniority, tr.to === Infinity ? seniority : tr.to) - tr.from + 1;
           const amount = salaireHoraire * tr.rate * years;
           const toStr = tr.to === Infinity ? '+' : `–${tr.to}`;
-          const label = this.lang === 'ar'
-            ? `${tr.from}${toStr} سنة × ${tr.rate} ساعة`
-            : `Années ${tr.from}${toStr} × ${tr.rate}h`;
-          const formula = this.lang === 'ar'
-            ? `${years} سنة × ${tr.rate}س × ${this.fmt(salaireHoraire)} MAD/h`
-            : `${years} an${years > 1 ? 's' : ''} × ${tr.rate}h × ${this.fmt(salaireHoraire)} MAD/h`;
+          const label = `Années ${tr.from}${toStr} × ${tr.rate}h`;
+          const formula = `${years} an${years > 1 ? 's' : ''} × ${tr.rate}h × ${this.fmt(salaireHoraire)} MAD/h`;
           breakdown.push({ label, amount, formula });
           indemniteLegale += amount;
         }
@@ -226,9 +204,7 @@ function app() {
         }
       }
       const jours = Math.round(preavismois * 30);
-      const preavislabel = this.lang === 'ar'
-        ? (jours >= 25 ? `${Math.round(preavismois)} شهر` : `${jours} يوم`)
-        : (jours >= 25 ? `${Math.round(preavismois)} mois` : `${jours} jours`);
+      const preavislabel = jours >= 25 ? `${Math.round(preavismois)} mois` : `${jours} jours`;
       const indemnitePreavis = salary * preavismois;
 
       // D&I abusif (Art. 41)
@@ -245,27 +221,19 @@ function app() {
       const total = indemniteLegale + indemnitePreavis + dommages + unpaidAmount + leaveAmount;
 
       // Seniority label
-      const seniorityLabel = this.lang === 'ar' ? `${seniority} سنة` : `${seniority} ans`;
+      const seniorityLabel = `${seniority} ans`;
 
       // Formules détaillées
       const salaireHoraireFormula = `${this.fmt(salary)} ÷ ${heuresBase}h (${secteur}) = ${this.fmt(salaireHoraire)} MAD/h`;
-      const preFormula = this.lang === 'ar'
-        ? `${jours >= 25 ? Math.round(preavismois) + ' شهر' : jours + ' يوم'} × ${this.fmt(salary)} درهم`
-        : `${jours >= 25 ? Math.round(preavismois) + ' mois' : jours + ' jours'} × ${this.fmt(salary)} MAD`;
+      const preFormula = `${jours >= 25 ? Math.round(preavismois) + ' mois' : jours + ' jours'} × ${this.fmt(salary)} MAD`;
       const plafonne = type === 'abusif' && (salary * 1.5 * seniority > salary * 36);
       const domFormula = type === 'abusif'
-        ? (this.lang === 'ar'
-          ? `${seniority} سنة × 1.5 × ${this.fmt(salary)} درهم${plafonne ? ' (محدود بـ 36 شهراً)' : ''}`
-          : `${seniority} ans × 1,5 × ${this.fmt(salary)} MAD${plafonne ? ' (plafonné 36 mois)' : ''}`)
+        ? `${seniority} ans × 1,5 × ${this.fmt(salary)} MAD${plafonne ? ' (plafonné 36 mois)' : ''}`
         : '';
 
       // Formules complémentaires
-      const unpaidFormula = this.lang === 'ar'
-        ? `${unpaidDays} يوم × ${this.fmt(salaireJournalier)} درهم/يوم`
-        : `${unpaidDays} jours × ${this.fmt(salaireJournalier)} MAD/jour`;
-      const leaveFormula = this.lang === 'ar'
-        ? `${unusedLeave} يوم × ${this.fmt(salaireJournalier)} درهم/يوم`
-        : `${unusedLeave} jours × ${this.fmt(salaireJournalier)} MAD/jour`;
+      const unpaidFormula = `${unpaidDays} jours × ${this.fmt(salaireJournalier)} MAD/jour`;
+      const leaveFormula = `${unusedLeave} jours × ${this.fmt(salaireJournalier)} MAD/jour`;
 
       this.results = {
         salaireHoraire, salaireHoraireFormula,
@@ -458,15 +426,12 @@ function app() {
     },
 
     dossierStatusLabel(status) {
-      const map = {
-        fr: { draft: 'Brouillon', in_progress: 'En cours', closed: 'Clôturé' },
-        ar: { draft: 'مسودة',     in_progress: 'قيد المعالجة', closed: 'مغلق' },
-      };
-      return (map[this.lang] || map.fr)[status] || status;
+      const map = { draft: 'Brouillon', in_progress: 'En cours', closed: 'Cloture' };
+      return map[status] || status;
     },
 
     dossierDate(d) {
-      return new Date(d.created_at).toLocaleDateString(this.lang === 'ar' ? 'ar-MA' : 'fr-MA');
+      return new Date(d.created_at).toLocaleDateString('fr-MA');
     },
 
     // ─── ② PARTAGE PAR URL ───────────────────────────────────────────────────
@@ -519,17 +484,16 @@ function app() {
 
       const add = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
       const today = new Date(); today.setHours(0,0,0,0);
-      const isAr = this.lang === 'ar';
 
-      const fmtDate = d => d.toLocaleDateString(isAr ? 'ar-MA' : 'fr-MA', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+      const fmtDate = d => d.toLocaleDateString('fr-MA', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
       const left = d => Math.ceil((d - today) / 86400000);
 
       const badge = d => {
         const n = left(d);
-        if (n < 0)  return { text: isAr ? `تأخير ${-n} يوم` : `Passé depuis ${-n}j`,    cls: 'text-red-400 bg-red-500/10 border-red-500/20' };
-        if (n === 0) return { text: isAr ? 'اليوم !' : "Aujourd'hui !",                   cls: 'text-red-400 bg-red-500/10 border-red-500/20' };
-        if (n <= 7)  return { text: isAr ? `خلال ${n} أيام` : `Dans ${n}j`,              cls: 'text-amber-400 bg-amber-500/10 border-amber-500/20' };
-        return         { text: isAr ? `${n} يوم متبقٍ` : `Dans ${n} jours`,              cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' };
+        if (n < 0)  return { text: `Passé depuis ${-n}j`,    cls: 'text-red-400 bg-red-500/10 border-red-500/20' };
+        if (n === 0) return { text: "Aujourd'hui !",                   cls: 'text-red-400 bg-red-500/10 border-red-500/20' };
+        if (n <= 7)  return { text: `Dans ${n}j`,              cls: 'text-amber-400 bg-amber-500/10 border-amber-500/20' };
+        return         { text: `Dans ${n} jours`,              cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' };
       };
 
       const finPreavis   = add(notif, preavisdays);
@@ -539,11 +503,11 @@ function app() {
 
       this.dateResults = {
         steps: [
-          { icon:'📋', label: isAr ? 'تاريخ الإشعار بالفصل'                           : 'Notification du licenciement',        date: fmtDate(notif),          badge: null,              highlight: true },
-          ...(preavisdays > 0 ? [{ icon:'⏳', label: isAr ? `نهاية مهلة الإشعار (${preavisdays} يوم)` : `Fin du préavis (${preavisdays} jours)`, date: fmtDate(finPreavis), badge: badge(finPreavis), highlight: false }] : []),
-          { icon:'📁', label: isAr ? 'تسليم وثائق نهاية العقد'                        : 'Remise des documents de fin contrat',  date: fmtDate(depart),         badge: badge(depart),     highlight: false },
-          { icon:'🏢', label: isAr ? 'آخر أجل — تصريح Damancom (30 يوم)'             : 'Déclaration Damancom (30j après départ)', date: fmtDate(limiteDaman), badge: badge(limiteDaman),highlight: false },
-          { icon:'⚖️', label: isAr ? 'آخر أجل — الطعن أمام المحكمة الاجتماعية (90 يوم)' : 'Délai de recours prud\'homal (90j)', date: fmtDate(limiteRecours), badge: badge(limiteRecours), highlight: false },
+          { icon:'📋', label: 'Notification du licenciement',        date: fmtDate(notif),          badge: null,              highlight: true },
+          ...(preavisdays > 0 ? [{ icon:'⏳', label: `Fin du préavis (${preavisdays} jours)`, date: fmtDate(finPreavis), badge: badge(finPreavis), highlight: false }] : []),
+          { icon:'📁', label: 'Remise des documents de fin contrat',  date: fmtDate(depart),         badge: badge(depart),     highlight: false },
+          { icon:'🏢', label: 'Déclaration Damancom (30j après départ)', date: fmtDate(limiteDaman), badge: badge(limiteDaman),highlight: false },
+          { icon:'⚖️', label: 'Délai de recours prud\'homal (90j)', date: fmtDate(limiteRecours), badge: badge(limiteRecours), highlight: false },
         ],
       };
     },
@@ -806,60 +770,16 @@ function app() {
           { title:'Exécution du préavis', desc:'Le salarié continue à travailler sauf dispense de l\'employeur (avec maintien du salaire). Aucun préavis en cas de faute grave.', badge:null, warning:null, ref:'Art. 43-51 — Décret 2-04-469', delegate: false },
           { title:'Remise des documents de fin de contrat', desc:'Certificat de travail · Reçu pour solde de tout compte · Attestation CNSS · Formulaire IPE (indemnité perte d\'emploi)', badge:null, warning:null, ref:'Art. 72 — Loi 65-99', delegate: false },
           { title:'Déclaration de départ sur Damancom', desc:'Obligatoire dans les 30 jours. Permet au salarié d\'activer ses droits à l\'IPE (indemnité chômage).', badge:'30 jours max', warning:null, ref:'CNSS — Damancom.ma', delegate: false },
-        ],
-        ar: [
-          { title:'الاستدعاء للمقابلة التمهيدية', desc:'رسالة مسلّمة باليد أو مضمونة مع إشعار بالاستلام. تتضمن السبب المزمع وحق الاستعانة بمساعد.', badge:'48 ساعة على الأقل', warning:'بدون هذه الخطوة، يُعدّ الفصل باطلاً بحكم القانون.', ref:'المادتان 62 و63 — قانون 65-99', delegate: false },
-          { title:'المقابلة التمهيدية', desc:'الاستماع لتفسيرات الأجير. يحق له الاستعانة بممثل الأجراء. تحرير محضر موقع من الطرفين.', badge:null, warning:null, ref:'المادة 62 — قانون 65-99', delegate: false },
-          { title:'الإخطار الكتابي بالفصل', desc:'رسالة مضمونة مع إشعار بالاستلام. سبب دقيق وملموس خلال 48 ساعة من المقابلة.', badge:'48 ساعة كحد أقصى', warning:'السبب الغامض قد يُعيد تصنيف الفصل إلى فصل تعسفي.', ref:'المادة 63 — قانون 65-99', delegate: false },
-          { title:'تنفيذ مهلة الإشعار المسبق', desc:'يستمر الأجير في العمل إلا إذا أعفاه صاحب العمل مع استمرار الراتب. لا إشعار في حالة الخطأ الجسيم.', badge:null, warning:null, ref:'المواد 43-51 — المرسوم 2-04-469', delegate: false },
-          { title:'تسليم وثائق نهاية العقد', desc:'شهادة العمل · إيصال تسوية الحساب الختامي · شهادة CNSS · استمارة التعويض عن فقدان الشغل (IPE)', badge:null, warning:null, ref:'المادة 72 — قانون 65-99', delegate: false },
-          { title:'التصريح بالمغادرة على Damancom', desc:'إلزامي في أجل 30 يوماً. يتيح للأجير تفعيل حقوق التعويض عن فقدان الشغل.', badge:'30 يوماً كحد أقصى', warning:null, ref:'CNSS — Damancom.ma', delegate: false },
-        ],
+        ]
       };
-      const delegateExtra = {
-        fr: [
-          { title:'🛡️ Saisine de l\'Inspection du Travail', desc:'Avant tout licenciement, l\'employeur doit demander l\'autorisation de l\'Inspecteur du Travail compétent. Cette étape est impérative et préalable à toute autre démarche.', badge:'OBLIGATOIRE', warning:'Sans cette autorisation, le licenciement est nul et de nul effet. Le délégué peut exiger sa réintégration.', ref:'Art. 457 — Loi 65-99', delegate: true },
-          { title:'🛡️ Réponse de l\'Inspecteur du Travail', desc:'L\'inspecteur dispose d\'un délai pour statuer. En l\'absence de réponse dans le délai légal, l\'autorisation est considérée comme accordée. En cas de refus, le licenciement ne peut être prononcé.', badge:'Délai légal', warning:null, ref:'Art. 458 — Loi 65-99', delegate: true },
-        ],
-        ar: [
-          { title:'🛡️ إخطار مفتشية الشغل', desc:'قبل أي فصل، يجب على صاحب العمل طلب إذن مفتش الشغل المختص. هذه الخطوة إلزامية وسابقة لأي إجراء آخر.', badge:'إلزامي', warning:'بدون هذا الإذن، يُعدّ الفصل باطلاً بطلاناً مطلقاً. يحق للمندوب المطالبة بإعادة الإدماج.', ref:'المادة 457 — قانون 65-99', delegate: true },
-          { title:'🛡️ رد مفتش الشغل', desc:'يتوفر المفتش على أجل قانوني للبت في الطلب. في حالة عدم الرد داخل الأجل، يُعدّ الإذن ضمنياً ممنوحاً. في حالة الرفض، لا يمكن إصدار قرار الفصل.', badge:'الأجل القانوني', warning:null, ref:'المادة 458 — قانون 65-99', delegate: true },
-        ],
-      };
-      const lang = this.lang in standard ? this.lang : 'fr';
-      const steps = standard[lang].slice();
-      if (this.form.isDelegate) {
-        // Insérer les étapes délégué avant les étapes standard (au début)
-        steps.unshift(...delegateExtra[lang]);
-      }
-      return steps;
-    },
-
-    // ─── DISMISSAL TYPES ─────────────────────────────────────────────────────
-    dismissalTypes() {
-      const d = {
-        fr: [
-          { id:'grave', icon:'🚨', color:'#ef4444', badge:'Faute grave', title:'Licenciement pour faute grave', desc:'Manquement grave rendant impossible le maintien dans l\'entreprise.', points:['Pas d\'indemnité légale','Pas de préavis','Rupture immédiate','Procédure préalable obligatoire'], warning:'L\'employeur doit prouver la faute. En cas de doute, le juge tranche en faveur du salarié.', ref:'Art. 39 & 61 — Loi 65-99' },
-          { id:'non_grave', icon:'⚠️', color:'#f97316', badge:'Faute non grave', title:'Licenciement pour faute non grave', desc:'Insuffisance professionnelle, comportement répréhensible ou faute légère répétée.', points:['Indemnité légale obligatoire (Art. 52)','Préavis obligatoire','Procédure préalable requise','Motif précis obligatoire'], warning:null, ref:'Art. 52-63 — Loi 65-99' },
-          { id:'economique', icon:'📉', color:'#3b82f6', badge:'Économique', title:'Licenciement économique', desc:'Suppression de poste pour raisons économiques, technologiques ou de restructuration.', points:['Autorisation de l\'Agent gouvernemental','Consultation des délégués du personnel','Indemnité légale obligatoire','Priorité de réembauche (1 an)'], warning:'Nécessite impérativement une autorisation administrative préalable.', ref:'Art. 66-71 — Loi 65-99' },
-          { id:'abusif', icon:'⚖️', color:'#a855f7', badge:'Abusif', title:'Licenciement abusif', desc:'Sans motif valable ou sans respect de la procédure légale.', points:['Indemnité légale + D&I (Art. 41)','D&I = 1,5 mois/an plafonné 36 mois','Recours au tribunal du travail','Délai de recours : 90 jours'], warning:null, ref:'Art. 41 & 63 — Loi 65-99' },
-        ],
-        ar: [
-          { id:'grave', icon:'🚨', color:'#ef4444', badge:'خطأ جسيم', title:'الفصل بسبب الخطأ الجسيم', desc:'مخالفة جسيمة تجعل استمرار العلاقة الشغلية مستحيلاً.', points:['لا تعويض قانونياً','لا إشعار مسبق','إنهاء فوري للعقد','الإجراء التمهيدي إلزامي'], warning:'على صاحب العمل إثبات الخطأ. في حالة الشك، يحكم القاضي لصالح الأجير.', ref:'المادتان 39 و61 — قانون 65-99' },
-          { id:'non_grave', icon:'⚠️', color:'#f97316', badge:'خطأ غير جسيم', title:'الفصل بسبب خطأ غير جسيم', desc:'قصور مهني أو سلوك مذموم أو خطأ بسيط متكرر.', points:['تعويض قانوني إلزامي (المادة 52)','الإشعار المسبق إلزامي','الإجراء التمهيدي مطلوب','سبب دقيق إلزامي'], warning:null, ref:'المواد 52-63 — قانون 65-99' },
-          { id:'economique', icon:'📉', color:'#3b82f6', badge:'اقتصادي', title:'الفصل لأسباب اقتصادية', desc:'إلغاء منصب عمل لأسباب اقتصادية أو تكنولوجية أو إعادة هيكلة.', points:['إذن العون الحكومي المكلف بالشغل','استشارة ممثلي الأجراء','تعويض قانوني إلزامي','أولوية إعادة التوظيف (سنة)'], warning:'يستلزم حتماً إذناً إدارياً مسبقاً.', ref:'المواد 66-71 — قانون 65-99' },
-          { id:'abusif', icon:'⚖️', color:'#a855f7', badge:'تعسفي', title:'الفصل التعسفي', desc:'بدون سبب مشروع أو بدون احترام الإجراءات القانونية.', points:['تعويض قانوني + تعويضات ضرر (المادة 41)','التعويض = 1.5 شهر/سنة، بحد أقصى 36 شهراً','الطعن أمام المحكمة الاجتماعية','أجل الطعن: 90 يوماً'], warning:null, ref:'المادتان 41 و63 — قانون 65-99' },
-        ],
-      };
-      return d[this.lang] || d['fr'];
+      return d['fr'];
     },
 
     fautesGraves() {
       const d = {
-        fr: ['Délit portant atteinte à l\'honneur ou à la probité','Vol ou tentative de vol','Abus de confiance','Ivresse ou consommation de stupéfiants pendant le travail','Violence, voie de fait ou injures graves','Refus délibéré d\'exécuter un travail','Absence injustifiée > 4 jours ou 8 demi-journées / 12 mois','Dégradation volontaire des équipements','Faute causant un dommage matériel considérable','Inobservation grave des règles de sécurité','Incitation à la débauche','Divulgation de secret professionnel'],
-        ar: ['جريمة ماسّة بالشرف أو النزاهة','السرقة أو محاولة السرقة','إساءة الثقة','السكر أو تعاطي المخدرات أثناء العمل','العنف أو الاعتداء أو الإهانة الجسيمة','الرفض المتعمد لتنفيذ عمل','غياب غير مبرر لأكثر من 4 أيام أو 8 أنصاف أيام / 12 شهراً','الإتلاف المتعمد للمعدات','خطأ يسبب ضرراً مادياً بالغاً','عدم احترام قواعد السلامة بشكل جسيم','التحريض على الفساد','إفشاء السر المهني'],
+        fr: ['Délit portant atteinte à l\'honneur ou à la probité','Vol ou tentative de vol','Abus de confiance','Ivresse ou consommation de stupéfiants pendant le travail','Violence, voie de fait ou injures graves','Refus délibéré d\'exécuter un travail','Absence injustifiée > 4 jours ou 8 demi-journées / 12 mois','Dégradation volontaire des équipements','Faute causant un dommage matériel considérable','Inobservation grave des règles de sécurité','Incitation à la débauche','Divulgation de secret professionnel'];
       };
-      return d[this.lang] || d['fr'];
+      return d['fr'];
     },
 
     // ─── LEGAL REFS ──────────────────────────────────────────────────────────
@@ -877,22 +797,9 @@ function app() {
           { article:'Art. 66-71', title:'Licenciement économique',     content:'Soumis à l\'autorisation préalable de l\'agent gouvernemental chargé du travail, après consultation des délégués.' },
           { article:'Art. 72',  title:'Documents de fin de contrat',   content:'L\'employeur remet obligatoirement : certificat de travail, solde de tout compte, attestation CNSS.' },
           { article:'Décret 2-04-469', title:'Délais de préavis',      content:'Cadres : 1/2/3 mois. Employés : 8 jours/1 mois/2 mois. Ouvriers : 8 jours/8 jours/1 mois. Selon tranches < 1an / 1-5ans / > 5ans.' },
-        ],
-        ar: [
-          { article:'المادة 39',       title:'الأخطاء الجسيمة',                content:'قائمة الأخطاء المعتبرة جسيمة والتي تبرر الفصل الفوري بدون تعويض ولا إشعار مسبق.' },
-          { article:'المادة 41',       title:'تعويضات الضرر',                  content:'في حالة الفصل التعسفي: 1,5 شهر من الراتب عن كل سنة خدمة، بحد أقصى 36 شهراً. الطعن في أجل 90 يوماً.' },
-          { article:'المادة 43',       title:'وجوب الإشعار المسبق',            content:'مهلة الإشعار المسبق إلزامية إلا في حالة الخطأ الجسيم. مدتها تختلف حسب الأقدمية والفئة المهنية.' },
-          { article:'المادة 52',       title:'جدول التعويض',                   content:'1-5 سنوات: 96ساعة/سنة · 6-10: 144ساعة/سنة · 11-15: 192ساعة/سنة · أكثر من 15: 240ساعة/سنة. الأجر الساعي = الشهري ÷ 191.' },
-          { article:'المادة 53',       title:'أساس الحساب',                    content:'يُحسب على أساس الأجر الإجمالي لآخر 52 أسبوعاً أو آخر 3 أشهر وفق الأفضل للأجير.' },
-          { article:'المادة 61',       title:'الإجراء التأديبي',               content:'يجب أن تسبق كل عقوبة مقابلة تمهيدية. يحق للأجير الإعلام بالوقائع والدفاع عن نفسه.' },
-          { article:'المادة 62',       title:'المقابلة التمهيدية',             content:'الاستدعاء قبل 48 ساعة على الأقل. يحق للأجير الاستعانة بممثل الأجراء.' },
-          { article:'المادة 63',       title:'الإخطار بالفصل',                content:'القرار يُبلَّغ كتابةً في 48 ساعة من المقابلة مع ذكر السبب الدقيق.' },
-          { article:'المواد 66-71',    title:'الفصل الاقتصادي',               content:'يخضع لإذن مسبق من العون الحكومي المكلف بالشغل بعد استشارة ممثلي الأجراء.' },
-          { article:'المادة 72',       title:'وثائق نهاية العقد',              content:'يلتزم صاحب العمل بتسليم: شهادة العمل، تسوية الحساب الختامي، شهادة CNSS.' },
-          { article:'المرسوم 2-04-469', title:'مدد الإشعار المسبق',           content:'الأطر: 1/2/3 أشهر. الموظفون: 8أيام/شهر/شهران. العمال: 8أيام/8أيام/شهر. للشرائح <1سنة/1-5سنوات/>5سنوات.' },
-        ],
+        ];
       };
-      return d[this.lang] || d['fr'];
+      return d['fr'];
     },
 
     resources() {
@@ -1078,173 +985,4 @@ const translations = {
     dates_calculate: 'Calculer les délais',
     dates_reset: 'Réinitialiser',
     dates_timeline_title: 'Échéancier légal',
-  },
-  ar: {
-    app_title: 'IndemnPro',
-    app_sub: 'قانون الشغل المغربي — 65-99',
-    nav_calc: 'الحاسبة',
-    nav_procedure: 'الإجراءات',
-    nav_types: 'الأنواع',
-    nav_refs: 'المراجع',
-    nav_docs: 'الوثائق',
-    calc_title: 'حاسبة تعويضات الفصل',
-    calc_title_pre: 'حاسبة تعويضات الفصل',
-    calc_title_em: 'وفق القانون.',
-    calc_sub: 'احسب حقوقك في 4 خطوات بسيطة — مطابقة للقانون 65-99.',
-    procedure_title_pre: 'من الملف إلى PDF،',
-    procedure_title_em: 'بخطوات واضحة.',
-    types_title_pre: 'جميع الأسباب،',
-    types_title_em: 'وفق القانون.',
-    refs_title_pre: 'قانون الشغل،',
-    refs_title_em: 'مادة بمادة.',
-    dates_title_pre: 'حاسبة',
-    dates_title_em: 'الآجال القانونية.',
-    step0_title: 'في أي قطاع يعمل الموظف ؟',
-    step0_sub: 'القطاع يحدد أساس احتساب الأجر الساعي',
-    step1_title: 'ما هو نوع الفصل ؟',
-    step1_sub: 'اختر الوضعية التي تنطبق على حالتك',
-    step2_title: 'ما هي فئتك المهنية ؟',
-    step2_sub: 'هذا يحدد مدة إشعارك المسبق',
-    step3_title: 'ما هي مدة أقدميتك ؟',
-    step3_sub: 'عدد السنوات الكاملة في المؤسسة',
-    step4_title: 'ما هو راتبك الإجمالي الشهري ؟',
-    step4_sub: 'أدخل راتبك الأساسي بالدرهم',
-    years_label: 'سنوات من الأقدمية',
-    year_short: 'سنة',
-    seniority_placeholder: 'أو أدخل مباشرة...',
-    salary_placeholder: 'مثال: 5000',
-    equiv_hourly: 'أي ما يعادل',
-    smig_ref: 'الحد الأدنى للأجر 2026: 3 422,72 درهم إجمالي',
-    secteur_label: 'قطاع النشاط',
-    secteur_smig: 'غير فلاحي (SMIG)',
-    secteur_smig_desc: '191 ساعة/شهر · صناعة، تجارة، خدمات (المادة 184 — 2288 ساعة/سنة)',
-    secteur_smag: 'فلاحي (SMAG)',
-    secteur_smag_desc: '208 ساعة/شهر · فلاحة، غابات، تربية الماشية (مرسوم 2-04-426 — 2496 ساعة/سنة)',
-    delegate_question: 'هل هذا الأجير مندوب للأجراء ؟',
-    delegate_yes: 'نعم، إنه مندوب للأجراء',
-    delegate_yes_desc: 'منتخب أو معيّن — حماية خاصة المادة 457-470',
-    delegate_no: 'لا، أجير عادي',
-    delegate_no_desc: 'لا يشغل أي منصب تمثيلي',
-    delegate_warning_title: '⚠️ أجير محمي — إجراء معزّز',
-    delegate_warning_body: 'فصل مندوب الأجراء يستوجب إذناً مسبقاً من مفتش الشغل (المادة 457). بدون هذا الإذن، يُعدّ الفصل باطلاً ويحق للمندوب المطالبة بإعادة الإدماج.',
-    delegate_grave_title: '🚨 تنبيه — خطأ جسيم + مندوب الأجراء',
-    delegate_grave_body: 'حتى في حالة الخطأ الجسيم، يخضع فصل المندوب لإذن مفتشية الشغل. الإجراء أكثر صرامة وخطر البطلان مرتفع. يُنصح باستشارة مختص قانوني.',
-    delegate_badge: 'أجير محمي',
-    back: 'رجوع',
-    next: 'التالي',
-    calculate: 'احسب تعويضاتي',
-    results_title: 'تعويضاتك المقدّرة',
-    total: 'المجموع الإجمالي المقدّر',
-    legal_indemnity: 'التعويض القانوني (المادة 52)',
-    notice_indemnity: 'تعويض الإشعار المسبق',
-    damages: 'تعويضات الضرر (المادة 41)',
-    damages_ref: '1.5 شهر × الأقدمية، بحد أقصى 36 شهراً',
-    faute_grave_warning_title: 'لا تعويض في حالة الخطأ الجسيم',
-    faute_grave_warning: 'في حالة الخطأ الجسيم الثابت (المادة 39)، لا يلتزم صاحب العمل بأي تعويض عن الفصل ولا عن الإشعار المسبق. يبقى الإجراء التمهيدي إلزامياً.',
-    faute_grave_ref: 'المادتان 39 و61 — قانون 65-99',
-    disclaimer: '⚠️ هذه التقديرات استرشادية وتستند إلى الراتب الإجمالي الأساسي. يُنصح باستشارة محامٍ متخصص لحالتك الخاصة.',
-    restart: 'إعادة الحساب →',
-    print: 'طباعة',
-    bareme_title: 'الجدول القانوني — المادة 52',
-    cadre: 'إطار',
-    employe: 'موظف',
-    ouvrier: 'عامل',
-    label_faute_grave: 'خطأ جسيم',
-    label_faute_non_grave: 'خطأ غير جسيم',
-    label_economique: 'اقتصادي',
-    label_abusif: 'تعسفي',
-    procedure_title: 'إجراءات الفصل من العمل',
-    procedure_sub: 'خطوات إلزامية تحت طائلة البطلان',
-    preavis_title: 'مدد الإشعار المسبق القانونية',
-    preavis_cat: 'الفئة',
-    preavis_less1: 'أقل من سنة',
-    preavis_1_5: '1 – 5 سنوات',
-    preavis_more5: 'أكثر من 5 سنوات',
-    '1mois': 'شهر',
-    '2mois': 'شهران',
-    '3mois': '3 أشهر',
-    '8jours': '8 أيام',
-    preavis_ref: 'المصدر: المرسوم 2-04-469 من قانون الشغل المغربي',
-    types_title: 'أنواع الفصل من العمل',
-    fautes_graves_title: 'قائمة الأخطاء الجسيمة (المادة 39)',
-    fautes_graves_ref: 'المصدر: المادة 39 — القانون 65-99، قانون الشغل المغربي',
-    refs_title: 'المراجع القانونية',
-    resources_title: 'الجهات الرسمية',
-    docs_title: 'نماذج الوثائق',
-    docs_sub: 'نماذج مطابقة لقانون الشغل المغربي',
-    footer: '⚖️ مستند إلى القانون 65-99 (قانون الشغل المغربي) · للاستئناس فقط · استشر محامياً متخصصاً لأي حالة خاصة.',
-    // Dossiers Supabase
-    nav_dossiers: 'ملفاتي',
-    dossiers_title_pre: 'ملفاتك',
-    dossiers_title_em: 'في لمحة.',
-    dossiers_sub: 'جميع حساباتك المحفوظة، متاحة من أي جهاز.',
-    dossiers_empty_title: 'لا توجد ملفات محفوظة',
-    dossiers_empty_sub: 'أنشئ حساباً ثم اضغط « حفظ الملف » لتجده هنا.',
-    dossiers_empty_cta: 'حساب جديد',
-    dossiers_count: 'ملفات',
-    dossiers_budget: 'الميزانية الإجمالية المخصصة',
-    dossier_save_btn: 'حفظ الملف',
-    dossier_saved: '✓ تم حفظ الملف',
-    dossier_save_error: 'خطأ أثناء حفظ الملف.',
-    dossier_delete_confirm: 'حذف هذا الملف نهائياً ؟',
-    dossier_open: 'فتح',
-    dossier_unnamed: 'بدون اسم',
-    dossier_search_ph: 'ابحث عن موظف، منصب، مرجع…',
-    filter_all: 'الكل',
-    filter_draft: 'مسودة',
-    filter_in_progress: 'قيد المعالجة',
-    filter_closed: 'مغلق',
-    sort_recent: 'الأحدث',
-    sort_old: 'الأقدم',
-    sort_amount: 'المبلغ ↓',
-    sort_name: 'الاسم أ-ي',
-    dossiers_no_match: 'لا يوجد ملف يطابق بحثك.',
-    dossiers_showing: 'معروض',
-    // PDF
-    pdf_btn: 'تحميل PDF',
-    dossier_opt: 'اختياري',
-    dossier_nom: 'اسم الموظف',
-    dossier_nom_ph: 'محمد بنعلي',
-    dossier_poste: 'المنصب',
-    dossier_poste_ph: 'مسؤول المحاسبة',
-    dossier_ref: 'المرجع الداخلي',
-    dossier_ref_ph: 'LIC-2026-042',
-    // Date d'embauche
-    hire_date_label: 'تاريخ بداية العقد',
-    end_date_label: 'تاريخ الفصل (افتراضياً : اليوم)',
-    hire_date_calculated: '← الأقدمية :',
-    hire_date_clear: 'مسح التواريخ',
-    // Compléments salaire
-    unpaid_label: 'أيام عمل غير مؤدّى عنها',
-    unpaid_help: 'متأخرات الأجور غير المدفوعة',
-    leave_label: 'العطلة المؤدى عنها غير المتمتع بها (بالأيام)',
-    leave_help: 'حسب المادة 247 — قانون 65-99',
-    unpaid_indemnity: 'الأجور غير المدفوعة',
-    leave_indemnity: 'العطلة غير المتمتع بها',
-    leave_ref: 'المادة 247 — قانون 65-99',
-    daily_rate: 'الأجر اليومي',
-    // Détail calcul
-    calc_hourly_rate: 'الأجر الساعي',
-    // Historique
-    nav_dates: 'المواعيد القانونية',
-    history_title: '🕑 الحسابات الأخيرة',
-    history_empty: 'لا توجد حسابات محفوظة',
-    history_restore: 'استعادة',
-    history_clear: 'مسح التاريخ',
-    history_total: 'المجموع',
-    // Partage
-    share_btn: '🔗 مشاركة الرابط',
-    share_copied: '✓ تم نسخ الرابط !',
-    share_copy_prompt: 'انسخ هذا الرابط :',
-    // Calculateur dates
-    dates_title: 'حاسبة الآجال القانونية',
-    dates_sub: 'أدخل تاريخ الإشعار لعرض جميع المواعيد النهائية',
-    dates_notif_label: 'تاريخ الإشعار بالفصل',
-    dates_category_label: 'الفئة المهنية',
-    dates_seniority_label: 'الأقدمية (سنوات)',
-    dates_type_label: 'نوع الفصل',
-    dates_calculate: 'احسب الآجال',
-    dates_reset: 'إعادة تعيين',
-    dates_timeline_title: 'جدول المواعيد القانونية',
-  },
-};
+  },};
