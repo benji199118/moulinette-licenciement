@@ -558,7 +558,26 @@ img, svg { display: block; max-width: 100%; }
 }
 .ml-input:focus { border-color: var(--ml-green); box-shadow: 0 0 0 3px rgba(15,77,58,0.12); }
 .ml-input--center { text-align: center; font-weight: 500; }
-.ml-input--lg { font-size: 22px; padding: 16px; font-weight: 600; letter-spacing: -0.02em; }
+.ml-input--lg {
+  font-size: 30px;
+  padding: 20px 72px 20px 24px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--f-sans);
+  border-radius: 16px;
+  border-width: 2px;
+  background: var(--ml-card);
+  color: var(--ml-ink);
+}
+.ml-input--lg:focus {
+  border-color: var(--ml-green);
+  box-shadow: 0 0 0 5px var(--ml-green-soft);
+}
+/* Masquer les flèches du champ number */
+.ml-input--lg::-webkit-inner-spin-button,
+.ml-input--lg::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.ml-input--lg { -moz-appearance: textfield; }
 .ml-input--accent {
   background: var(--ml-green-soft); color: var(--ml-green);
   border-color: transparent; font-weight: 500;
@@ -1375,7 +1394,7 @@ img, svg { display: block; max-width: 100%; }
           <div style="position: relative;">
             <input type="number" x-model.number="form.salary" min="0"
               class="ml-input ml-input--center ml-input--lg" placeholder="0">
-            <span class="ml-mono" style="position: absolute; inset-inline-end: 16px; top: 50%; transform: translateY(-50%); color: var(--ml-ink-faint); font-size: 14px;">MAD</span>
+            <span style="position: absolute; inset-inline-end: 20px; top: 50%; transform: translateY(-50%); color: var(--ml-ink-mute); font-size: 15px; font-weight: 600; font-family: var(--f-mono); letter-spacing: 0.04em; pointer-events: none;">MAD</span>
           </div>
         </div>
       </div>
