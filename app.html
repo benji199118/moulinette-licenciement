@@ -328,33 +328,59 @@ img, svg { display: block; max-width: 100%; }
   font-family: var(--f-mono);
 }
 .ml-lang button.is-active { background: var(--ml-ink); color: var(--ml-bg); }
-.ml-lang button
 
-/* Theme toggle */
+/* Theme toggle — pill slider */
 .ml-theme {
-  width: 40px; height: 40px;
-  border-radius: 12px;
-  border: 1.5px solid var(--ml-line-strong);
-  background: var(--ml-bg-2);
-  color: var(--ml-ink-mute);
-  display: grid; place-items: center;
+  position: relative;
+  width: 76px; height: 38px;
+  border-radius: 999px;
+  border: none;
+  background: #18201e;
   cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
-  transition: background .2s ease, border-color .2s ease, color .2s ease, transform .15s ease, box-shadow .2s ease;
+  transition: box-shadow .2s ease, transform .15s ease;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,.45), 0 1px 4px rgba(0,0,0,.18);
 }
 .ml-theme:hover {
-  background: var(--ml-green-soft);
-  border-color: var(--ml-green);
-  color: var(--ml-green);
-  transform: scale(1.08);
-  box-shadow: 0 0 0 4px var(--ml-green-soft);
+  box-shadow: inset 0 2px 6px rgba(0,0,0,.45), 0 0 0 3px var(--ml-green-soft);
 }
-.ml-theme:active { transform: scale(0.95); }
-.ml-theme svg {
-  transition: transform .4s cubic-bezier(.34,1.56,.64,1), opacity .2s;
+.ml-theme:active { transform: scale(0.96); }
+
+/* Knob glissant */
+.ml-theme__knob {
+  position: absolute;
+  left: 4px; top: 4px;
+  width: 30px; height: 30px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 38% 36%, rgba(255,255,255,.22), rgba(255,255,255,.07));
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 2px 8px rgba(0,0,0,.35);
+  transition: left .38s cubic-bezier(.34,1.56,.64,1);
   pointer-events: none;
+  z-index: 1;
 }
-.ml-theme:hover svg { transform: rotate(20deg); }
+.ml-theme.is-dark .ml-theme__knob {
+  left: calc(100% - 34px);
+}
+
+/* Icônes */
+.ml-theme__icon {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 2;
+  transition: color .25s ease, opacity .25s ease;
+}
+/* Mode clair actif → soleil brillant, lune atténuée */
+.ml-theme:not(.is-dark) .ml-theme__sun { color: rgba(255,255,255,.95); }
+.ml-theme:not(.is-dark) .ml-theme__moon { color: rgba(255,255,255,.3); }
+/* Mode sombre actif → lune brillante, soleil atténué */
+.ml-theme.is-dark .ml-theme__sun { color: rgba(255,255,255,.3); }
+.ml-theme.is-dark .ml-theme__moon { color: rgba(255,255,255,.95); }
 
 /* User pill */
 .ml-user-pill {
@@ -1019,23 +1045,30 @@ img, svg { display: block; max-width: 100%; }
       <div class="ml-nav__right">
         <button @click="darkMode = !darkMode"
           class="ml-theme"
+          :class="darkMode ? 'is-dark' : ''"
           :title="darkMode ? 'Mode clair' : 'Mode sombre'">
-          <!-- Lune (mode clair actif → basculer vers sombre) -->
-          <svg x-show="!darkMode" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-          </svg>
-          <!-- Soleil (mode sombre actif → basculer vers clair) -->
-          <svg x-show="darkMode" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="4"/>
-            <line x1="12" y1="2" x2="12" y2="6"/>
-            <line x1="12" y1="18" x2="12" y2="22"/>
-            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
-            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
-            <line x1="2" y1="12" x2="6" y2="12"/>
-            <line x1="18" y1="12" x2="22" y2="12"/>
-            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
-            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
-          </svg>
+          <!-- Knob glissant -->
+          <span class="ml-theme__knob"></span>
+          <!-- ☀ Soleil — gauche -->
+          <span class="ml-theme__icon ml-theme__sun">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"/>
+              <line x1="12" y1="2" x2="12" y2="6"/>
+              <line x1="12" y1="18" x2="12" y2="22"/>
+              <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
+              <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+              <line x1="2" y1="12" x2="6" y2="12"/>
+              <line x1="18" y1="12" x2="22" y2="12"/>
+              <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
+              <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+            </svg>
+          </span>
+          <!-- ☾ Lune — droite -->
+          <span class="ml-theme__icon ml-theme__moon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </span>
         </button>
 
         <!-- Badge invité (essais restants) -->
