@@ -780,6 +780,60 @@ img, svg { display: block; max-width: 100%; }
 .ml-tl-step__badge--ok    { background: var(--ml-green-soft);  color: var(--ml-green);  border-color: transparent; }
 .ml-tl-step__badge--warn  { background: var(--ml-ochre-soft);  color: #6b4515; border-color: transparent; }
 .dark .ml-tl-step__badge--warn { color: var(--ml-ochre); }
+
+/* ── Salarié protégé / Délégué — dark mode adaptive ────────────── */
+.ml-delegate-warn {
+  margin-top: 14px; padding: 14px 16px;
+  background: #fffbeb; border: 1px solid #f59e0b;
+  border-radius: 10px; display: flex; gap: 12px; align-items: flex-start;
+}
+.dark .ml-delegate-warn {
+  background: rgba(245,177,106,.1); border-color: rgba(245,177,106,.35);
+}
+.ml-delegate-banner {
+  padding: 14px 18px;
+  background: #fffbeb; border: 1.5px solid #f59e0b;
+  border-radius: 12px; display: flex; gap: 12px; align-items: flex-start;
+}
+.dark .ml-delegate-banner {
+  background: rgba(245,177,106,.1); border-color: rgba(245,177,106,.3);
+}
+.ml-delegate-title {
+  font-weight: 600; font-size: 13px; color: #92400e; margin: 0 0 4px;
+}
+.dark .ml-delegate-title { color: var(--ml-ochre); }
+.ml-delegate-body {
+  font-size: 12px; color: #78350f; line-height: 1.5; margin: 0;
+}
+.dark .ml-delegate-body { color: rgba(245,177,106,.85); }
+.ml-delegate-ref {
+  font-size: 11px; color: #92400e; font-family: var(--f-mono); margin: 6px 0 0;
+}
+.dark .ml-delegate-ref { color: var(--ml-ochre); opacity: .75; }
+
+.ml-delegate-grave {
+  margin-top: 14px; padding: 14px 16px;
+  background: #fef2f2; border: 1px solid #ef4444;
+  border-radius: 10px; display: flex; gap: 12px; align-items: flex-start;
+}
+.dark .ml-delegate-grave {
+  background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.35);
+}
+.ml-delegate-grave-title {
+  font-weight: 600; font-size: 13px; color: #991b1b; margin: 0 0 4px;
+}
+.dark .ml-delegate-grave-title { color: #f87171; }
+.ml-delegate-grave-body {
+  font-size: 12px; color: #7f1d1d; line-height: 1.5; margin: 0;
+}
+.dark .ml-delegate-grave-body { color: rgba(248,113,113,.8); }
+.ml-delegate-grave-ref {
+  font-size: 11px; color: #991b1b; font-family: var(--f-mono); margin: 6px 0 0;
+}
+.dark .ml-delegate-grave-ref { color: #f87171; opacity: .7; }
+
+.ml-disclaimer-text { color: #6b4515; font-size: 13px; margin: 0; }
+.dark .ml-disclaimer-text { color: var(--ml-ochre); }
 .ml-tl-step__badge--danger{ background: var(--ml-rouge-soft);  color: var(--ml-rouge);  border-color: transparent; }
 /* ── Refs (legal articles) ─────────────────────────────────────── */
 .ml-ref {
@@ -892,6 +946,22 @@ img, svg { display: block; max-width: 100%; }
   font-size: 11px;
   color: var(--ml-ink-mute);
 }
+/* Procedure step — délégué protégé */
+.ml-proc-step--delegate {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+.dark .ml-proc-step--delegate {
+  border-color: rgba(245,177,106,.35);
+  background: rgba(245,177,106,.08);
+}
+.ml-proc-step--delegate .ml-proc-step__title h4 { color: #92400e; }
+.dark .ml-proc-step--delegate .ml-proc-step__title h4 { color: var(--ml-ochre); }
+.ml-proc-step--delegate .ml-proc-step__desc { color: #78350f; }
+.dark .ml-proc-step--delegate .ml-proc-step__desc { color: rgba(245,177,106,.8); }
+.ml-proc-step--delegate .ml-proc-step__num { background: #f59e0b; color: #fff; border-color: #f59e0b; }
+.dark .ml-proc-step--delegate .ml-proc-step__num { background: rgba(245,177,106,.2); color: var(--ml-ochre); border-color: rgba(245,177,106,.5); }
+
 /* ── Bareme grid (Art. 52) ─────────────────────────────────────── */
 .ml-bareme {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
@@ -1262,24 +1332,22 @@ img, svg { display: block; max-width: 100%; }
         </div>
 
         <!-- Warning délégué général -->
-        <div x-show="form.isDelegate && form.type !== 'faute_grave'"
-          style="margin-top: 14px; padding: 14px 16px; background: #fffbeb; border: 1px solid #f59e0b; border-radius: 10px; display: flex; gap: 12px; align-items: flex-start;">
+        <div x-show="form.isDelegate && form.type !== 'faute_grave'" class="ml-delegate-warn">
           <span style="font-size: 20px; flex-shrink: 0;">⚠️</span>
           <div>
-            <p style="font-weight: 600; font-size: 13px; color: #92400e; margin: 0 0 4px;" x-text="t('delegate_warning_title')"></p>
-            <p style="font-size: 12px; color: #78350f; line-height: 1.5; margin: 0;" x-text="t('delegate_warning_body')"></p>
-            <p style="font-size: 11px; color: #92400e; font-family: var(--f-mono); margin: 6px 0 0;">Art. 457-470 — Loi 65-99</p>
+            <p class="ml-delegate-title" x-text="t('delegate_warning_title')"></p>
+            <p class="ml-delegate-body" x-text="t('delegate_warning_body')"></p>
+            <p class="ml-delegate-ref">Art. 457-470 — Loi 65-99</p>
           </div>
         </div>
 
         <!-- Warning délégué + faute grave (plus sévère) -->
-        <div x-show="form.isDelegate && form.type === 'faute_grave'"
-          style="margin-top: 14px; padding: 14px 16px; background: #fef2f2; border: 1px solid #ef4444; border-radius: 10px; display: flex; gap: 12px; align-items: flex-start;">
+        <div x-show="form.isDelegate && form.type === 'faute_grave'" class="ml-delegate-grave">
           <span style="font-size: 20px; flex-shrink: 0;">🚨</span>
           <div>
-            <p style="font-weight: 600; font-size: 13px; color: #991b1b; margin: 0 0 4px;" x-text="t('delegate_grave_title')"></p>
-            <p style="font-size: 12px; color: #7f1d1d; line-height: 1.5; margin: 0;" x-text="t('delegate_grave_body')"></p>
-            <p style="font-size: 11px; color: #991b1b; font-family: var(--f-mono); margin: 6px 0 0;">Art. 457-470 — Loi 65-99</p>
+            <p class="ml-delegate-grave-title" x-text="t('delegate_grave_title')"></p>
+            <p class="ml-delegate-grave-body" x-text="t('delegate_grave_body')"></p>
+            <p class="ml-delegate-grave-ref">Art. 457-470 — Loi 65-99</p>
           </div>
         </div>
       </div>
@@ -1611,7 +1679,7 @@ img, svg { display: block; max-width: 100%; }
 
         <!-- Disclaimer -->
         <div class="ml-card ml-card--bordered" style="background: var(--ml-ochre-soft); border-color: transparent; margin-bottom: 20px;">
-          <p style="color: #6b4515; font-size: 13px; margin: 0;" x-text="t('disclaimer')"></p>
+          <p class="ml-disclaimer-text" x-text="t('disclaimer')"></p>
         </div>
 
         <!-- Actions -->
@@ -1947,22 +2015,20 @@ img, svg { display: block; max-width: 100%; }
 
     <!-- Bannière délégué dans procédure -->
     <div x-show="form.isDelegate" class="ml-mw-lg" style="margin-bottom: 16px;">
-      <div style="padding: 14px 18px; background: #fffbeb; border: 1.5px solid #f59e0b; border-radius: 12px; display: flex; gap: 12px; align-items: flex-start;">
+      <div class="ml-delegate-banner">
         <span style="font-size: 22px;">🛡️</span>
         <div>
-          <p style="font-weight: 700; font-size: 13px; color: #92400e; margin: 0 0 4px;" x-text="t('delegate_warning_title')"></p>
-          <p style="font-size: 12px; color: #78350f; line-height: 1.5; margin: 0;" x-text="t('delegate_warning_body')"></p>
-          <p style="font-size: 11px; color: #92400e; font-family: var(--f-mono); margin: 6px 0 0;">Art. 457-470 — Loi 65-99</p>
+          <p class="ml-delegate-title" x-text="t('delegate_warning_title')"></p>
+          <p class="ml-delegate-body" x-text="t('delegate_warning_body')"></p>
+          <p class="ml-delegate-ref">Art. 457-470 — Loi 65-99</p>
         </div>
       </div>
     </div>
 
     <div class="ml-mw-lg ml-stack" style="gap: 12px; margin-bottom: 48px;">
       <template x-for="(step, i) in procedureSteps()" :key="i">
-        <div class="ml-proc-step" :style="step.delegate ? 'border-color: #f59e0b; background: #fffbeb;' : ''">
-          <div class="ml-proc-step__num"
-            :style="step.delegate ? 'background: #f59e0b; color: #fff; border-color: #f59e0b;' : ''"
-            x-text="i+1"></div>
+        <div class="ml-proc-step" :class="step.delegate ? 'ml-proc-step--delegate' : ''">
+          <div class="ml-proc-step__num" x-text="i+1"></div>
           <div>
             <div class="ml-proc-step__title">
               <h4 x-text="step.title"></h4>
