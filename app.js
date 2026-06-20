@@ -74,6 +74,19 @@ function app() {
         this.loadHistory();
       }
       this.$nextTick(() => this.loadFromUrl());
+
+      // Écoute le token de confirmation email dans le hash URL
+      // Supabase le traite de façon asynchrone — on capte l'événement SIGNED_IN
+      sb.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' && session && !this.currentUser) {
+          this.currentUser = session.user;
+          this.isGuest = false;
+          this.loadHistory();
+          this.loadDossiers();
+          // Nettoie le hash de l'URL sans recharger la page
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      });
     },
 
     // Essais restants pour le badge

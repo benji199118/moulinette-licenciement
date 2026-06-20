@@ -21,7 +21,13 @@ async function signIn(email, password) {
 }
 
 async function signUp(email, password) {
-  return await sb.auth.signUp({ email, password });
+  return await sb.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: window.location.origin + '/app.html',
+    },
+  });
 }
 
 async function signOut() {
