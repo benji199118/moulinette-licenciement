@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html x-data="app()" lang="fr">
+<head><meta charset="UTF-8"><title>t1</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3/dist/cdn.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+</head>
+<body>
+<div x-data="{n:1}" :class="n===1 ? 'yes' : 'no'" :title="'t'+n"><span x-text="'alpine ok '+n"></span></div>
+<div><span x-text="'tab '+activeTab"></span></div>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.31/dist/jspdf.plugin.autotable.min.js"></script>
+<script src="app.js?v=23"></script>
+</body>
+</html>

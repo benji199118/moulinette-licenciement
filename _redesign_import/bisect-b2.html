@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html x-data="app()" dir="ltr" lang="fr" :class="darkMode ? 'dark' : ''" class="scroll-smooth">
+<head><meta charset="UTF-8"><title>bisect body</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3/dist/cdn.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+</head>
+<body><main class="ml-wrap"><div >
+
+  <!-- ══════════════════════════════════════════
+       TAB · MES DOSSIERS (Supabase)
+  ══════════════════════════════════════════ -->
+  <div x-show="activeTab==='dossiers'" x-cloak class="ml-fadein">
+    <div class="ml-section__head">
+      <p class="ml-eyebrow"><span x-text="t('app_sub')"></span></p>
+      <h2 class="ml-h2"><span x-text="t('dossiers_title_pre')"></span> <em x-text="t('dossiers_title_em')"></em></h2>
+      <p class="ml-lead ml-center" x-text="t('dossiers_sub')"></p>
+    </div>
+
+    <!-- État verrouillé pour les invités -->
+    <div x-show="isGuest" class="ml-mw-md ml-fadein">
+      <div class="ml-card ml-card--lg ml-center" style="padding: 56px 32px;">
+        <div style="width: 64px; height: 64px; border-radius: 18px; background: var(--ml-bg-2); display: grid; place-items: center; font-size: 28px; margin: 0 auto 20px;">🔒</div>
+        <h3 class="ml-h3" style="margin-bottom: 10px;" x-text="'Fonctionnalité réservée aux membres'"></h3>
+        <p class="ml-mute" style="font-size: 14px; max-width: 38ch; margin: 0 auto 28px;">Créez votre compte gratuit pour sauvegarder vos dossiers et les retrouver depuis n'importe quel poste.</p>
+        <div class="ml-stack" style="gap: 10px; max-width: 300px; margin: 0 auto 28px;">
+          <div style="display: flex; gap: 10px; align-items: center; padding: 12px 16px; background: var(--ml-green-soft); border-radius: 10px; text-align: start;">
+            <span style="color: var(--ml-green); font-weight: 700; flex-shrink: 0;">✓</span>
+            <span style="font-size: 13.5px; color: var(--ml-ink-2);" x-text="'Calculs & dossiers illimités'"></span>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; padding: 12px 16px; background: var(--ml-green-soft); border-radius: 10px; text-align: start;">
+            <span style="color: var(--ml-green); font-weight: 700; flex-shrink: 0;">✓</span>
+            <span style="font-size: 13.5px; color: var(--ml-ink-2);" x-text="'PDF horodaté à votre nom'"></span>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; padding: 12px 16px; background: var(--ml-green-soft); border-radius: 10px; text-align: start;">
+            <span style="color: var(--ml-green); font-weight: 700; flex-shrink: 0;">✓</span>
+            <span style="font-size: 13.5px; color: var(--ml-ink-2);" x-text="'Accès multi-poste, synchronisé'"></span>
+          </div>
+        </div>
+        <a href="login-v2.html?tab=signup" class="ml-btn ml-btn--accent ml-btn--lg" style="margin-bottom: 10px; display: inline-flex;">
+          <span>Créer mon compte gratuit</span>
+          <span class="ml-arrow">→</span>
+        </a>
+        <br>
+        <a href="login-v2.html" class="ml-btn ml-btn--ghost ml-btn--sm" style="margin-top: 8px;">
+          <span>J'ai déjà un compte</span>
+        </a>
+      </div>
+    </div>
+
+    <div x-show="!isGuest" class="ml-mw-lg">
+
+      <!-- Budget summary band -->
+      <div x-show="dossiers.length > 0" class="ml-card ml-card--ink" style="margin-bottom: 20px; padding: 28px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <div>
+          <div class="ml-total__small" x-text="t('dossiers_budget')"></div>
+          <div style="font-weight: 600; font-size: 36px; letter-spacing: -0.04em; margin-top: 6px; line-height: 1; display: flex; align-items: baseline; gap: 8px;">
+            <span x-text="fmt(dossiersBudget())" style="font-variant-numeric: tabular-nums;"></span>
+            <span class="ml-mono" style="font-size: 14px; opacity: 0.5; font-weight: 400;">MAD</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+          <div class="ml-chip" style="background: rgba(61,214,140,0.15); color: #3dd68c; border-color: rgba(61,214,140,0.25);">
+            <span class="ml-chip__dot" style="background: #3dd68c;"></span>
+            <span x-text="filteredDossiers().length"></span>
+            <span x-show="filteredDossiers().length !== dossiers.length" class="ml-mono" style="opacity: 0.5;"> / <span x-text="dossiers.length"></span></span>
+            &nbsp;<span x-text="t('dossiers_count')"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Toolbar : recherche + filtres + tri ───────────────────── -->
+      <div x-show="dossiers.length > 0"
+        style="margin-bottom: 20px; background: var(--ml-card); border: 1px solid var(--ml-line-strong); border-radius: var(--r); overflow: hidden; box-shadow: var(--sh-sm);">
+
+        <!-- Ligne 1 · Recherche ──────────────────────────────────── -->
+        <div style="display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid var(--ml-line);">
+          <!-- Icône loupe -->
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" style="flex-shrink:0; color: var(--ml-ink-faint);">
+            <circle cx="6.5" cy="6.5" r="4.5"/><path d="M13 13l-3-3"/>
+          </svg>
+
+          <!-- Input -->
+          <input type="text" x-model="dossierSearch"
+            :placeholder="t('dossier_search_ph')"
+            style="flex: 1; border: none; background: transparent; padding: 14px 0; font-size: 14px; color: var(--ml-ink); outline: none; font-family: inherit; min-width: 0;">
+
+          <!-- Compteur résultats (si recherche active) -->
+          <span x-show="dossierSearch"
+            class="ml-mono"
+            style="font-size: 11px; color: var(--ml-ink-faint); white-space: nowrap; flex-shrink: 0;">
+            <span x-text="filteredDossiers().length"></span>
+            <span x-text="' résultat' + (filteredDossiers().length > 1 ? 's' : '')"></span>
+          </span>
+
+          <!-- Clear -->
+          <button x-show="dossierSearch" @click="dossierSearch=''"
+            style="flex-shrink:0; background: var(--ml-bg-2); border: 1px solid var(--ml-line-strong); border-radius: 999px; width: 20px; height: 20px; display: grid; place-items: center; cursor: pointer; color: var(--ml-ink-mute); font-size: 10px; line-height:1; transition: all .15s;"
+            onmouseover="this.style.background='var(--ml-rouge-soft)'; this.style.color='var(--ml-rouge)'"
+            onmouseout="this.style.background='var(--ml-bg-2)'; this.style.color='var(--ml-ink-mute)'">✕</button>
+        </div>
+
+        <!-- Ligne 2 · Filtres + Tri ──────────────────────────────── -->
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; gap: 8px; flex-wrap: wrap;">
+
+          <!-- Filtres statut -->
+          <div style="display: flex; gap: 2px; flex-wrap: wrap;">
+
+            <!-- Tous -->
+            <button @click="dossierStatusFilter='all'"
+              style="height: 30px; padding: 0 11px; border-radius: 7px; border: none; font-size: 12.5px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all .13s; font-family: inherit; white-space: nowrap;"
+              :style="dossierStatusFilter==='all'
+                ? 'background: var(--ml-ink); color: var(--ml-bg);'
+                : 'background: transparent; color: var(--ml-ink-mute);'">
+              <span x-text="t('filter_all')"></span>
+              <span class="ml-mono" style="font-size: 11px; opacity: 0.6;" x-text="statusCount('all')"></span>
+            </button>
+
+            <!-- Brouillon -->
+            <button @click="dossierStatusFilter='draft'"
+              style="height: 30px; padding: 0 11px; border-radius: 7px; border: none; font-size: 12.5px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all .13s; font-family: inherit; white-space: nowrap;"
+              :style="dossierStatusFilter==='draft'
+                ? 'background: var(--ml-bg-2); color: var(--ml-ink); box-shadow: inset 0 0 0 1px var(--ml-line-strong);'
+                : 'background: transparent; color: var(--ml-ink-mute);'">
+              <span style="width:6px; height:6px; border-radius:50%; background: var(--ml-ink-faint); flex-shrink:0;"></span>
+              <span x-text="t('filter_draft')"></span>
+              <span class="ml-mono" style="font-size: 11px; opacity: 0.5;" x-text="statusCount('draft')"></span>
+            </button>
+
+            <!-- En cours -->
+            <button @click="dossierStatusFilter='in_progress'"
+              style="height: 30px; padding: 0 11px; border-radius: 7px; border: none; font-size: 12.5px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all .13s; font-family: inherit; white-space: nowrap;"
+              :style="dossierStatusFilter==='in_progress'
+                ? 'background: var(--ml-ochre-soft); color: var(--ml-ochre); box-shadow: inset 0 0 0 1px rgba(201,122,38,0.25);'
+                : 'background: transparent; color: var(--ml-ink-mute);'">
+              <span style="width:6px; height:6px; border-radius:50%; background: var(--ml-ochre); flex-shrink:0;"></span>
+              <span x-text="t('filter_in_progress')"></span>
+              <span class="ml-mono" style="font-size: 11px; opacity: 0.5;" x-text="statusCount('in_progress')"></span>
+            </button>
+
+            <!-- Clôturé -->
+            <button @click="dossierStatusFilter='closed'"
+              style="height: 30px; padding: 0 11px; border-radius: 7px; border: none; font-size: 12.5px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: all .13s; font-family: inherit; white-space: nowrap;"
+              :style="dossierStatusFilter==='closed'
+                ? 'background: var(--ml-green-soft); color: var(--ml-green); box-shadow: inset 0 0 0 1px rgba(15,77,58,0.18);'
+                : 'background: transparent; color: var(--ml-ink-mute);'">
+              <span style="width:6px; height:6px; border-radius:50%; background: var(--ml-green); flex-shrink:0;"></span>
+              <span x-text="t('filter_closed')"></span>
+              <span class="ml-mono" style="font-size: 11px; opacity: 0.5;" x-text="statusCount('closed')"></span>
+            </button>
+          </div>
+
+          <!-- Séparateur vertical -->
+          <div style="width: 1px; height: 20px; background: var(--ml-line-strong); flex-shrink:0;"></div>
+
+          <!-- Tri inline -->
+          <div style="display: flex; align-items: center; gap: 6px; flex-shrink:0;">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color: var(--ml-ink-faint); flex-shrink:0;">
+              <path d="M1 3h11M3 6.5h7M5 10h3"/>
+            </svg>
+            <select x-model="dossierSort"
+              style="border: none; background: transparent; font-size: 12.5px; font-weight: 500; color: var(--ml-ink-mute); cursor: pointer; outline: none; font-family: inherit; padding: 0; max-width: 110px;">
+              <option value="recent" x-text="t('sort_recent')"></option>
+              <option value="old" x-text="t('sort_old')"></option>
+              <option value="amount" x-text="t('sort_amount')"></option>
+              <option value="name" x-text="t('sort_name')"></option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div x-show="loadingDossiers" class="ml-center ml-mute" style="padding: 40px;">⏳</div>
+
+      <!-- Empty state -->
+      <div x-show="!loadingDossiers && dossiers.length === 0" class="ml-card ml-card--lg ml-center" style="padding: 56px 32px;">
+        <div style="font-size: 44px; margin-bottom: 16px; opacity: 0.4;">📁</div>
+        <h3 class="ml-h3" style="margin-bottom: 8px;" x-text="t('dossiers_empty_title')"></h3>
+        <p class="ml-mute" style="font-size: 14px; max-width: 38ch; margin: 0 auto 24px;" x-text="t('dossiers_empty_sub')"></p>
+        <button @click="activeTab='calc'; wizardStep=1" class="ml-btn ml-btn--primary" x-text="t('dossiers_empty_cta')"></button>
+      </div>
+
+      <!-- Aucun résultat (filtres) -->
+      <div x-show="!loadingDossiers && dossiers.length > 0 && filteredDossiers().length === 0"
+        class="ml-card ml-center ml-mute" style="padding: 40px; font-size: 14px;"
+        x-text="t('dossiers_no_match')"></div>
+
+      <!-- Dossiers list -->
+      <div x-show="!loadingDossiers && filteredDossiers().length > 0" class="ml-stack" style="gap: 8px;">
+        <template x-for="d in filteredDossiers()" :key="d.id">
+          <div class="ml-card ml-card--hover"
+            style="padding: 18px 22px; display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; border: 1px solid var(--ml-line); box-shadow: none; transition: border-color .15s, transform .15s, box-shadow .15s;">
+            <div style="min-width: 0;">
+              <!-- Header : nom + statut -->
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                <span style="font-weight: 600; font-size: 15px; letter-spacing: -0.01em;" x-text="d.nom_salarie || t('dossier_unnamed')"></span>
+                <button @click="cycleDossierStatus(d)"
+                  class="ml-chip"
+                  :style="d.status==='closed'
+                    ? 'background: var(--ml-green-soft); color: var(--ml-green); border-color: transparent; cursor:pointer;'
+                    : d.status==='in_progress'
+                    ? 'background: var(--ml-ochre-soft); color: var(--ml-ochre); border-color: transparent; cursor:pointer;'
+                    : 'cursor:pointer;'"
+                  x-text="dossierStatusLabel(d.status)"></button>
+              </div>
+              <!-- Méta -->
+              <div class="ml-mono" style="display: flex; gap: 8px; flex-wrap: wrap; font-size: 11px; color: var(--ml-ink-faint); align-items: center;">
+                <span x-show="d.poste" x-text="d.poste" style="color: var(--ml-ink-mute);"></span>
+                <span x-show="d.poste" style="opacity:0.4;">·</span>
+                <span x-text="t('label_'+d.type)"></span>
+                <span style="opacity:0.4;">·</span>
+                <span x-text="d.seniority + ' ans'"></span>
+                <span style="opacity:0.4;">·</span>
+                <span x-text="dossierDate(d)"></span>
+                <template x-if="d.ref">
+                  <span style="display:contents;">
+                    <span style="opacity:0.4;">·</span>
+                    <span style="background: var(--ml-bg-2); padding: 1px 7px; border-radius: 4px;" x-text="d.ref"></span>
+                  </span>
+                </template>
+              </div>
+              <!-- Montant -->
+              <div style="margin-top: 10px; display: flex; align-items: baseline; gap: 5px;">
+                <span style="font-weight: 700; font-size: 22px; color: var(--ml-green); letter-spacing: -0.03em; font-variant-numeric: tabular-nums;" x-text="fmt(d.total)"></span>
+                <span class="ml-mono" style="font-size: 11px; color: var(--ml-ink-faint); font-weight: 400;">MAD</span>
+              </div>
+            </div>
+            <!-- Actions -->
+            <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-end;">
+              <button @click="restoreDossier(d)" class="ml-btn ml-btn--sm ml-btn--primary" x-text="t('dossier_open')"></button>
+              <button @click="deleteDossier(d.id)" class="ml-btn ml-btn--ghost ml-btn--sm"
+                style="color: var(--ml-rouge); font-size: 11.5px; height: 28px; padding: 0 10px;">
+                <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2.5 4h9M5 4V2.5h4V4M5.5 6.5v4M8.5 6.5v4M3.5 4l.5 8a1 1 0 001 1h4a1 1 0 001-1l.5-8"/>
+                </svg>
+                <span>Suppr.</span>
+              </button>
+            </div>
+          </div>
+        </template>
+      </div>
+
+    </div><!-- /!isGuest -->
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TAB · PROCÉDURE
+  ══════════════════════════════════════════ -->
+  <div x-show="activeTab==='procedure'" x-cloak class="ml-fadein">
+    <div class="ml-section__head">
+      <p class="ml-eyebrow"><span x-text="t('procedure_sub')"></span></p>
+      <h2 class="ml-h2"><span x-text="t('procedure_title_pre')"></span> <em x-text="t('procedure_title_em')"></em></h2>
+    </div>
+
+    <!-- Bannière délégué dans procédure -->
+    <div x-show="form.isDelegate" class="ml-mw-lg" style="margin-bottom: 16px;">
+      <div class="ml-delegate-banner">
+        <span style="font-size: 22px;">🛡️</span>
+        <div>
+          <p class="ml-delegate-title" x-text="t('delegate_warning_title')"></p>
+          <p class="ml-delegate-body" x-text="t('delegate_warning_body')"></p>
+          <p class="ml-delegate-ref">Art. 457-470 — Loi 65-99</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="ml-mw-lg ml-stack" style="gap: 12px; margin-bottom: 48px;">
+      <template x-for="(step, i) in procedureSteps()" :key="i">
+        <div class="ml-proc-step" :class="step.delegate ? 'ml-proc-step--delegate' : ''">
+          <div class="ml-proc-step__num" x-text="i+1"></div>
+          <div>
+            <div class="ml-proc-step__title">
+              <h4 x-text="step.title"></h4>
+              <span x-show="step.badge"
+                :class="step.delegate ? 'ml-chip ml-chip--ochre' : 'ml-chip ml-chip--green'"
+                x-text="step.badge"></span>
+            </div>
+            <p class="ml-proc-step__desc" x-text="step.desc"></p>
+            <div x-show="step.warning" class="ml-proc-step__warning">
+              <span>⚠</span><span x-text="step.warning"></span>
+            </div>
+            <p x-show="step.ref" class="ml-proc-step__ref" x-text="step.ref"></p>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Préavis table -->
+    <div class="ml-mw-lg">
+      <div class="ml-card ml-card--lg">
+        <h3 class="ml-h3" style="margin-bottom: 18px;" x-text="t('preavis_title')"></h3>
+        <table class="ml-table">
+          <thead>
+            <tr>
+              <th x-text="t('preavis_cat')"></th>
+              <th x-text="t('preavis_less1')"></th>
+              <th x-text="t('preavis_1_5')"></th>
+              <th x-text="t('preavis_more5')"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td x-text="t('cadre')"></td>
+              <td class="ml-table__green" x-text="t('1mois')"></td>
+              <td class="ml-table__green" x-text="t('2mois')"></td>
+              <td class="ml-table__green" x-text="t('3mois')"></td>
+            </tr>
+            <tr>
+              <td x-text="t('employe')"></td>
+              <td class="ml-table__green" x-text="t('8jours')"></td>
+              <td class="ml-table__green" x-text="t('1mois')"></td>
+              <td class="ml-table__green" x-text="t('2mois')"></td>
+            </tr>
+            <tr>
+              <td x-text="t('ouvrier')"></td>
+              <td class="ml-table__green" x-text="t('8jours')"></td>
+              <td class="ml-table__green" x-text="t('8jours')"></td>
+              <td class="ml-table__green" x-text="t('1mois')"></td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="ml-faint ml-mono" style="font-size: 11px; margin-top: 14px;" x-text="t('preavis_ref')"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TAB · TYPES
+  ══════════════════════════════════════════ -->
+  <div x-show="activeTab==='types'" x-cloak class="ml-fadein">
+    <div class="ml-section__head">
+      <p class="ml-eyebrow"><span x-text="t('app_sub')"></span></p>
+      <h2 class="ml-h2"><span x-text="t('types_title_pre')"></span> <em x-text="t('types_title_em')"></em></h2>
+    </div>
+
+    <div class="ml-grid-2" style="gap: 16px; margin-bottom: 32px;">
+      <template x-for="type in dismissalTypes()" :key="type.id">
+        <article class="ml-type" :style="`border-top-color: ${type.color}`">
+          <div class="ml-type__head">
+            <div class="ml-type__icon" :style="`background: ${type.color}22; color: ${type.color}`" x-text="type.icon"></div>
+            <div>
+              <span class="ml-chip" :style="`background: ${type.color}22; color: ${type.color}; border-color: transparent;`" x-text="type.badge"></span>
+              <h3 class="ml-type__title" style="margin-top: 8px;" x-text="type.title"></h3>
+            </div>
+          </div>
+          <p class="ml-type__desc" x-text="type.desc"></p>
+          <ul class="ml-type__list">
+            <template x-for="item in type.points" :key="item">
+              <li x-text="item"></li>
+            </template>
+          </ul>
+          <div x-show="type.warning" class="ml-type__warning" x-text="type.warning"></div>
+          <p class="ml-type__ref" x-text="type.ref"></p>
+        </article>
+      </template>
+    </div>
+
+    <!-- Fautes graves -->
+    <div class="ml-card ml-card--lg">
+      <h3 class="ml-h3" style="margin-bottom: 6px;" x-text="t('fautes_graves_title')"></h3>
+      <p class="ml-faint ml-mono" style="font-size: 11px; margin-bottom: 18px;" x-text="t('fautes_graves_ref')"></p>
+      <div class="ml-grid-2" style="gap: 8px;">
+        <template x-for="f in fautesGraves()" :key="f">
+          <div style="display: flex; align-items: start; gap: 10px; padding: 10px 14px; background: var(--ml-bg-2); border-radius: 8px;">
+            <span style="color: var(--ml-rouge); flex-shrink: 0;">•</span>
+            <span style="font-size: 13px; color: var(--ml-ink-2);" x-text="f"></span>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TAB · RÉFÉRENCES
+  ══════════════════════════════════════════ -->
+  <div x-show="activeTab==='refs'" x-cloak class="ml-fadein">
+    <div class="ml-section__head">
+      <p class="ml-eyebrow"><span x-text="t('app_sub')"></span></p>
+      <h2 class="ml-h2"><span x-text="t('refs_title_pre')"></span> <em x-text="t('refs_title_em')"></em></h2>
+    </div>
+
+    <div class="ml-mw-lg ml-stack" style="gap: 10px; margin-bottom: 36px;">
+      <template x-for="(ref, i) in legalRefs()" :key="ref.article">
+        <div class="ml-ref" :class="openRef===i ? 'is-open' : ''">
+          <button @click="openRef===i ? openRef=null : openRef=i" class="ml-ref__head">
+            <span class="ml-ref__art" x-text="ref.article"></span>
+            <span class="ml-ref__title" x-text="ref.title"></span>
+            <span class="ml-ref__chev">▾</span>
+          </button>
+          <div x-show="openRef===i" x-collapse>
+            <div class="ml-ref__body" x-text="ref.content"></div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Resources -->
+    <div class="ml-mw-lg">
+      <h3 class="ml-h3 ml-center" style="margin-bottom: 18px;" x-text="t('resources_title')"></h3>
+      <div class="ml-grid-3" style="gap: 12px;">
+        <template x-for="r in resources()" :key="r.name">
+          <div class="ml-card ml-card--bordered ml-card--hover" style="padding: 16px; display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 22px;" x-text="r.icon"></span>
+            <div>
+              <p style="font-weight: 500; font-size: 14px; margin: 0;" x-text="r.name"></p>
+              <p class="ml-mute" style="font-size: 12px; margin: 2px 0 0;" x-text="r.desc"></p>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TAB · DATES LÉGALES
+  ══════════════════════════════════════════ -->
+  <div x-show="activeTab==='dates'" x-cloak class="ml-fadein">
+    <div class="ml-section__head">
+      <p class="ml-eyebrow"><span x-text="t('app_sub')"></span></p>
+      <h2 class="ml-h2"><span x-text="t('dates_title_pre')"></span> <em x-text="t('dates_title_em')"></em></h2>
+      <p class="ml-lead ml-center" x-text="t('dates_sub')"></p>
+    </div>
+
+    <div class="ml-mw-md">
+
+      <div class="ml-card ml-card--lg ml-stack">
+
+        <div class="ml-field">
+          <label class="ml-field__label" x-text="t('dates_notif_label')"></label>
+          <input type="date" x-model="dateForm.notifDate" class="ml-input">
+        </div>
+
+        <div class="ml-field">
+          <label class="ml-field__label" x-text="t('dates_type_label')"></label>
+          <div class="ml-grid-2" style="gap: 8px;">
+            <template x-for="opt in dismissalOptions()" :key="opt.value">
+              <button @click="dateForm.type = opt.value"
+                :class="dateForm.type === opt.value ? 'is-selected' : ''"
+                class="ml-option" style="padding: 14px; text-align: center; flex-direction: row; align-items: center; gap: 10px;">
+                <span class="ml-option__icon" style="width: 32px; height: 32px; font-size: 16px;" x-text="opt.icon"></span>
+                <span class="ml-option__label" style="font-size: 13px;" x-text="opt.label"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <div class="ml-field">
+          <label class="ml-field__label" x-text="t('dates_category_label')"></label>
+          <div class="ml-grid-3" style="gap: 8px;">
+            <template x-for="opt in categoryOptions()" :key="opt.value">
+              <button @click="dateForm.category = opt.value"
+                :class="dateForm.category === opt.value ? 'is-selected' : ''"
+                class="ml-option" style="padding: 14px; text-align: center; align-items: center;">
+                <span class="ml-option__icon" x-text="opt.icon"></span>
+                <span class="ml-option__label" style="font-size: 13px;" x-text="opt.label"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <div x-show="dateForm.type !== 'faute_grave'" class="ml-field">
+          <label class="ml-field__label">
+            <span x-text="t('dates_seniority_label')"></span>
+            <span class="ml-mono" style="color: var(--ml-green); margin-inline-start: 6px;" x-text="dateForm.seniority"></span>
+          </label>
+          <input type="range" min="1" max="40" x-model.number="dateForm.seniority" class="ml-range">
+        </div>
+
+        <button @click="calculateDates()"
+          :disabled="!dateForm.notifDate || !dateForm.category"
+          class="ml-btn ml-btn--accent ml-btn--lg ml-btn--block">
+          <span x-text="t('dates_calculate')"></span>
+          <span class="ml-arrow">→</span>
+        </button>
+      </div>
+
+      <!-- Timeline results -->
+      <div x-show="dateResults" style="margin-top: 32px;">
+        <p class="ml-eyebrow" style="margin-bottom: 18px;"><span x-text="t('dates_timeline_title')"></span></p>
+        <div class="ml-card ml-card--lg">
+          <div class="ml-timeline">
+            <template x-if="dateResults">
+              <div>
+                <template x-for="(step, i) in dateResults.steps" :key="i">
+                  <div class="ml-tl-step" :class="step.highlight ? 'ml-tl-step--highlight' : ''">
+                    <div class="ml-tl-step__col">
+                      <div class="ml-tl-step__dot" x-text="step.icon"></div>
+                      <div class="ml-tl-step__line"></div>
+                    </div>
+                    <div class="ml-tl-step__body">
+                      <p class="ml-tl-step__label" x-text="step.label"></p>
+                      <p class="ml-tl-step__date" x-text="step.date"></p>
+                      <span x-show="step.badge"
+                        class="ml-tl-step__badge"
+                        :class="step.badge && step.badge.cls.includes('red') ? 'ml-tl-step__badge--danger' : step.badge && step.badge.cls.includes('amber') ? 'ml-tl-step__badge--warn' : 'ml-tl-step__badge--ok'"
+                        x-text="step.badge ? step.badge.text : ''"></span>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <button @click="dateResults = null; dateForm.notifDate = ''; dateForm.category = null"
+          class="ml-btn ml-btn--ghost ml-btn--block" style="margin-top: 14px;"
+          x-text="t('dates_reset')"></button>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<!-- ════════════ TRIAL WALL MODAL ════════════ -->
+<div x-show="showTrialWall" x-cloak
+  style="position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px;"
+  @keydown.escape.window="showTrialWall = false">
+  <!-- Backdrop -->
+  <div @click="showTrialWall = false"
+    style="position: absolute; inset: 0; background: rgba(13,15,14,0.72); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"></div>
+
+  <!-- Carte modale -->
+  <div class="ml-card ml-card--xl ml-fadein"
+    style="position: relative; max-width: 500px; width: 100%; text-align: center; z-index: 1; padding: 44px 40px;">
+
+    <!-- Logo mark -->
+    <div style="width: 60px; height: 60px; border-radius: 18px; background: var(--ml-green); color: #f6f3ec; display: grid; place-items: center; font-family: var(--f-sans); font-weight: 700; font-size: 20px; letter-spacing: -0.02em; margin: 0 auto 22px;">IP</div>
+
+    <!-- Titre -->
+    <h2 class="ml-h2" style="margin-bottom: 10px;" x-text="'Vos 2 essais gratuits sont utilisés'"></h2>
+    <p class="ml-lead ml-center" style="font-size: 15px; margin: 0 auto 28px; max-width: 36ch;"
+      x-text="'Créez votre compte gratuit pour sauvegarder vos dossiers et les retrouver depuis n\'importe quel poste.'">
+    </p>
+
+    <!-- Avantages -->
+    <div style="display: flex; flex-direction: column; gap: 9px; margin-bottom: 28px; text-align: start;">
+      <template x-for="benefit in [
+        'Calculs illimités + dossiers persistants',
+        'PDF horodaté généré à votre nom',
+        'Accès depuis n\'importe quel poste',
+        '100 % gratuit — sans carte bancaire'
+      ]" :key="benefit">
+        <div style="display: flex; gap: 10px; align-items: center; padding: 11px 15px; background: var(--ml-green-soft); border-radius: 10px;">
+          <span style="color: var(--ml-green); font-weight: 700; flex-shrink: 0; font-size: 13px;">✓</span>
+          <span style="font-size: 13.5px; color: var(--ml-ink-2);" x-text="benefit"></span>
+        </div>
+      </template>
+    </div>
+
+    <!-- CTA principal -->
+    <a :href="'login-v2.html?tab=signup'" class="ml-btn ml-btn--accent ml-btn--lg ml-btn--block" style="margin-bottom: 10px; text-decoration: none;">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+        <path d="M7.5 1a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM1.5 14a6 6 0 0 1 12 0"/>
+      </svg>
+      <span>Créer mon compte gratuit — 30 sec</span>
+      <span class="ml-arrow">→</span>
+    </a>
+
+    <!-- CTA secondaire -->
+    <a href="login-v2.html" class="ml-btn ml-btn--ghost ml-btn--block" style="text-decoration: none;">
+      <span>J'ai déjà un compte — Se connecter</span>
+    </a>
+
+    <!-- Bouton fermer (pour voir les résultats déjà calculés) -->
+    <button @click="showTrialWall = false"
+      style="position: absolute; top: 14px; inset-inline-end: 14px; width: 28px; height: 28px; border-radius: 999px; border: 1px solid var(--ml-line-strong); background: var(--ml-bg-2); color: var(--ml-ink-mute); display: grid; place-items: center; cursor: pointer; font-size: 13px; transition: all .15s;"
+      title="Fermer">✕</button>
+
+  </div>
+</div>
+
+<!-- ════════════ FOOTER ════════════ -->
+<footer class="no-print" style="border-top: 1px solid var(--ml-line); padding: 28px 0; margin-top: 32px;">
+  <div class="ml-wrap ml-center">
+    <p class="ml-mute" style="font-size: 12.5px; margin: 0;" x-text="t('footer')"></p>
+  </div>
+</footer>
+
+<!-- jsPDF + AutoTable — génération PDF côté client -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.31/dist/jspdf.plugin.autotable.min.js"></script>
+<script src="app.js?v=23"></script>
+</body>
+</html>

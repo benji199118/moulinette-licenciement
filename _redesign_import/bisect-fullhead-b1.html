@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html x-data="app()" dir="ltr" lang="fr" :class="darkMode ? 'dark' : ''" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IndemnPro | Loi 65-99</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Supabase CDN — doit charger AVANT auth.js et Alpine -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3/dist/cdn.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+<style>
+/* ════════════════════════════════════════════════════════════════
+   INDEMNPRO V2 — DESIGN SYSTEM
+   Calm, precise, fintech-grade. Paper white + deep green + ochre.
+   Type: Archivo (grotesque) + IBM Plex Mono (numerals, legal refs)
+   ════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Surfaces */
+  --ml-bg:         #f7f6f2;
+  --ml-bg-2:       #efede6;
+  --ml-card:       #ffffff;
+
+  /* Ink hierarchy */
+  --ml-ink:        #131614;
+  --ml-ink-2:      #3a3f3c;
+  --ml-ink-mute:   #6f746e;
+  --ml-ink-faint:  #a3a79f;
+
+  /* Lines */
+  --ml-line:        rgba(19, 22, 20, 0.08);
+  --ml-line-strong: rgba(19, 22, 20, 0.16);
+
+  /* Accents */
+  --ml-green:      #14563f;
+  --ml-green-2:    #1d7154;
+  --ml-green-soft: #e4ede7;
+  --ml-green-ring: rgba(20, 86, 63, 0.14);
+  --ml-ochre:      #b57722;
+  --ml-ochre-soft: #f5e8ce;
+  --ml-rouge:      #b23a2a;
+  --ml-rouge-soft: #f6ddd7;
+
+  /* Deep green surface (total card) */
+  --ml-deep-1:     #123f2f;
+  --ml-deep-2:     #0c2b20;
+
+  /* Radius */
+  --r-sm: 10px;
+  --r:    14px;
+  --r-lg: 20px;
+
+  /* Shadow — hairline ring + soft ambient (Stripe-style) */
+  --sh-sm: 0 1px 2px rgba(19,22,20,.04);
+  --sh:    0 1px 2px rgba(19,22,20,.03), 0 10px 30px -12px rgba(19,22,20,.14);
+  --sh-lg: 0 2px 4px rgba(19,22,20,.04), 0 28px 64px -24px rgba(19,22,20,.28);
+
+  /* Fonts */
+  --f-serif: "Archivo", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --f-sans:  "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --f-mono:  "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+/* ── Dark mode — deep green-black, not inverted ─────────────────── */
+.dark {
+  --ml-bg:         #0c0e0d;
+  --ml-bg-2:       #131615;
+  --ml-card:       #181c1a;
+  --ml-ink:        #eceae3;
+  --ml-ink-2:      #c4c2ba;
+  --ml-ink-mute:   #8d918b;
+  --ml-ink-faint:  #5e625d;
+  --ml-line:        rgba(236, 234, 227, 0.07);
+  --ml-line-strong: rgba(236, 234, 227, 0.14);
+  --ml-green:      #46c78e;
+  --ml-green-2:    #5fd8a1;
+  --ml-green-soft: rgba(70, 199, 142, 0.12);
+  --ml-green-ring: rgba(70, 199, 142, 0.20);
+  --ml-ochre:      #e3a558;
+  --ml-ochre-soft: rgba(227, 165, 88, 0.13);
+  --ml-rouge:      #ef7a67;
+  --ml-rouge-soft: rgba(239, 122, 103, 0.13);
+  --ml-deep-1:     #17342a;
+  --ml-deep-2:     #0e2018;
+  --sh-sm: 0 1px 2px rgba(0,0,0,.3);
+  --sh:    0 1px 2px rgba(0,0,0,.3), 0 12px 32px -12px rgba(0,0,0,.5);
+  --sh-lg: 0 2px 4px rgba(0,0,0,.35), 0 32px 72px -24px rgba(0,0,0,.65);
+}
+
+/* Budget band (dossiers) — premium dark card */
+.dark .ml-card--ink {
+  background: linear-gradient(150deg, #173428 0%, #10231b 100%);
+  border: 1px solid rgba(70,199,142,0.16);
+  box-shadow: 0 0 0 1px rgba(70,199,142,0.06), 0 12px 36px -12px rgba(0,0,0,.5);
+  color: var(--ml-ink);
+}
+.dark .ml-card--ink .ml-total__small { color: rgba(70,199,142,0.75); }
+.dark .ml-card--ink .ml-mute { color: var(--ml-ink-mute); }
+
+.dark .ml-input {
+  background: var(--ml-bg-2);
+  border-color: var(--ml-line-strong);
+  color: var(--ml-ink);
+}
+.dark .ml-input:focus {
+  border-color: var(--ml-green);
+  box-shadow: 0 0 0 3px var(--ml-green-ring);
+  background: #151a17;
+}
+.dark select.ml-input { background: var(--ml-bg-2); color: var(--ml-ink); }
+.dark .ml-chip { border-color: var(--ml-line-strong); }
+.dark .ml-card--hover:hover {
+  box-shadow: 0 0 0 1px rgba(70,199,142,0.22), 0 14px 36px -10px rgba(0,0,0,.55);
+  transform: translateY(-2px);
+}
+.dark .ml-card { background: var(--ml-card); border: 1px solid var(--ml-line); }
+
+/* Total card (hero résultats) — dark: deep green glass */
+.dark .ml-total {
+  background: linear-gradient(150deg, #17342a 0%, #0e2018 100%);
+  border: 1px solid rgba(70,199,142,0.2);
+}
+.dark .ml-total__small { color: rgba(70,199,142,0.7); }
+.dark .ml-total__amount { color: #f2f0e9; }
+.dark .ml-total__currency { color: rgba(242,240,233,0.45); }
+.dark .ml-total__tag { background: rgba(242,240,233,0.07); color: rgba(242,240,233,0.75); border: 1px solid rgba(242,240,233,0.08); }
+
+/* ── Resets ────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+[x-cloak] { display: none !important; }
+html { scroll-behavior: smooth; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--ml-bg);
+  color: var(--ml-ink);
+  font-family: var(--f-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+  transition: background .3s, color .3s;
+}
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; }
+input, select, textarea { font: inherit; color: inherit; }
+img, svg { display: block; max-width: 100%; }
+:focus-visible { outline: 2px solid var(--ml-green); outline-offset: 2px; border-radius: 4px; }
+
+/* ── Layout ────────────────────────────────────────────────────── */
+.ml-wrap { max-width: 1140px; margin: 0 auto; padding: 0 32px; }
+@media (max-width: 720px) { .ml-wrap { padding: 0 20px; } }
+
+/* ── Typography ────────────────────────────────────────────────── */
+.ml-eyebrow {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ml-ink-mute);
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.ml-eyebrow::before {
+  content: "";
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--ml-green);
+}
+.ml-display {
+  font-family: var(--f-sans);
+  font-weight: 620;
+  font-size: clamp(30px, 4vw, 46px);
+  line-height: 1.06;
+  letter-spacing: -0.028em;
+  margin: 0;
+  color: var(--ml-ink);
+}
+.ml-display em { font-style: normal; font-weight: 620; color: var(--ml-green); }
+.ml-h2 {
+  font-family: var(--f-sans);
+  font-weight: 620;
+  font-size: clamp(24px, 3vw, 34px);
+  line-height: 1.12;
+  letter-spacing: -0.022em;
+  margin: 0;
+  color: var(--ml-ink);
+}
+.ml-h2 em { font-style: normal; font-weight: 620; color: var(--ml-green); }
+.ml-h3 {
+  font-family: var(--f-sans);
+  font-weight: 560;
+  font-size: 19px;
+  letter-spacing: -0.012em;
+  margin: 0;
+  color: var(--ml-ink);
+}
+.ml-lead {
+  font-size: 16.5px;
+  line-height: 1.6;
+  color: var(--ml-ink-mute);
+  margin: 0;
+  max-width: 58ch;
+}
+.ml-mono { font-family: var(--f-mono); font-feature-settings: "tnum"; }
+.ml-num { font-variant-numeric: tabular-nums; }
+.ml-mute { color: var(--ml-ink-mute); }
+.ml-faint { color: var(--ml-ink-faint); }
+.ml-serif { font-family: var(--f-serif); }
+
+/* ── Buttons ───────────────────────────────────────────────────── */
+.ml-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 10px;
+  border: 1px solid var(--ml-line-strong);
+  background: var(--ml-card);
+  color: var(--ml-ink);
+  font-weight: 540;
+  font-size: 14.5px;
+  letter-spacing: -0.006em;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease, color .15s, box-shadow .15s;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: var(--sh-sm);
+}
+.ml-btn:hover { border-color: var(--ml-ink-faint); box-shadow: var(--sh); }
+.ml-btn:active { transform: translateY(1px); }
+.ml-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+.ml-btn--primary {
+  background: var(--ml-ink);
+  color: var(--ml-bg);
+  border-color: var(--ml-ink);
+}
+.ml-btn--primary:hover { background: var(--ml-ink-2); border-color: var(--ml-ink-2); }
+.dark .ml-btn--primary { background: var(--ml-ink); color: #10120f; border-color: transparent; }
+.dark .ml-btn--primary:hover { background: #ffffff; }
+.ml-btn--accent {
+  background: var(--ml-green);
+  color: #f4f7f4;
+  border-color: var(--ml-green);
+  box-shadow: 0 1px 2px rgba(19,22,20,.1), inset 0 1px 0 rgba(255,255,255,.08);
+}
+.ml-btn--accent:hover { background: var(--ml-green-2); border-color: var(--ml-green-2); }
+.dark .ml-btn--accent { color: #0b1a12; font-weight: 600; }
+.ml-btn--ghost { background: transparent; border-color: transparent; box-shadow: none; }
+.ml-btn--ghost:hover { background: var(--ml-bg-2); border-color: transparent; transform: none; box-shadow: none; }
+.ml-btn--lg { height: 52px; padding: 0 26px; font-size: 15.5px; border-radius: 12px; }
+.ml-btn--sm { height: 34px; padding: 0 14px; font-size: 13px; border-radius: 8px; }
+.ml-btn--icon { height: 38px; width: 38px; padding: 0; border-radius: 10px; }
+.ml-btn--block { width: 100%; }
+
+.ml-arrow { display: inline-block; transition: transform .2s ease; }
+.ml-btn:hover .ml-arrow { transform: translateX(3px); }
+[dir="rtl"] .ml-btn:hover .ml-arrow { transform: translateX(-3px); }
+
+/* ── Chip / Badge ──────────────────────────────────────────────── */
+.ml-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--ml-card);
+  border: 1px solid var(--ml-line);
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ml-ink-2);
+  white-space: nowrap;
+}
+.ml-chip--green { background: var(--ml-green-soft); border-color: transparent; color: var(--ml-green); }
+.ml-chip--ochre { background: var(--ml-ochre-soft); border-color: transparent; color: #6e4a12; }
+.dark .ml-chip--ochre { color: var(--ml-ochre); }
+.ml-chip--rouge { background: var(--ml-rouge-soft); border-color: transparent; color: var(--ml-rouge); }
+.ml-chip--ink   { background: var(--ml-ink); border-color: transparent; color: var(--ml-bg); }
+.ml-chip__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.7; }
+
+/* ── Nav ───────────────────────────────────────────────────────── */
+.ml-nav {
+  position: sticky; top: 0; z-index: 50;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  background: color-mix(in srgb, var(--ml-bg) 84%, transparent);
+  border-bottom: 1px solid var(--ml-line);
+}
+.ml-nav__inner {
+  display: flex; align-items: center; gap: 24px;
+  padding: 14px 0;
+}
+.ml-logo {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-weight: 560; letter-spacing: -0.02em;
+  font-size: 15.5px;
+  color: var(--ml-ink);
+}
+.ml-logo__mark {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: var(--ml-green); color: #f4f7f4;
+  display: grid; place-items: center;
+  font-family: var(--f-sans);
+  font-weight: 700; font-size: 11px; line-height: 1;
+  letter-spacing: -0.01em;
+}
+.dark .ml-logo__mark { color: #0b1a12; }
+.ml-logo__sub { color: var(--ml-ink-faint); font-weight: 400; font-size: 12px; }
+.ml-nav__spacer { flex: 1; }
+.ml-nav__right { display: flex; align-items: center; gap: 8px; }
+
+/* Language toggle */
+.ml-lang {
+  display: inline-flex; align-items: center;
+  border: 1px solid var(--ml-line-strong);
+  border-radius: 999px;
+  padding: 3px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+.ml-lang button {
+  border: 0; background: transparent; color: var(--ml-ink-mute);
+  padding: 5px 12px; border-radius: 999px; cursor: pointer;
+  transition: all .15s;
+  font-family: var(--f-mono);
+}
+.ml-lang button.is-active { background: var(--ml-ink); color: var(--ml-bg); }
+
+/* Theme toggle — quiet pill */
+.ml-theme {
+  position: relative;
+  width: 68px; height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--ml-line-strong);
+  background: var(--ml-bg-2);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: box-shadow .2s ease, transform .15s ease, background .25s ease, border-color .25s;
+}
+.dark .ml-theme { background: var(--ml-card); border-color: var(--ml-line-strong); }
+.ml-theme:hover { box-shadow: 0 0 0 3px var(--ml-green-ring); }
+.ml-theme:active { transform: scale(0.96); }
+.ml-theme__knob {
+  position: absolute;
+  left: 3px; top: 3px;
+  width: 28px; height: 28px;
+  border-radius: 999px;
+  background: var(--ml-card);
+  border: 1px solid var(--ml-line-strong);
+  box-shadow: 0 1px 3px rgba(19,22,20,.15);
+  transition: left .32s cubic-bezier(.34,1.4,.64,1), background .25s;
+  pointer-events: none;
+  z-index: 1;
+}
+.dark .ml-theme__knob { background: #232825; }
+.ml-theme.is-dark .ml-theme__knob { left: calc(100% - 31px); }
+.ml-theme__icon {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  z-index: 2;
+  transition: color .25s ease, opacity .25s ease;
+}
+.ml-theme:not(.is-dark) .ml-theme__sun { color: var(--ml-ochre); }
+.ml-theme:not(.is-dark) .ml-theme__moon { color: var(--ml-ink-faint); }
+.ml-theme.is-dark .ml-theme__sun { color: var(--ml-ink-faint); }
+.ml-theme.is-dark .ml-theme__moon { color: var(--ml-green); }
+
+/* User pill */
+.ml-user-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--ml-line-strong);
+  background: var(--ml-card);
+}
+.ml-user-pill__avatar {
+  width: 28px; height: 28px;
+  border-radius: 999px;
+  background: var(--ml-green);
+  color: #f4f7f4;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 600;
+  flex-shrink: 0;
+}
+.dark .ml-user-pill__avatar { color: #0b1a12; }
+.ml-user-pill__email {
+  font-size: 11.5px;
+  color: var(--ml-ink-mute);
+  letter-spacing: 0;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 640px) { .ml-user-pill__email { display: none; } }
+.ml-user-pill__logout {
+  background: none;
+  border: none;
+  width: 24px; height: 24px;
+  border-radius: 999px;
+  display: grid; place-items: center;
+  cursor: pointer;
+  color: var(--ml-ink-faint);
+  font-size: 11px;
+  font-family: var(--f-sans);
+  font-weight: 600;
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.ml-user-pill__logout:hover { background: var(--ml-rouge-soft); color: var(--ml-rouge); }
+
+/* Tabs — underline style, quieter than pills */
+.ml-tabs {
+  display: flex; gap: 2px;
+  padding: 2px 0 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ml-tabs::-webkit-scrollbar { display: none; }
+.ml-tab {
+  padding: 10px 14px 12px;
+  border-radius: 0;
+  font-size: 13.5px; font-weight: 520;
+  color: var(--ml-ink-mute);
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer; transition: color .15s, border-color .15s;
+  white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 7px;
+  margin-bottom: -1px;
+}
+.ml-tab:hover { color: var(--ml-ink); }
+.ml-tab.is-active { background: transparent; color: var(--ml-ink); border-bottom-color: var(--ml-green); font-weight: 600; }
+.ml-tab__icon { font-size: 14px; filter: grayscale(1) contrast(0.6); opacity: .75; }
+.ml-tab.is-active .ml-tab__icon { filter: none; opacity: 1; }
+
+/* ── Cards ─────────────────────────────────────────────────────── */
+.ml-card {
+  background: var(--ml-card);
+  border-radius: var(--r);
+  border: 1px solid var(--ml-line);
+  box-shadow: var(--sh-sm);
+  padding: 24px;
+  transition: box-shadow .2s, transform .2s, border-color .15s;
+}
+.ml-card--lg { padding: 32px; }
+.ml-card--xl { padding: 40px; }
+.ml-card--bordered { box-shadow: none; border: 1px solid var(--ml-line); }
+.ml-card--hover:hover { box-shadow: var(--sh); transform: translateY(-2px); }
+.ml-card--ink { background: linear-gradient(150deg, var(--ml-deep-1), var(--ml-deep-2)); color: #f2f0e9; border-color: transparent; }
+.ml-card--ink .ml-mute { color: rgba(242,240,233,0.6); }
+
+/* ── Wizard progress ───────────────────────────────────────────── */
+.ml-progresswrap { max-width: 460px; margin: 0 auto 44px; }
+.ml-progress__meta {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 12px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ml-ink-mute);
+}
+.ml-progress__meta strong { color: var(--ml-green); font-weight: 600; }
+.ml-progress {
+  display: flex; align-items: center; gap: 0;
+}
+.ml-progress__step {
+  width: 34px; height: 34px;
+  border-radius: 999px;
+  display: grid; place-items: center;
+  font-family: var(--f-mono);
+  font-size: 12.5px; font-weight: 500;
+  background: var(--ml-card);
+  color: var(--ml-ink-faint);
+  border: 1px solid var(--ml-line-strong);
+  flex-shrink: 0;
+  transition: all .25s;
+}
+.ml-progress__step.is-current {
+  background: var(--ml-card);
+  color: var(--ml-green);
+  border: 2px solid var(--ml-green);
+  box-shadow: 0 0 0 4px var(--ml-green-ring);
+  font-weight: 600;
+}
+.ml-progress__step.is-done { background: var(--ml-green); color: #f4f7f4; border-color: var(--ml-green); }
+.dark .ml-progress__step.is-done { color: #0b1a12; }
+.ml-progress__line {
+  flex: 1; height: 2px;
+  border-radius: 2px;
+  background: var(--ml-line-strong);
+  transition: background .25s;
+}
+.ml-progress__line.is-done { background: var(--ml-green); }
+
+/* ── Step option (wizard choice cards) ─────────────────────────── */
+.ml-option {
+  background: var(--ml-card);
+  border: 1px solid var(--ml-line-strong);
+  border-radius: var(--r);
+  padding: 20px;
+  cursor: pointer;
+  transition: all .15s;
+  text-align: start;
+  width: 100%;
+  font-family: inherit;
+  color: inherit;
+  display: flex; flex-direction: column; gap: 10px;
+  position: relative;
+  box-shadow: var(--sh-sm);
+}
+.ml-option:hover { border-color: var(--ml-green); box-shadow: 0 0 0 1px var(--ml-green), var(--sh); }
+.ml-option.is-selected {
+  border-color: var(--ml-green);
+  background: var(--ml-green-soft);
+  box-shadow: 0 0 0 1px var(--ml-green);
+}
+.ml-option__icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: var(--ml-bg-2);
+  display: grid; place-items: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.ml-option.is-selected .ml-option__icon { background: var(--ml-card); }
+.ml-option__label { font-size: 15.5px; font-weight: 560; color: var(--ml-ink); letter-spacing: -0.01em; }
+.ml-option__desc  { font-size: 13px; color: var(--ml-ink-mute); line-height: 1.5; }
+
+/* ── Forms ─────────────────────────────────────────────────────── */
+.ml-field { display: flex; flex-direction: column; gap: 7px; }
+.ml-field__label {
+  font-family: var(--f-sans);
+  font-size: 12.5px;
+  font-weight: 560;
+  letter-spacing: 0.01em;
+  color: var(--ml-ink-2);
+}
+.ml-input {
+  padding: 12px 14px;
+  border: 1px solid var(--ml-line-strong);
+  border-radius: var(--r-sm);
+  font-size: 15px;
+  color: var(--ml-ink);
+  background: var(--ml-card);
+  width: 100%;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  font-family: inherit;
+  box-shadow: var(--sh-sm);
+}
+.ml-input:hover { border-color: var(--ml-ink-faint); }
+.ml-input:focus { border-color: var(--ml-green); box-shadow: 0 0 0 3px var(--ml-green-ring); }
+.ml-input--center { text-align: center; font-weight: 500; }
+.ml-input--lg {
+  font-size: 32px;
+  padding: 20px 76px 20px 24px;
+  font-weight: 640;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--f-sans);
+  border-radius: 14px;
+  border-width: 1.5px;
+  background: var(--ml-card);
+  color: var(--ml-ink);
+}
+.ml-input--lg:focus {
+  border-color: var(--ml-green);
+  box-shadow: 0 0 0 4px var(--ml-green-ring);
+}
+.ml-input--lg::-webkit-inner-spin-button,
+.ml-input--lg::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.ml-input--lg { -moz-appearance: textfield; }
+.ml-input--accent {
+  background: var(--ml-green-soft); color: var(--ml-green);
+  border-color: transparent; font-weight: 500;
+}
+
+/* Range slider */
+.ml-range {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 5px;
+  border-radius: 999px;
+  background: var(--ml-line-strong);
+  outline: none;
+}
+.ml-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 24px; height: 24px;
+  border-radius: 999px;
+  background: var(--ml-green);
+  border: 3px solid var(--ml-card);
+  box-shadow: 0 1px 4px rgba(19,22,20,.25);
+  cursor: pointer;
+  transition: transform .15s;
+}
+.ml-range::-webkit-slider-thumb:hover { transform: scale(1.12); }
+.ml-range::-moz-range-thumb {
+  width: 20px; height: 20px;
+  border-radius: 999px;
+  background: var(--ml-green);
+  cursor: pointer; border: 3px solid var(--ml-card);
+}
+
+/* ── Result: amount lines ──────────────────────────────────────── */
+.ml-amount {
+  display: grid; grid-template-columns: 1fr auto;
+  gap: 16px; align-items: center;
+  padding: 20px 24px;
+  border-radius: var(--r);
+  background: var(--ml-card);
+  border: 1px solid var(--ml-line);
+  box-shadow: var(--sh-sm);
+}
+.ml-amount__label { font-size: 15px; color: var(--ml-ink); font-weight: 560; letter-spacing: -0.01em; }
+.ml-amount__sub   { font-size: 12.5px; color: var(--ml-ink-mute); margin-top: 3px; }
+.ml-amount__formula {
+  font-family: var(--f-mono);
+  font-size: 11.5px;
+  color: var(--ml-ink-faint);
+  margin-top: 6px;
+}
+.ml-amount__value {
+  font-family: var(--f-sans);
+  font-size: 24px;
+  font-weight: 640;
+  letter-spacing: -0.02em;
+  color: var(--ml-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ml-amount__value--accent { color: var(--ml-green); }
+.ml-amount__value--blue   { color: #2563eb; }
+.dark .ml-amount__value--blue { color: #7aa8f7; }
+.ml-amount__value--rouge  { color: var(--ml-rouge); }
+.ml-amount__value--ochre  { color: #8a5a13; }
+.dark .ml-amount__value--ochre { color: var(--ml-ochre); }
+.ml-amount__icon {
+  width: 34px; height: 34px;
+  border-radius: 9px;
+  background: var(--ml-bg-2);
+  color: var(--ml-ink-2);
+  display: grid; place-items: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.ml-breakdown {
+  margin-top: 14px;
+  padding: 16px 18px;
+  background: var(--ml-bg);
+  border: 1px solid var(--ml-line);
+  border-radius: var(--r-sm);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.dark .ml-breakdown { background: var(--ml-bg-2); }
+.ml-breakdown__row { display: flex; flex-direction: column; gap: 2px; }
+.ml-breakdown__main {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 13px;
+}
+.ml-breakdown__label { color: var(--ml-ink-2); font-weight: 520; }
+.ml-breakdown__amount { font-family: var(--f-mono); color: var(--ml-ink); }
+.ml-breakdown__formula {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--ml-ink-faint);
+}
+.ml-breakdown__head {
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px dashed var(--ml-line-strong);
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ml-ink-mute);
+}
+
+/* Total card (hero) — deep confident green */
+.ml-total {
+  background: linear-gradient(150deg, var(--ml-deep-1) 0%, var(--ml-deep-2) 100%);
+  color: #f2f0e9;
+  border-radius: var(--r-lg);
+  padding: 40px 44px;
+  display: flex; flex-direction: column; gap: 8px;
+  box-shadow: var(--sh-lg);
+  position: relative;
+  overflow: hidden;
+}
+.ml-total::after {
+  content: "";
+  position: absolute; right: -80px; top: -110px;
+  width: 300px; height: 300px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.06), transparent 70%);
+  pointer-events: none;
+}
+.ml-total__small {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(242,240,233,0.55);
+}
+.ml-total__amount {
+  font-family: var(--f-sans);
+  font-weight: 640;
+  font-size: clamp(52px, 8vw, 84px);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+.ml-total__currency {
+  font-family: var(--f-mono);
+  font-size: 18px;
+  color: rgba(242,240,233,0.6);
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.ml-total__tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+.ml-total__tag {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(242,240,233,0.08);
+  border: 1px solid rgba(242,240,233,0.1);
+  color: rgba(242,240,233,0.85);
+}
+
+/* ── Timeline (dates tab) ──────────────────────────────────────── */
+.ml-timeline { display: flex; flex-direction: column; gap: 0; }
+.ml-tl-step {
+  display: grid; grid-template-columns: 56px 1fr; gap: 0;
+  padding: 0;
+  position: relative;
+}
+.ml-tl-step__col { display: flex; flex-direction: column; align-items: center; padding-top: 2px; }
+.ml-tl-step__dot {
+  width: 36px; height: 36px;
+  border-radius: 999px;
+  background: var(--ml-bg-2);
+  display: grid; place-items: center;
+  font-size: 14px;
+  border: 1px solid var(--ml-line);
+  flex-shrink: 0;
+}
+.ml-tl-step__line {
+  width: 2px; flex: 1;
+  border-radius: 2px;
+  background: var(--ml-line-strong);
+  min-height: 28px;
+  margin: 6px 0;
+}
+.ml-tl-step:last-child .ml-tl-step__line { display: none; }
+.ml-tl-step__body { padding: 4px 0 26px; }
+.ml-tl-step__label {
+  font-size: 13px;
+  color: var(--ml-ink-mute);
+  font-weight: 520;
+  margin-bottom: 4px;
+}
+.ml-tl-step__date {
+  font-family: var(--f-sans);
+  font-weight: 620;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+  color: var(--ml-ink);
+  margin-bottom: 8px;
+}
+.ml-tl-step--highlight .ml-tl-step__dot { background: var(--ml-green-soft); border-color: var(--ml-green); }
+.ml-tl-step--highlight .ml-tl-step__date { color: var(--ml-green); }
+.ml-tl-step__badge {
+  display: inline-flex;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+.ml-tl-step__badge--ok    { background: var(--ml-green-soft);  color: var(--ml-green);  border-color: transparent; }
+.ml-tl-step__badge--warn  { background: var(--ml-ochre-soft);  color: #6e4a12; border-color: transparent; }
+.dark .ml-tl-step__badge--warn { color: var(--ml-ochre); }
+.ml-tl-step__badge--danger{ background: var(--ml-rouge-soft);  color: var(--ml-rouge);  border-color: transparent; }
+
+/* ── Salarié protégé / Délégué ─────────────────────────────────── */
+.ml-delegate-warn {
+  margin-top: 14px; padding: 14px 16px;
+  background: var(--ml-ochre-soft); border: 1px solid rgba(181,119,34,.35);
+  border-radius: var(--r-sm); display: flex; gap: 12px; align-items: flex-start;
+}
+.dark .ml-delegate-warn { background: rgba(227,165,88,.1); border-color: rgba(227,165,88,.3); }
+.ml-delegate-banner {
+  padding: 14px 18px;
+  background: var(--ml-ochre-soft); border: 1px solid rgba(181,119,34,.4);
+  border-radius: var(--r-sm); display: flex; gap: 12px; align-items: flex-start;
+}
+.dark .ml-delegate-banner { background: rgba(227,165,88,.1); border-color: rgba(227,165,88,.3); }
+.ml-delegate-title { font-weight: 600; font-size: 13px; color: #6e4a12; margin: 0 0 4px; }
+.dark .ml-delegate-title { color: var(--ml-ochre); }
+.ml-delegate-body { font-size: 12.5px; color: #6e4a12; line-height: 1.5; margin: 0; opacity: .9; }
+.dark .ml-delegate-body { color: rgba(227,165,88,.85); }
+.ml-delegate-ref { font-size: 11px; color: #6e4a12; font-family: var(--f-mono); margin: 6px 0 0; opacity: .75; }
+.dark .ml-delegate-ref { color: var(--ml-ochre); opacity: .7; }
+
+.ml-delegate-grave {
+  margin-top: 14px; padding: 14px 16px;
+  background: var(--ml-rouge-soft); border: 1px solid rgba(178,58,42,.4);
+  border-radius: var(--r-sm); display: flex; gap: 12px; align-items: flex-start;
+}
+.dark .ml-delegate-grave { background: rgba(239,122,103,.1); border-color: rgba(239,122,103,.3); }
+.ml-delegate-grave-title { font-weight: 600; font-size: 13px; color: var(--ml-rouge); margin: 0 0 4px; }
+.ml-delegate-grave-body { font-size: 12.5px; color: var(--ml-rouge); line-height: 1.5; margin: 0; opacity: .85; }
+.ml-delegate-grave-ref { font-size: 11px; color: var(--ml-rouge); font-family: var(--f-mono); margin: 6px 0 0; opacity: .7; }
+
+.ml-disclaimer-text { color: #6e4a12; font-size: 13px; margin: 0; }
+.dark .ml-disclaimer-text { color: var(--ml-ochre); }
+
+/* ── Refs (legal articles) ─────────────────────────────────────── */
+.ml-ref {
+  border: 1px solid var(--ml-line);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--ml-card);
+  transition: border-color .15s;
+  box-shadow: var(--sh-sm);
+}
+.ml-ref:hover { border-color: var(--ml-line-strong); }
+.ml-ref__head {
+  width: 100%;
+  padding: 18px 22px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  background: transparent; border: 0;
+  text-align: start;
+}
+.ml-ref__art {
+  font-family: var(--f-mono);
+  font-size: 11.5px;
+  padding: 4px 10px;
+  background: var(--ml-green-soft);
+  color: var(--ml-green);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.ml-ref__title { flex: 1; font-size: 14.5px; font-weight: 540; color: var(--ml-ink); }
+.ml-ref__chev { color: var(--ml-ink-mute); transition: transform .25s; }
+.ml-ref.is-open .ml-ref__chev { transform: rotate(180deg); }
+.ml-ref__body {
+  padding: 0 22px 20px;
+  border-top: 1px dashed var(--ml-line-strong);
+  padding-top: 16px;
+  color: var(--ml-ink-2);
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+/* ── Types cards ───────────────────────────────────────────────── */
+.ml-type {
+  background: var(--ml-card);
+  border-radius: var(--r);
+  border: 1px solid var(--ml-line);
+  padding: 24px;
+  box-shadow: var(--sh-sm);
+  display: flex; flex-direction: column; gap: 14px;
+  border-top: 3px solid;
+}
+.ml-type__head { display: flex; align-items: start; gap: 12px; }
+.ml-type__icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: grid; place-items: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.ml-type__title { font-family: var(--f-sans); font-weight: 620; font-size: 19px; line-height: 1.15; letter-spacing: -0.02em; color: var(--ml-ink); }
+.ml-type__desc { color: var(--ml-ink-mute); font-size: 14px; }
+.ml-type__list { display: flex; flex-direction: column; gap: 8px; padding: 0; margin: 0; list-style: none; }
+.ml-type__list li { display: flex; align-items: start; gap: 10px; font-size: 13.5px; color: var(--ml-ink-2); }
+.ml-type__list li::before { content: "✓"; color: var(--ml-green); font-weight: 600; flex-shrink: 0; }
+.ml-type__warning {
+  padding: 10px 14px;
+  background: var(--ml-rouge-soft);
+  color: var(--ml-rouge);
+  border-radius: 8px;
+  font-size: 12.5px;
+}
+.ml-type__ref {
+  padding-top: 12px;
+  border-top: 1px dashed var(--ml-line);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--ml-ink-mute);
+}
+
+/* ── Procedure steps ───────────────────────────────────────────── */
+.ml-proc-step {
+  background: var(--ml-card);
+  border-radius: var(--r);
+  border: 1px solid var(--ml-line);
+  padding: 22px 24px;
+  box-shadow: var(--sh-sm);
+  display: grid; grid-template-columns: 48px 1fr; gap: 18px;
+}
+.ml-proc-step__num {
+  width: 36px; height: 36px;
+  border-radius: 999px;
+  background: var(--ml-green-soft); color: var(--ml-green);
+  display: grid; place-items: center;
+  font-family: var(--f-mono);
+  font-weight: 600;
+  font-size: 14px;
+}
+.ml-proc-step__title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.ml-proc-step__title h4 { font-size: 16px; font-weight: 560; color: var(--ml-ink); margin: 0; }
+.ml-proc-step__desc { font-size: 14px; color: var(--ml-ink-mute); line-height: 1.6; }
+.ml-proc-step__warning {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: var(--ml-rouge-soft);
+  color: var(--ml-rouge);
+  border-radius: 8px;
+  font-size: 12.5px;
+  display: flex; align-items: start; gap: 8px;
+}
+.ml-proc-step__ref {
+  margin-top: 8px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--ml-ink-mute);
+}
+.ml-proc-step--delegate { border-color: rgba(181,119,34,.4); background: var(--ml-ochre-soft); }
+.dark .ml-proc-step--delegate { border-color: rgba(227,165,88,.3); background: rgba(227,165,88,.07); }
+.ml-proc-step--delegate .ml-proc-step__title h4 { color: #6e4a12; }
+.dark .ml-proc-step--delegate .ml-proc-step__title h4 { color: var(--ml-ochre); }
+.ml-proc-step--delegate .ml-proc-step__desc { color: #6e4a12; opacity: .85; }
+.dark .ml-proc-step--delegate .ml-proc-step__desc { color: rgba(227,165,88,.8); }
+.ml-proc-step--delegate .ml-proc-step__num { background: var(--ml-ochre); color: #fff; }
+.dark .ml-proc-step--delegate .ml-proc-step__num { background: rgba(227,165,88,.2); color: var(--ml-ochre); }
+
+/* ── Bareme grid (Art. 52) ─────────────────────────────────────── */
+.ml-bareme {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  max-width: 720px; margin: 0 auto;
+}
+@media (max-width: 720px) { .ml-bareme { grid-template-columns: repeat(2, 1fr); } }
+.ml-bareme__cell {
+  background: var(--ml-card);
+  border: 1px solid var(--ml-line);
+  border-radius: var(--r-sm);
+  padding: 18px 16px;
+  text-align: center;
+  transition: border-color .15s, box-shadow .15s;
+  box-shadow: var(--sh-sm);
+}
+.ml-bareme__cell:hover { border-color: var(--ml-green); }
+.ml-bareme__years { font-family: var(--f-mono); font-size: 11px; color: var(--ml-ink-mute); text-transform: uppercase; letter-spacing: 0.08em; }
+.ml-bareme__rate  { font-family: var(--f-sans); font-weight: 640; font-size: 24px; letter-spacing: -0.02em; color: var(--ml-green); margin: 6px 0; line-height: 1; font-variant-numeric: tabular-nums; }
+.ml-bareme__art   { font-family: var(--f-mono); font-size: 10.5px; color: var(--ml-ink-faint); }
+
+/* ── Préavis table ─────────────────────────────────────────────── */
+.ml-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ml-table th {
+  padding: 12px 14px;
+  text-align: start;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ml-ink-mute);
+  border-bottom: 1px solid var(--ml-line-strong);
+}
+.ml-table td {
+  padding: 14px;
+  border-bottom: 1px solid var(--ml-line);
+  color: var(--ml-ink-2);
+}
+.ml-table td:first-child { font-weight: 540; color: var(--ml-ink); }
+.ml-table .ml-table__green { color: var(--ml-green); font-family: var(--f-mono); font-weight: 500; }
+
+/* ── Section headers ───────────────────────────────────────────── */
+.ml-section { padding: 56px 0; }
+.ml-section--alt { background: var(--ml-bg-2); }
+.ml-section__head {
+  text-align: center; margin-bottom: 40px;
+  display: flex; flex-direction: column; gap: 14px; align-items: center;
+}
+
+/* ── Animations ────────────────────────────────────────────────── */
+.ml-fadein { animation: mlFadeIn .35s cubic-bezier(.16,1,.3,1) both; }
+@keyframes mlFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.ml-countup { animation: mlCount .5s cubic-bezier(.16,1,.3,1) both; }
+@keyframes mlCount { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+
+/* ── Utilities ─────────────────────────────────────────────────── */
+.ml-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.ml-row--between { justify-content: space-between; }
+.ml-stack { display: flex; flex-direction: column; gap: 12px; }
+.ml-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.ml-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.ml-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 720px) { .ml-grid-2, .ml-grid-3, .ml-grid-4 { grid-template-columns: 1fr; } }
+.ml-center { text-align: center; }
+.ml-mw-md { max-width: 640px; margin: 0 auto; }
+.ml-mw-lg { max-width: 880px; margin: 0 auto; }
+.ml-divider { height: 1px; background: var(--ml-line); margin: 16px 0; }
+
+/* History entry */
+.ml-hist {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px;
+  padding: 12px 16px;
+  background: var(--ml-bg-2);
+  border-radius: 10px;
+  border: 1px solid transparent;
+  transition: border-color .15s;
+}
+.ml-hist:hover { border-color: var(--ml-line-strong); }
+.ml-hist__date { font-family: var(--f-mono); font-size: 11px; color: var(--ml-ink-mute); }
+.ml-hist__total { font-family: var(--f-sans); font-weight: 620; letter-spacing: -0.02em; font-size: 18px; color: var(--ml-green); margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+/* Print-only header */
+.ml-print-header { display: none; }
+
+/* ════════════════════════════════════════════════════════════════
+   PRINT — fond blanc forcé, lisibilité garantie
+   ════════════════════════════════════════════════════════════════ */
+@media print {
+  :root, .dark {
+    --ml-bg:        #ffffff !important;
+    --ml-bg-2:      #f5f5f8 !important;
+    --ml-card:      #ffffff !important;
+    --ml-ink:       #111122 !important;
+    --ml-ink-2:     #2c302e !important;
+    --ml-ink-mute:  #555555 !important;
+    --ml-ink-faint: #888888 !important;
+    --ml-line:        rgba(0,0,0,0.10) !important;
+    --ml-line-strong: rgba(0,0,0,0.18) !important;
+    --ml-green:      #14563f !important;
+    --ml-green-soft: #e6efe9 !important;
+  }
+  html, body { background: #ffffff !important; color: #111122 !important; }
+
+  .ml-nav, .no-print, button.ml-btn, .ml-tabs, footer { display: none !important; }
+
+  [x-show="activeTab==='calc'"] { display: block !important; }
+  [x-show="activeTab==='procedure'"],
+  [x-show="activeTab==='types'"],
+  [x-show="activeTab==='refs'"],
+  [x-show="activeTab==='dates'"] { display: none !important; }
+  [x-show="wizardStep===1"],
+  [x-show="wizardStep===2"],
+  [x-show="wizardStep===3"],
+  [x-show="wizardStep===4"],
+  [x-show="wizardStep===5"],
+  [x-show="wizardStep < 6"] { display: none !important; }
+  [x-show="wizardStep===6 && results"] { display: block !important; }
+  [x-show="form.type!=='faute_grave'"] { display: block !important; }
+  [x-show="results && results.dommages > 0"] { display: block !important; }
+  [x-show="results && results.unpaidAmount > 0"] { display: block !important; }
+  [x-show="results && results.leaveAmount > 0"] { display: block !important; }
+  [x-show="form.type==='faute_grave'"] { display: none !important; }
+
+  .ml-total { background: #ffffff !important; color: #111122 !important; border: 2px solid var(--ml-green) !important; box-shadow: none !important; }
+  .ml-total__small { color: #555555 !important; }
+  .ml-total__amount { color: var(--ml-green) !important; }
+  .ml-total__currency { color: #555555 !important; }
+  .ml-total__tag { background: #f5f5f8 !important; color: #333333 !important; }
+
+  .ml-card, .ml-amount { box-shadow: none !important; border: 1px solid #cccccc !important; }
+  .ml-breakdown { background: #f9f9fb !important; border: 1px solid #eeeeee !important; }
+
+  .ml-print-header {
+    display: flex !important;
+    justify-content: space-between; align-items: center;
+    padding: 0 0 16px;
+    margin-bottom: 24px;
+    border-bottom: 2px solid var(--ml-green);
+  }
+  .ml-print-header h1 { font-family: var(--f-sans); font-size: 22pt; font-weight: 600; letter-spacing: -0.02em; color: #111122; margin: 0; }
+  .ml-print-header p  { font-family: var(--f-mono); font-size: 9pt; color: #777777; margin: 4px 0 0; }
+  .ml-print-header__right { text-align: end; }
+
+  * { text-shadow: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════ PRINT-ONLY HEADER ════════════ -->
+<div class="ml-print-header">
+  <div>
+    <h1>IndemnPro</h1>
+    <p>Code du Travail Marocain — Loi 65-99</p>
+  </div>
+  <div class="ml-print-header__right">
+    <p>Imprimé le <span id="print-date"></span></p>
+    <p style="font-style: italic;">Document à titre indicatif</p>
+  </div>
+</div>
+<script>window.addEventListener('DOMContentLoaded', function () { document.getElementById('print-date').textContent = new Date().toLocaleDateString('fr-MA'); });</script>
+
+<!-- ════════════ NAVIGATION ════════════ -->
+<header class="ml-nav no-print">
+  <div class="ml-wrap">
+    <div class="ml-nav__inner">
+      <a href="index-v2.html" class="ml-logo">
+        <span class="ml-logo__mark">IP</span>
+        <span>
+          <span x-text="t('app_title')"></span>
+          <span class="ml-logo__sub"> · Loi 65-99</span>
+        </span>
+      </a>
+      <div class="ml-nav__spacer"></div>
+      <div class="ml-nav__right">
+        <button @click="darkMode = !darkMode"
+          class="ml-theme"
+          :class="darkMode ? 'is-dark' : ''"
+          :title="darkMode ? 'Mode clair' : 'Mode sombre'">
+          <!-- Knob glissant -->
+          <span class="ml-theme__knob"></span>
+          <!-- ☀ Soleil — gauche -->
+          <span class="ml-theme__icon ml-theme__sun">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"/>
+              <line x1="12" y1="2" x2="12" y2="6"/>
+              <line x1="12" y1="18" x2="12" y2="22"/>
+              <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
+              <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+              <line x1="2" y1="12" x2="6" y2="12"/>
+              <line x1="18" y1="12" x2="22" y2="12"/>
+              <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
+              <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+            </svg>
+          </span>
+          <!-- ☾ Lune — droite -->
+          <span class="ml-theme__icon ml-theme__moon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </span>
+        </button>
+
+        <!-- Badge invité (essais restants) -->
+        <div x-show="isGuest" class="ml-row" style="gap: 8px;">
+          <span class="ml-chip"
+            :class="trialRemaining() > 0 ? 'ml-chip--ochre' : 'ml-chip--rouge'"
+            style="cursor: default;">
+            <span class="ml-chip__dot"></span>
+            <span x-text="trialRemaining() > 0
+              ? trialRemaining() + ' essai' + (trialRemaining() > 1 ? 's' : '') + ' gratuit' + (trialRemaining() > 1 ? 's' : '')
+              : 'Limite atteinte'">
+            </span>
+          </span>
+          <a href="login-v2.html?tab=signup" class="ml-btn ml-btn--accent ml-btn--sm">
+            <span>Créer un compte</span>
+          </a>
+        </div>
+
+        <!-- User pill + logout (utilisateur connecté) -->
+        <div x-show="currentUser" class="ml-user-pill">
+          <span class="ml-user-pill__avatar" x-text="currentUser ? currentUser.email[0].toUpperCase() : ''"></span>
+          <span class="ml-user-pill__email ml-mono" x-text="currentUser ? currentUser.email : ''"></span>
+          <button @click="signOut()" class="ml-user-pill__logout" title="Se déconnecter">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4.5 6H11M8.5 3.5L11 6l-2.5 2.5"/>
+              <path d="M7 1.5H2a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h5"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="ml-tabs">
+      <template x-for="tab in tabs" :key="tab.id">
+        <button @click="activeTab=tab.id; wizardStep=1; window.scrollTo({top:0,behavior:'smooth'})"
+          :class="activeTab===tab.id ? 'is-active' : ''"
+          class="ml-tab">
+          <span class="ml-tab__icon" x-text="tab.icon"></span>
+          <span x-text="t(tab.labelKey)"></span>
+        </button>
+      </template>
+    </div>
+  </div>
+</header>
+
+<!-- ════════════ MAIN ════════════ -->
+<main class="ml-wrap" style="padding-top: 48px; padding-bottom: 80px;">
+
+  <!-- ══════════════════════════════════════════
+       TAB · CALCULATEUR (wizard)
+  ══════════════════════════════════════════ -->
+  <div x-show="activeTab==='calc'" x-cloak>
+
+    <!-- Section header -->
+    <div class="ml-section__head" style="margin-bottom: 32px;">
+      <p class="ml-eyebrow"><span x-text="t('app_sub')"></span></p>
+      <h1 class="ml-display"><span x-text="t('calc_title_pre')"></span> <em x-text="t('calc_title_em')"></em></h1>
+      <p class="ml-lead ml-center" x-text="t('calc_sub')"></p>
+    </div>
+
+    <!-- Progress -->
+    <div class="ml-progresswrap" x-show="wizardStep < 6">
+      <div class="ml-progress__meta">
+        <span>Étape <strong x-text="wizardStep"></strong> sur 5</span>
+        <span x-text="Math.round((wizardStep-1)/5*100) + ' %'"></span>
+      </div>
+      <div class="ml-progress">
+        <template x-for="n in [1,2,3,4,5]" :key="n">
+          <div style="display:contents">
+            <div class="ml-progress__step"
+              :class="wizardStep > n ? 'is-done' : wizardStep === n ? 'is-current' : ''"
+              x-text="wizardStep > n ? '✓' : n"></div>
+            <div x-show="n < 5" class="ml-progress__line"
+              :class="wizardStep > n ? 'is-done' : ''"></div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- STEP 1 · Secteur SMIG / SMAG -->
+    <div x-show="wizardStep===1" class="ml-fadein ml-mw-lg">
+      <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step0_title')"></h2>
+      <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step0_sub')"></p>
+      <div class="ml-grid-2">
+
+        <!-- SMIG -->
+        <button @click="form.secteur='SMIG'; nextStep()"
+          :class="form.secteur==='SMIG' ? 'is-selected' : ''"
+          class="ml-option">
+          <div class="ml-row">
+            <span class="ml-option__icon">🏭</span>
+            <span class="ml-chip ml-chip--ochre">191h / mois</span>
+          </div>
+          <div>
+            <p class="ml-option__label" x-text="t('secteur_smig')"></p>
+            <p class="ml-option__desc" x-text="t('secteur_smig_desc')"></p>
+          </div>
+          <div style="margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--ml-line-strong);">
+            <span class="ml-mono" style="font-size: 11px; color: var(--ml-ink-mute);">SMIG 2026 · 3 422,72 MAD/mois · 17,92 MAD/h</span>
+          </div>
+        </button>
+
+        <!-- SMAG -->
+        <button @click="form.secteur='SMAG'; nextStep()"
+          :class="form.secteur==='SMAG' ? 'is-selected' : ''"
+          class="ml-option">
+          <div class="ml-row">
+            <span class="ml-option__icon">🌾</span>
+            <span class="ml-chip ml-chip--ochre">208h / mois</span>
+          </div>
+          <div>
+            <p class="ml-option__label" x-text="t('secteur_smag')"></p>
+            <p class="ml-option__desc" x-text="t('secteur_smag_desc')"></p>
+          </div>
+          <div style="margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--ml-line-strong);">
+            <span class="ml-mono" style="font-size: 11px; color: var(--ml-ink-mute);">SMAG 2026 · 2 014,56 MAD/mois · 9,69 MAD/h</span>
+          </div>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- STEP 2 · Type + Délégué -->
+    <div x-show="wizardStep===2" class="ml-fadein ml-mw-lg">
+      <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step1_title')"></h2>
+      <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step1_sub')"></p>
+      <div class="ml-grid-2">
+        <template x-for="opt in dismissalOptions()" :key="opt.value">
+          <button @click="form.type=opt.value; nextStep()"
+            :class="form.type===opt.value ? 'is-selected' : ''"
+            class="ml-option">
+            <div class="ml-row">
+              <span class="ml-option__icon" x-text="opt.icon"></span>
+              <span class="ml-chip" x-text="opt.badge"></span>
+            </div>
+            <div>
+              <p class="ml-option__label" x-text="opt.label"></p>
+              <p class="ml-option__desc" x-text="opt.desc"></p>
+            </div>
+          </button>
+        </template>
+      </div>
+
+      <!-- Délégué du personnel -->
+      <div class="ml-card" style="margin-top: 20px;">
+        <div style="font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ml-ink-mute); margin-bottom: 14px;" x-text="t('delegate_question')"></div>
+        <div class="ml-row" style="gap: 10px;">
+          <!-- OUI — délégué -->
+          <button @click="form.isDelegate = true"
+            :class="form.isDelegate === true ? 'is-selected' : ''"
+            class="ml-option" style="flex: 1; flex-direction: row; align-items: center; gap: 14px; padding: 16px;">
+            <span class="ml-option__icon" style="font-size: 22px; flex-shrink: 0;">🛡️</span>
+            <div>
+              <p class="ml-option__label" x-text="t('delegate_yes')"></p>
+              <p class="ml-option__desc" x-text="t('delegate_yes_desc')"></p>
+            </div>
+          </button>
+          <!-- NON — ordinaire -->
+          <button @click="form.isDelegate = false"
+            :class="form.isDelegate === false ? 'is-selected' : ''"
+            class="ml-option" style="flex: 1; flex-direction: row; align-items: center; gap: 14px; padding: 16px;">
+            <span class="ml-option__icon" style="font-size: 22px; flex-shrink: 0;">👤</span>
+            <div>
+              <p class="ml-option__label" x-text="t('delegate_no')"></p>
+              <p class="ml-option__desc" x-text="t('delegate_no_desc')"></p>
+            </div>
+          </button>
+        </div>
+
+        <!-- Warning délégué général -->
+        <div x-show="form.isDelegate && form.type !== 'faute_grave'" class="ml-delegate-warn">
+          <span style="font-size: 20px; flex-shrink: 0;">⚠️</span>
+          <div>
+            <p class="ml-delegate-title" x-text="t('delegate_warning_title')"></p>
+            <p class="ml-delegate-body" x-text="t('delegate_warning_body')"></p>
+            <p class="ml-delegate-ref">Art. 457-470 — Loi 65-99</p>
+          </div>
+        </div>
+
+        <!-- Warning délégué + faute grave (plus sévère) -->
+        <div x-show="form.isDelegate && form.type === 'faute_grave'" class="ml-delegate-grave">
+          <span style="font-size: 20px; flex-shrink: 0;">🚨</span>
+          <div>
+            <p class="ml-delegate-grave-title" x-text="t('delegate_grave_title')"></p>
+            <p class="ml-delegate-grave-body" x-text="t('delegate_grave_body')"></p>
+            <p class="ml-delegate-grave-ref">Art. 457-470 — Loi 65-99</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 · Catégorie -->
+    <div x-show="wizardStep===3" class="ml-fadein ml-mw-md">
+      <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step2_title')"></h2>
+      <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step2_sub')"></p>
+      <div class="ml-grid-3">
+        <template x-for="opt in categoryOptions()" :key="opt.value">
+          <button @click="form.category=opt.value; nextStep()"
+            :class="form.category===opt.value ? 'is-selected' : ''"
+            class="ml-option" style="text-align: center; align-items: center;">
+            <span class="ml-option__icon" style="width:48px; height:48px; font-size:22px;" x-text="opt.icon"></span>
+            <div>
+              <p class="ml-option__label" x-text="opt.label"></p>
+              <p class="ml-option__desc" x-text="opt.desc"></p>
+            </div>
+          </button>
+        </template>
+      </div>
+      <div class="ml-row ml-center" style="justify-content: center; margin-top: 28px;">
+        <button @click="prevStep()" class="ml-btn ml-btn--ghost">
+          <span>←</span>
+          <span x-text="t('back')"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 4 · Ancienneté + Dates -->
+    <div x-show="wizardStep===4" class="ml-fadein ml-mw-md">
+      <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step3_title')"></h2>
+      <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step3_sub')"></p>
+
+      <!-- Dates de contrat -->
+      <div class="ml-card" style="margin-bottom: 16px;">
+        <div class="ml-grid-2" style="gap: 14px;">
+          <div class="ml-field">
+            <label class="ml-field__label" x-text="t('hire_date_label')"></label>
+            <input type="date" x-model="form.hireDate"
+              @change="updateSeniorityFromDate()"
+              :max="new Date().toISOString().split('T')[0]"
+              class="ml-input">
+          </div>
+          <div class="ml-field">
+            <label class="ml-field__label" x-text="t('end_date_label')"></label>
+            <input type="date" x-model="form.endDate"
+              @change="updateSeniorityFromDate()"
+              :max="new Date().toISOString().split('T')[0]"
+              class="ml-input">
+          </div>
+        </div>
+        <div x-show="form.hireDate" class="ml-row ml-row--between" style="margin-top: 14px;">
+          <span class="ml-chip ml-chip--green">
+            <span x-text="t('hire_date_calculated')"></span>
+            <strong x-text="hireDateLabel()" style="margin-left: 4px;"></strong>
+          </span>
+          <button @click="form.hireDate=''; form.endDate=''" class="ml-btn ml-btn--ghost ml-btn--sm"
+            x-text="t('hire_date_clear')"></button>
+        </div>
+      </div>
+
+      <!-- Slider ancienneté manuel -->
+      <div class="ml-card">
+        <div class="ml-center" style="margin-bottom: 24px;">
+          <div style="font-family: var(--f-sans); font-weight: 600; font-size: 64px; line-height: 1; letter-spacing: -0.04em; color: var(--ml-ink); font-variant-numeric: tabular-nums;" x-text="form.seniority"></div>
+          <div class="ml-mute" style="font-size: 13px; margin-top: 8px;" x-text="t('years_label')"></div>
+        </div>
+        <input type="range" min="1" max="40" x-model.number="form.seniority"
+          @input="form.hireDate = ''" class="ml-range">
+        <div class="ml-row ml-row--between" style="margin-top: 8px;">
+          <span class="ml-mono ml-faint" style="font-size: 11px;">1</span>
+          <span class="ml-mono ml-faint" style="font-size: 11px;">20</span>
+          <span class="ml-mono ml-faint" style="font-size: 11px;">40</span>
+        </div>
+      </div>
+
+      <div class="ml-row ml-row--between" style="margin-top: 28px;">
+        <button @click="prevStep()" class="ml-btn ml-btn--ghost">
+          <span>←</span>
+          <span x-text="t('back')"></span>
+        </button>
+        <button @click="nextStep()" :disabled="!form.seniority || form.seniority < 1"
+          class="ml-btn ml-btn--primary">
+          <span x-text="t('next')"></span>
+          <span class="ml-arrow" x-text="'→'"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 5 · Salaire & compléments -->
+    <div x-show="wizardStep===5" class="ml-fadein ml-mw-md">
+      <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step4_title')"></h2>
+      <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step4_sub')"></p>
+
+      <!-- Salaire -->
+      <div class="ml-card">
+        <div class="ml-center" style="margin-bottom: 20px;">
+          <div style="font-family: var(--f-sans); font-weight: 600; font-size: 48px; line-height: 1; letter-spacing: -0.035em; font-variant-numeric: tabular-nums;">
+            <span x-text="form.salary ? fmt(form.salary) : '—'"></span>
+            <span class="ml-mono" style="font-size: 18px; color: var(--ml-ink-mute);">MAD</span>
+          </div>
+          <div class="ml-mute ml-mono" style="font-size: 11.5px; margin-top: 10px; letter-spacing: 0.08em;">
+            <span x-text="t('equiv_hourly')"></span>
+            <span style="color: var(--ml-green); font-weight: 500;"
+              x-text="form.salary ? fmt(form.salary / (form.secteur === 'SMAG' ? 208 : 191)) + ' MAD/h' : '—'"></span>
+          </div>
+        </div>
+        <div class="ml-field">
+          <label class="ml-field__label" x-text="t('salary_placeholder')"></label>
+          <div style="position: relative;">
+            <input type="number" x-model.number="form.salary" min="0"
+              class="ml-input ml-input--center ml-input--lg" placeholder="0">
+            <span style="position: absolute; inset-inline-end: 20px; top: 50%; transform: translateY(-50%); color: var(--ml-ink-mute); font-size: 15px; font-weight: 600; font-family: var(--f-mono); letter-spacing: 0.04em; pointer-events: none;">MAD</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compléments -->
+      <div class="ml-card" style="margin-top: 14px;">
+        <div class="ml-field">
+          <label class="ml-field__label">
+            <span x-text="t('unpaid_label')"></span>
+          </label>
+          <p class="ml-mute" style="font-size: 12px; margin: 4px 0 8px;" x-text="t('unpaid_help')"></p>
+          <input type="number" x-model.number="form.unpaidDays" min="0" max="365"
+            class="ml-input ml-input--center" placeholder="0">
+        </div>
+        <div class="ml-divider"></div>
+        <div class="ml-field">
+          <label class="ml-field__label">
+            <span x-text="t('leave_label')"></span>
+          </label>
+          <p class="ml-mute" style="font-size: 12px; margin: 4px 0 8px;" x-text="t('leave_help')"></p>
+          <input type="number" x-model.number="form.unusedLeave" min="0" max="365"
+            class="ml-input ml-input--center" placeholder="0">
+        </div>
+        <div x-show="form.salary && (form.unpaidDays > 0 || form.unusedLeave > 0)"
+          class="ml-divider"></div>
+        <p x-show="form.salary && (form.unpaidDays > 0 || form.unusedLeave > 0)"
+          class="ml-mute ml-center ml-mono" style="font-size: 12px;">
+          <span x-text="t('daily_rate') + ' :'"></span>
+          <span style="color: var(--ml-green); font-weight: 500;" x-text="form.salary ? fmt(form.salary/26) + ' MAD/jour' : ''"></span>
+        </p>
+      </div>
+
+      <div class="ml-row ml-row--between" style="margin-top: 28px;">
+        <button @click="prevStep()" class="ml-btn ml-btn--ghost">
+          <span>←</span>
+          <span x-text="t('back')"></span>
+        </button>
+        <button @click="calculateAndNext()" :disabled="!form.salary || form.salary < 1"
+          class="ml-btn ml-btn--accent ml-btn--lg">
+          <span x-text="t('calculate')"></span>
+          <span class="ml-arrow">→</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 6 · Résultats -->
+    <div x-show="wizardStep===6 && results" class="ml-fadein">
+
+      <!-- Faute grave warning -->
+      <div x-show="form.type==='faute_grave'" class="ml-mw-md">
+        <div class="ml-card ml-card--lg ml-center" style="border: 1px solid var(--ml-rouge-soft);">
+          <div style="font-size: 48px; margin-bottom: 12px;">🚨</div>
+          <h2 class="ml-h2" style="color: var(--ml-rouge); margin-bottom: 12px;" x-text="t('faute_grave_warning_title')"></h2>
+          <p class="ml-lead" style="margin: 0 auto 16px;" x-text="t('faute_grave_warning')"></p>
+          <span class="ml-chip ml-chip--rouge" x-text="t('faute_grave_ref')"></span>
+        </div>
+        <button @click="wizardStep=1; results=null"
+          class="ml-btn ml-btn--ghost ml-btn--block" style="margin-top: 20px;"
+          x-text="t('restart')"></button>
+      </div>
+
+      <!-- Résultats normaux -->
+      <div x-show="form.type!=='faute_grave'" class="ml-mw-lg">
+
+        <!-- Total card -->
+        <div class="ml-total ml-countup" style="margin-bottom: 28px;">
+          <span class="ml-total__small" x-text="t('total')"></span>
+          <div>
+            <span class="ml-total__amount" x-text="results ? fmt(results.total) : ''"></span>
+            <span class="ml-total__currency">MAD</span>
+          </div>
+          <div class="ml-total__tags">
+            <span class="ml-total__tag" x-text="t('label_'+form.type)"></span>
+            <span class="ml-total__tag" x-text="t(form.category)"></span>
+            <span class="ml-total__tag" x-text="results ? results.seniorityLabel : ''"></span>
+            <span x-show="form.isDelegate"
+              class="ml-total__tag"
+              style="background: rgba(245,158,11,0.25); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4);"
+              x-text="t('delegate_badge')"></span>
+          </div>
+        </div>
+
+        <!-- Breakdown lines -->
+        <div class="ml-stack" style="gap: 12px; margin-bottom: 24px;">
+
+          <!-- Indemnité légale -->
+          <div class="ml-amount">
+            <div>
+              <div class="ml-row" style="gap: 10px;">
+                <div class="ml-amount__icon">§</div>
+                <div>
+                  <p class="ml-amount__label" x-text="t('legal_indemnity')"></p>
+                </div>
+              </div>
+              <div class="ml-breakdown">
+                <div class="ml-breakdown__head">
+                  <span x-text="t('calc_hourly_rate') + ' :'"></span>
+                  <span class="ml-mono" style="color: var(--ml-ink); letter-spacing: 0;" x-text="results ? results.salaireHoraireFormula : ''"></span>
+                </div>
+                <template x-if="results">
+                  <div class="ml-stack" style="gap: 8px;">
+                    <template x-for="line in results.breakdown" :key="line.label">
+                      <div class="ml-breakdown__row">
+                        <div class="ml-breakdown__main">
+                          <span class="ml-breakdown__label" x-text="line.label"></span>
+                          <span class="ml-breakdown__amount" x-text="fmt(line.amount)+' MAD'"></span>
+                        </div>
+                        <span class="ml-breakdown__formula" x-text="line.formula"></span>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </div>
+            <span class="ml-amount__value ml-amount__value--accent"
+              x-text="results ? fmt(results.indemniteLegale)+' MAD' : ''"></span>
+          </div>
+
+          <!-- Préavis -->
+          <div class="ml-amount">
+            <div>
+              <div class="ml-row" style="gap: 10px;">
+                <div class="ml-amount__icon">⏱</div>
+                <div>
+                  <p class="ml-amount__label" x-text="t('notice_indemnity')"></p>
+                  <p class="ml-amount__sub" x-text="results ? results.preavislabel : ''"></p>
+                  <p class="ml-amount__formula" x-text="results ? results.preFormula : ''"></p>
+                </div>
+              </div>
+            </div>
+            <span class="ml-amount__value ml-amount__value--blue"
+              x-text="results ? fmt(results.indemnitePreavis)+' MAD' : ''"></span>
+          </div>
+
+          <!-- Salaires non payés -->
+          <div x-show="results && results.unpaidAmount > 0" class="ml-amount">
+            <div>
+              <div class="ml-row" style="gap: 10px;">
+                <div class="ml-amount__icon">∑</div>
+                <div>
+                  <p class="ml-amount__label" x-text="t('unpaid_indemnity')"></p>
+                  <p class="ml-amount__sub">
+                    <span x-text="results ? results.unpaidDays : 0"></span>
+                    <span x-text="'jours'"></span>
+                  </p>
+                  <p class="ml-amount__formula" x-text="results ? results.unpaidFormula : ''"></p>
+                </div>
+              </div>
+            </div>
+            <span class="ml-amount__value ml-amount__value--accent"
+              x-text="results ? fmt(results.unpaidAmount)+' MAD' : ''"></span>
+          </div>
+
+          <!-- Congés non pris -->
+          <div x-show="results && results.leaveAmount > 0" class="ml-amount">
+            <div>
+              <div class="ml-row" style="gap: 10px;">
+                <div class="ml-amount__icon">☀</div>
+                <div>
+                  <p class="ml-amount__label" x-text="t('leave_indemnity')"></p>
+                  <p class="ml-amount__sub" x-text="t('leave_ref')"></p>
+                  <p class="ml-amount__formula" x-text="results ? results.leaveFormula : ''"></p>
+                </div>
+              </div>
+            </div>
+            <span class="ml-amount__value ml-amount__value--ochre"
+              x-text="results ? fmt(results.leaveAmount)+' MAD' : ''"></span>
+          </div>
+
+          <!-- D&I -->
+          <div x-show="results && results.dommages > 0" class="ml-amount">
+            <div>
+              <div class="ml-row" style="gap: 10px;">
+                <div class="ml-amount__icon">⚖</div>
+                <div>
+                  <p class="ml-amount__label" x-text="t('damages')"></p>
+                  <p class="ml-amount__sub" x-text="t('damages_ref')"></p>
+                  <p class="ml-amount__formula" x-text="results ? results.domFormula : ''"></p>
+                </div>
+              </div>
+            </div>
+            <span class="ml-amount__value ml-amount__value--rouge"
+              x-text="results ? fmt(results.dommages)+' MAD' : ''"></span>
+          </div>
+
+        </div>
+
+        <!-- Infos dossier (optionnel — pour le PDF) -->
+        <div class="ml-card ml-card--bordered no-print" style="margin-bottom: 16px;">
+          <div class="ml-row ml-row--between" style="margin-bottom: 14px;">
+            <span class="ml-eyebrow" style="display:inline-flex; gap:6px;">
+              <span>Informations dossier</span>
+            </span>
+            <span class="ml-chip" style="font-size:10px;" x-text="t('dossier_opt')"></span>
+          </div>
+          <div class="ml-grid-2" style="gap: 12px; margin-bottom: 12px;">
+            <div class="ml-field">
+              <label class="ml-field__label" x-text="t('dossier_nom')"></label>
+              <input type="text" x-model="dossier.nomSalarie" class="ml-input"
+                :placeholder="t('dossier_nom_ph')">
+            </div>
+            <div class="ml-field">
+              <label class="ml-field__label" x-text="t('dossier_poste')"></label>
+              <input type="text" x-model="dossier.poste" class="ml-input"
+                :placeholder="t('dossier_poste_ph')">
+            </div>
+          </div>
+          <div class="ml-field">
+            <label class="ml-field__label" x-text="t('dossier_ref')"></label>
+            <input type="text" x-model="dossier.ref" class="ml-input"
+              :placeholder="t('dossier_ref_ph')">
+          </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="ml-card ml-card--bordered" style="background: var(--ml-ochre-soft); border-color: transparent; margin-bottom: 20px;">
+          <p class="ml-disclaimer-text" x-text="t('disclaimer')"></p>
+        </div>
+
+        <!-- Actions -->
+        <div class="ml-row no-print" style="gap: 10px; flex-wrap: wrap;">
+          <button @click="wizardStep=1; results=null; dossier={nomSalarie:'',poste:'',ref:''}" class="ml-btn" style="flex: 1; min-width: 120px;" x-text="t('restart')"></button>
+          <button @click="shareUrl()" class="ml-btn"
+            :style="copiedUrl ? 'background: var(--ml-green); color: #f6f3ec; border-color: var(--ml-green);' : ''"
+            style="flex: 1; min-width: 120px;">
+            <span x-text="copiedUrl ? t('share_copied') : t('share_btn')"></span>
+          </button>
+          <button @click="generatePDF()" class="ml-btn ml-btn--primary" style="flex: 1; min-width: 140px;">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+              <path d="M7 1v8M4 6l3 3 3-3"/><path d="M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1"/>
+            </svg>
+            <span x-text="t('pdf_btn')"></span>
+          </button>
+        </div>
+
+        <!-- Séparateur -->
+        <div class="no-print" style="height: 1px; background: var(--ml-line); margin: 36px 0;"></div>
+
+        <!-- Sauvegarder dossier (Supabase) -->
+        <button @click="saveDossier()" :disabled="savingDossier"
+          class="ml-btn ml-btn--accent ml-btn--block ml-btn--lg no-print"
+          :style="dossierSaved ? 'background: var(--ml-green-2); border-color: var(--ml-green-2);' : ''">
+          <template x-if="!savingDossier && !dossierSaved">
+            <span style="display:inline-flex; align-items:center; gap:8px;">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+                <path d="M11 12H3a1 1 0 01-1-1V3a1 1 0 011-1h6l3 3v6a1 1 0 01-1 1z"/><path d="M9 12V8H5v4M5 2v3h3"/>
+              </svg>
+              <span x-text="t('dossier_save_btn')"></span>
+            </span>
+          </template>
+          <template x-if="savingDossier"><span class="ml-spin">⏳</span></template>
+          <template x-if="dossierSaved && !savingDossier"><span x-text="t('dossier_saved')"></span></template>
+        </button>
+
+        <!-- Historique -->
+        <div x-show="history.length > 0" class="no-print" style="margin-top: 28px;">
+          <button @click="showHistory = !showHistory"
+            class="ml-btn ml-btn--ghost ml-btn--block"
+            style="justify-content: space-between; background: var(--ml-bg-2); border-color: var(--ml-line);">
+            <span style="display: inline-flex; align-items: center; gap: 8px;">
+              <span class="ml-mono" style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ml-ink-mute);" x-text="t('history_title')"></span>
+              <span class="ml-chip ml-chip--green" style="height: 20px; font-size: 10px;" x-text="history.length"></span>
+            </span>
+            <span :class="showHistory ? 'rotate-180' : ''" style="display:inline-block; transition: transform .25s;" :style="showHistory ? 'transform: rotate(180deg);' : ''">▾</span>
+          </button>
+          <div x-show="showHistory" class="ml-stack" style="margin-top: 10px; gap: 8px;">
+            <template x-for="entry in history" :key="entry.id">
+              <div class="ml-hist">
+                <div>
+                  <div class="ml-row" style="gap: 6px; flex-wrap: wrap;">
+                    <span class="ml-hist__date" x-text="entry.date"></span>
+                    <span class="ml-chip ml-chip--green" style="height: 20px; font-size: 10px;" x-text="t('label_'+entry.type)"></span>
+                    <span class="ml-chip" style="height: 20px; font-size: 10px;" x-text="t(entry.category)"></span>
+                    <span class="ml-chip" style="height: 20px; font-size: 10px;" x-text="entry.seniority + ' ans'"></span>
+                  </div>
+                  <div class="ml-hist__total" x-text="fmt(entry.total) + ' MAD'"></div>
+                </div>
+                <button @click="restoreFromHistory(entry)" class="ml-btn ml-btn--sm ml-btn--primary" x-text="t('history_restore')"></button>
+              </div>
+            </template>
+            <button @click="clearHistory()" class="ml-btn ml-btn--ghost ml-btn--sm" style="margin-top: 4px;" x-text="t('history_clear')"></button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Barème (visible avant les résultats) -->
+    <div x-show="wizardStep < 5" style="margin-top: 64px;">
+      <p class="ml-eyebrow ml-center" style="display: flex; justify-content: center; margin-bottom: 18px;">
+        <span x-text="t('bareme_title')"></span>
+      </p>
+      <div class="ml-bareme">
+        <template x-for="row in baremeRows()" :key="row.years">
+          <div class="ml-bareme__cell">
+            <div class="ml-bareme__years" x-text="row.years"></div>
+            <div class="ml-bareme__rate" x-text="row.rate"></div>
+            <div class="ml-bareme__art">art. 52</div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       </main></body></html>

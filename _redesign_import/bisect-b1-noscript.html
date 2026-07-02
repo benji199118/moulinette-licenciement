@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html x-data="app()" dir="ltr" lang="fr" :class="darkMode ? 'dark' : ''" class="scroll-smooth">
+<head><meta charset="UTF-8"><title>bisect body</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3/dist/cdn.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+</head>
+<body>
+
+<!-- ════════════ PRINT-ONLY HEADER ════════════ -->
+<div class="ml-print-header">
+  <div>
+    <h1>IndemnPro</h1>
+    <p>Code du Travail Marocain — Loi 65-99</p>
+  </div>
+  <div class="ml-print-header__right">
+    <p>Imprimé le <span id="print-date"></span></p>
+    <p style="font-style: italic;">Document à titre indicatif</p>
+  </div>
+</div>
+
+
+<!-- ════════════ NAVIGATION ════════════ -->
+<header class="ml-nav no-print">
+  <div class="ml-wrap">
+    <div class="ml-nav__inner">
+      <a href="index-v2.html" class="ml-logo">
+        <span class="ml-logo__mark">IP</span>
+        <span>
+          <span x-text="t('app_title')"></span>
+          <span class="ml-logo__sub"> · Loi 65-99</span>
+        </span>
+      </a>
+      <div class="ml-nav__spacer"></div>
+      <div class="ml-nav__right">
+        <button @click="darkMode = !darkMode"
+          class="ml-theme"
+          :class="darkMode ? 'is-dark' : ''"
+          :title="darkMode ? 'Mode clair' : 'Mode sombre'">
+          <!-- Knob glissant -->
+          <span class="ml-theme__knob"></span>
+          <!-- ☀ Soleil — gauche -->
+          <span class="ml-theme__icon ml-theme__sun">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"/>
+              <line x1="12" y1="2" x2="12" y2="6"/>
+              <line x1="12" y1="18" x2="12" y2="22"/>
+              <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
+              <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+              <line x1="2" y1="12" x2="6" y2="12"/>
+              <line x1="18" y1="12" x2="22" y2="12"/>
+              <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
+              <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+            </svg>
+          </span>
+          <!-- ☾ Lune — droite -->
+          <span class="ml-theme__icon ml-theme__moon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </span>
+        </button>
+
+        <!-- Badge invité (essais restants) -->
+        <div x-show="isGuest" class="ml-row" style="gap: 8px;">
+          <span class="ml-chip"
+            :class="trialRemaining() > 0 ? 'ml-chip--ochre' : 'ml-chip--rouge'"
+            style="cursor: default;">
+            <span class="ml-chip__dot"></span>
+            <span x-text="trialRemaining() > 0
+              ? trialRemaining() + ' essai' + (trialRemaining() > 1 ? 's' : '') + ' gratuit' + (trialRemaining() > 1 ? 's' : '')
+              : 'Limite atteinte'">
+            </span>
+          </span>
+          <a href="login-v2.html?tab=signup" class="ml-btn ml-btn--accent ml-btn--sm">
+            <span>Créer un compte</span>
+          </a>
+        </div>
+
+        <!-- User pill + logout (utilisateur connecté) -->
+        <div x-show="currentUser" class="ml-user-pill">
+          <span class="ml-user-pill__avatar" x-text="currentUser ? currentUser.email[0].toUpperCase() : ''"></span>
+          <span class="ml-user-pill__email ml-mono" x-text="currentUser ? currentUser.email : ''"></span>
+          <button @click="signOut()" class="ml-user-pill__logout" title="Se déconnecter">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4.5 6H11M8.5 3.5L11 6l-2.5 2.5"/>
+              <path d="M7 1.5H2a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h5"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="ml-tabs">
+      <template x-for="tab in tabs" :key="tab.id">
+        <button @click="activeTab=tab.id; wizardStep=1; window.scrollTo({top:0,behavior:'smooth'})"
+          :class="activeTab===tab.id ? 'is-active' : ''"
+          class="ml-tab">
+          <span class="ml-tab__icon" x-text="tab.icon"></span>
+          <span x-text="t(tab.labelKey)"></span>
+        </button>
+      </template>
+    </div>
+  </div>
+</header>
+
+<!-- ════════════ MAIN ════════════ -->
+<main class="ml-wrap" style="padding-top: 48px; padding-bottom: 80px;">
+
+  <!-- ══════════════════════════════════════════
+       TAB · CALCULATEUR (wizard)
+  ══════════════════════════════════════════ -->
+  <div x-show="activeTab==='calc'" x-cloak>
+
+    <!-- Section header -->
+    <div class="ml-section__head" style="margin-bottom: 32px;">
+      <p class="ml-eyebrow"><span x-text="t('app_sub')"></span></p>
+      <h1 class="ml-display"><span x-text="t('calc_title_pre')"></span> <em x-text="t('calc_title_em')"></em></h1>
+      <p class="ml-lead ml-center" x-text="t('calc_sub')"></p>
+    </div>
+
+    <!-- Progress -->
+    <div class="ml-progresswrap" x-show="wizardStep < 6">
+      <div class="ml-progress__meta">
+        <span>Étape <strong x-text="wizardStep"></strong> sur 5</span>
+        <span x-text="Math.round((wizardStep-1)/5*100) + ' %'"></span>
+      </div>
+      <div class="ml-progress">
+        <template x-for="n in [1,2,3,4,5]" :key="n">
+          <div style="display:contents">
+            <div class="ml-progress__step"
+              :class="wizardStep > n ? 'is-done' : wizardStep === n ? 'is-current' : ''"
+              x-text="wizardStep > n ? '✓' : n"></div>
+            <div x-show="n < 5" class="ml-progress__line"
+              :class="wizardStep > n ? 'is-done' : ''"></div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- STEP 1 · Secteur SMIG / SMAG -->
+    <div x-show="wizardStep===1" class="ml-fadein ml-mw-lg">
+      <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step0_title')"></h2>
+      <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step0_sub')"></p>
+      <div class="ml-grid-2">
+
+        <!-- SMIG -->
+        <button @click="form.secteur='SMIG'; nextStep()"
+          :class="form.secteur==='SMIG' ? 'is-selected' : ''"
+          class="ml-option">
+          <div class="ml-row">
+            <span class="ml-option__icon">🏭</span>
+            <span class="ml-chip ml-chip--ochre">191h / mois</span>
+          </div>
+          <div>
+            <p class="ml-option__label" x-text="t('secteur_smig')"></p>
+            <p class="ml-option__desc" x-text="t('secteur_smig_desc')"></p>
+          </div>
+          <div style="margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--ml-line-strong);">
+            <span class="ml-mono" style="font-size: 11px; color: var(--ml-ink-mute);">SMIG 2026 · 3 422,72 MAD/mois · 17,92 MAD/h</span>
+          </div>
+        </button>
+
+        <!-- SMAG -->
+        <button @click="form.secteur='SMAG'; nextStep()"
+          :class="form.secteur==='SMAG' ? 'is-selected' : ''"
+          class="ml-option">
+          <div class="ml-row">
+            <span class="ml-option__icon">🌾</span>
+            <span class="ml-chip ml-chip--ochre">208h / mois</span>
+          </div>
+          <div>
+            <p class="ml-option__label" x-text="t('secteur_smag')"></p>
+            <p class="ml-option__desc" x-text="t('secteur_smag_desc')"></p>
+          </div>
+          <div style="margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--ml-line-strong);">
+            <span class="ml-mono" style="font-size: 11px; color: var(--ml-ink-mute);">SMAG 2026 · 2 014,56 MAD/mois · 9,69 MAD/h</span>
+          </div>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- STEP 2 · Type + Délégué -->
+    <div x-show="wizardStep===2" class="ml-fadein ml-mw-lg">
+      <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step1_title')"></h2>
+      <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step1_sub')"></p>
+      <div class="ml-grid-2">
+        <template x-for="opt in dismissalOptions()" :key="opt.value">
+          <button @click="form.type=opt.value; nextStep()"
+            :class="form.type===opt.value ? 'is-selected' : ''"
+            class="ml-option">
+            <div class="ml-row">
+              <span class="ml-option__icon" x-text="opt.icon"></span>
+              <span class="ml-chip" x-text="opt.badge"></span>
+            </div>
+            <div>
+              <p class="ml-option__label" x-text="opt.label"></p>
+              <p class="ml-option__desc" x-text="opt.desc"></p>
+            </div>
+          </button>
+        </template>
+      </div>
+
+      <!-- Délégué du personnel -->
+      <div class="ml-card" style="margin-top: 20px;">
+        <div style="font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ml-ink-mute); margin-bottom: 14px;" x-text="t('delegate_question')"></div>
+        <div class="ml-row" style="gap: 10px;">
+          <!-- OUI — délégué -->
+          <button @click="form.isDelegate = true"
+            :class="form.isDelegate === true ? 'is-selected' : ''"
+            class="ml-option" style="flex: 1; flex-direction: row; align-items: center; gap: 14px; padding: 16px;">
+            <span class="ml-option__icon" style="font-size: 22px; flex-shrink: 0;">🛡️</span>
+            <div>
+              <p class="ml-option__label" x-text="t('delegate_yes')"></p>
+              <p class="ml-option__desc" x-text="t('delegate_yes_desc')"></p>
+            </div>
+          </button>
+          <!-- NON — ordinaire -->
+          <button @click="form.isDelegate = false"
+            :class="form.isDelegate === false ? 'is-selected' : ''"
+            class="ml-option" style="flex: 1; flex-direction: row; align-items: center; gap: 14px; padding: 16px;">
+            <span class="ml-option__icon" style="font-size: 22px; flex-shrink: 0;">👤</span>
+            <div>
+              <p class="ml-option__label" x-text="t('delegate_no')"></p>
+              <p class="ml-option__desc" x-text="t('delegate_no_desc')"></p>
+            </div>
+          </button>
+        </div>
+
+        <!-- Warning délégué général -->
+        <div x-show="form.isDelegate && form.type !== 'faute_grave'" class="ml-delegate-warn">
+          <span style="font-size: 20px; flex-shrink: 0;">⚠️</span>
+          <div>
+            <p class="ml-delegate-title" x-text="t('delegate_warning_title')"></p>
+            <p class="ml-delegate-body" x-text="t('delegate_warning_body')"></p>
+            <p class="ml-delegate-ref">Art. 457-470 — Loi 65-99</p>
+          </div>
+        </div>
+
+        <!-- Warning délégué + faute grave (plus sévère) -->
+        <div x-show="form.isDelegate && form.type === 'faute_grave'" class="ml-delegate-grave">
+          <span style="font-size: 20px; flex-shrink: 0;">🚨</span>
+          <div>
+            <p class="ml-delegate-grave-title" x-text="t('delegate_grave_title')"></p>
+            <p class="ml-delegate-grave-body" x-text="t('delegate_grave_body')"></p>
+            <p class="ml-delegate-grave-ref">Art. 457-470 — Loi 65-99</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 · Catégorie -->
+    <div x-show="wizardStep===3" class="ml-fadein ml-mw-md">
+      <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step2_title')"></h2>
+      <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step2_sub')"></p>
+      <div class="ml-grid-3">
+        <template x-for="opt in categoryOptions()" :key="opt.value">
+          <button @click="form.category=opt.value; nextStep()"
+            :class="form.category===opt.value ? 'is-selected' : ''"
+            class="ml-option" style="text-align: center; align-items: center;">
+            <span class="ml-option__icon" style="width:48px; height:48px; font-size:22px;" x-text="opt.icon"></span>
+            <div>
+              <p class="ml-option__label" x-text="opt.label"></p>
+              <p class="ml-option__desc" x-text="opt.desc"></p>
+            </div>
+          </button>
+        </template>
+      </div>
+      <div class="ml-row ml-center" style="justify-content: center; margin-top: 28px;">
+        <button @click="prevStep()" class="ml-btn ml-btn--ghost">
+          <span>←</span>
+          <span x-text="t('back')"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 4 · Ancienneté + Dates -->
+    <div x-show="wizardStep===4" class="ml-fadein ml-mw-md">
+      <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step3_title')"></h2>
+      <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step3_sub')"></p>
+
+      <!-- Dates de contrat -->
+      <div class="ml-card" style="margin-bottom: 16px;">
+        <div class="ml-grid-2" style="gap: 14px;">
+          <div class="ml-field">
+            <label class="ml-field__label" x-text="t('hire_date_label')"></label>
+            <input type="date" x-model="form.hireDate"
+              @change="updateSeniorityFromDate()"
+              :max="new Date().toISOString().split('T')[0]"
+              class="ml-input">
+          </div>
+          <div class="ml-field">
+            <label class="ml-field__label" x-text="t('end_date_label')"></label>
+            <input type="date" x-model="form.endDate"
+              @change="updateSeniorityFromDate()"
+              :max="new Date().toISOString().split('T')[0]"
+              class="ml-input">
+          </div>
+        </div>
+        <div x-show="form.hireDate" class="ml-row ml-row--between" style="margin-top: 14px;">
+          <span class="ml-chip ml-chip--green">
+            <span x-text="t('hire_date_calculated')"></span>
+            <strong x-text="hireDateLabel()" style="margin-left: 4px;"></strong>
+          </span>
+          <button @click="form.hireDate=''; form.endDate=''" class="ml-btn ml-btn--ghost ml-btn--sm"
+            x-text="t('hire_date_clear')"></button>
+        </div>
+      </div>
+
+      <!-- Slider ancienneté manuel -->
+      <div class="ml-card">
+        <div class="ml-center" style="margin-bottom: 24px;">
+          <div style="font-family: var(--f-sans); font-weight: 600; font-size: 64px; line-height: 1; letter-spacing: -0.04em; color: var(--ml-ink); font-variant-numeric: tabular-nums;" x-text="form.seniority"></div>
+          <div class="ml-mute" style="font-size: 13px; margin-top: 8px;" x-text="t('years_label')"></div>
+        </div>
+        <input type="range" min="1" max="40" x-model.number="form.seniority"
+          @input="form.hireDate = ''" class="ml-range">
+        <div class="ml-row ml-row--between" style="margin-top: 8px;">
+          <span class="ml-mono ml-faint" style="font-size: 11px;">1</span>
+          <span class="ml-mono ml-faint" style="font-size: 11px;">20</span>
+          <span class="ml-mono ml-faint" style="font-size: 11px;">40</span>
+        </div>
+      </div>
+
+      <div class="ml-row ml-row--between" style="margin-top: 28px;">
+        <button @click="prevStep()" class="ml-btn ml-btn--ghost">
+          <span>←</span>
+          <span x-text="t('back')"></span>
+        </button>
+        <button @click="nextStep()" :disabled="!form.seniority || form.seniority < 1"
+          class="ml-btn ml-btn--primary">
+          <span x-text="t('next')"></span>
+          <span class="ml-arrow" x-text="'→'"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 5 · Salaire & compléments -->
+    <div x-show="wizardStep===5" class="ml-fadein ml-mw-md">
+      <h2 class="ml-h2 ml-center" style="margin-bottom: 6px;" x-text="t('step4_title')"></h2>
+      <p class="ml-lead ml-center" style="margin: 0 auto 32px;" x-text="t('step4_sub')"></p>
+
+      <!-- Salaire -->
+      <div class="ml-card">
+        <div class="ml-center" style="margin-bottom: 20px;">
+          <div style="font-family: var(--f-sans); font-weight: 600; font-size: 48px; line-height: 1; letter-spacing: -0.035em; font-variant-numeric: tabular-nums;">
+            <span x-text="form.salary ? fmt(form.salary) : '—'"></span>
+            <span class="ml-mono" style="font-size: 18px; color: var(--ml-ink-mute);">MAD</span>
+          </div>
+          <div class="ml-mute ml-mono" style="font-size: 11.5px; margin-top: 10px; letter-spacing: 0.08em;">
+            <span x-text="t('equiv_hourly')"></span>
+            <span style="color: var(--ml-green); font-weight: 500;"
+              x-text="form.salary ? fmt(form.salary / (form.secteur === 'SMAG' ? 208 : 191)) + ' MAD/h' : '—'"></span>
+          </div>
+        </div>
+        <div class="ml-field">
+          <label class="ml-field__label" x-text="t('salary_placeholder')"></label>
+          <div style="position: relative;">
+            <input type="number" x-model.number="form.salary" min="0"
+              class="ml-input ml-input--center ml-input--lg" placeholder="0">
+            <span style="position: absolute; inset-inline-end: 20px; top: 50%; transform: translateY(-50%); color: var(--ml-ink-mute); font-size: 15px; font-weight: 600; font-family: var(--f-mono); letter-spacing: 0.04em; pointer-events: none;">MAD</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compléments -->
+      <div class="ml-card" style="margin-top: 14px;">
+        <div class="ml-field">
+          <label class="ml-field__label">
+            <span x-text="t('unpaid_label')"></span>
+          </label>
+          <p class="ml-mute" style="font-size: 12px; margin: 4px 0 8px;" x-text="t('unpaid_help')"></p>
+          <input type="number" x-model.number="form.unpaidDays" min="0" max="365"
+            class="ml-input ml-input--center" placeholder="0">
+        </div>
+        <div class="ml-divider"></div>
+        <div class="ml-field">
+          <label class="ml-field__label">
+            <span x-text="t('leave_label')"></span>
+          </label>
+          <p class="ml-mute" style="font-size: 12px; margin: 4px 0 8px;" x-text="t('leave_help')"></p>
+          <input type="number" x-model.number="form.unusedLeave" min="0" max="365"
+            class="ml-input ml-input--center" placeholder="0">
+        </div>
+        <div x-show="form.salary && (form.unpaidDays > 0 || form.unusedLeave > 0)"
+          class="ml-divider"></div>
+        <p x-show="form.salary && (form.unpaidDays > 0 || form.unusedLeave > 0)"
+          class="ml-mute ml-center ml-mono" style="font-size: 12px;">
+          <span x-text="t('daily_rate') + ' :'"></span>
+          <span style="color: var(--ml-green); font-weight: 500;" x-text="form.salary ? fmt(form.salary/26) + ' MAD/jour' : ''"></span>
+        </p>
+      </div>
+
+      <div class="ml-row ml-row--between" style="margin-top: 28px;">
+        <button @click="prevStep()" class="ml-btn ml-btn--ghost">
+          <span>←</span>
+          <span x-text="t('back')"></span>
+        </button>
+        <button @click="calculateAndNext()" :disabled="!form.salary || form.salary < 1"
+          class="ml-btn ml-btn--accent ml-btn--lg">
+          <span x-text="t('calculate')"></span>
+          <span class="ml-arrow">→</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 6 · Résultats -->
+    <div x-show="wizardStep===6 && results" class="ml-fadein">
+
+      <!-- Faute grave warning -->
+      <div x-show="form.type==='faute_grave'" class="ml-mw-md">
+        <div class="ml-card ml-card--lg ml-center" style="border: 1px solid var(--ml-rouge-soft);">
+          <div style="font-size: 48px; margin-bottom: 12px;">🚨</div>
+          <h2 class="ml-h2" style="color: var(--ml-rouge); margin-bottom: 12px;" x-text="t('faute_grave_warning_title')"></h2>
+          <p class="ml-lead" style="margin: 0 auto 16px;" x-text="t('faute_grave_warning')"></p>
+          <span class="ml-chip ml-chip--rouge" x-text="t('faute_grave_ref')"></span>
+        </div>
+        <button @click="wizardStep=1; results=null"
+          class="ml-btn ml-btn--ghost ml-btn--block" style="margin-top: 20px;"
+          x-text="t('restart')"></button>
+      </div>
+
+      <!-- Résultats normaux -->
+      <div x-show="form.type!=='faute_grave'" class="ml-mw-lg">
+
+        <!-- Total card -->
+        <div class="ml-total ml-countup" style="margin-bottom: 28px;">
+          <span class="ml-total__small" x-text="t('total')"></span>
+          <div>
+            <span class="ml-total__amount" x-text="results ? fmt(results.total) : ''"></span>
+            <span class="ml-total__currency">MAD</span>
+          </div>
+          <div class="ml-total__tags">
+            <span class="ml-total__tag" x-text="t('label_'+form.type)"></span>
+            <span class="ml-total__tag" x-text="t(form.category)"></span>
+            <span class="ml-total__tag" x-text="results ? results.seniorityLabel : ''"></span>
+            <span x-show="form.isDelegate"
+              class="ml-total__tag"
+              style="background: rgba(245,158,11,0.25); color: #fbbf24; border: 1px solid rgba(245,158,11,0.4);"
+              x-text="t('delegate_badge')"></span>
+          </div>
+        </div>
+
+        <!-- Breakdown lines -->
+        <div class="ml-stack" style="gap: 12px; margin-bottom: 24px;">
+
+          <!-- Indemnité légale -->
+          <div class="ml-amount">
+            <div>
+              <div class="ml-row" style="gap: 10px;">
+                <div class="ml-amount__icon">§</div>
+                <div>
+                  <p class="ml-amount__label" x-text="t('legal_indemnity')"></p>
+                </div>
+              </div>
+              <div class="ml-breakdown">
+                <div class="ml-breakdown__head">
+                  <span x-text="t('calc_hourly_rate') + ' :'"></span>
+                  <span class="ml-mono" style="color: var(--ml-ink); letter-spacing: 0;" x-text="results ? results.salaireHoraireFormula : ''"></span>
+                </div>
+                <template x-if="results">
+                  <div class="ml-stack" style="gap: 8px;">
+                    <template x-for="line in results.breakdown" :key="line.label">
+                      <div class="ml-breakdown__row">
+                        <div class="ml-breakdown__main">
+                          <span class="ml-breakdown__label" x-text="line.label"></span>
+                          <span class="ml-breakdown__amount" x-text="fmt(line.amount)+' MAD'"></span>
+                        </div>
+                        <span class="ml-breakdown__formula" x-text="line.formula"></span>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+              </div>
+            </div>
+            <span class="ml-amount__value ml-amount__value--accent"
+              x-text="results ? fmt(results.indemniteLegale)+' MAD' : ''"></span>
+          </div>
+
+          <!-- Préavis -->
+          <div class="ml-amount">
+            <div>
+              <div class="ml-row" style="gap: 10px;">
+                <div class="ml-amount__icon">⏱</div>
+                <div>
+                  <p class="ml-amount__label" x-text="t('notice_indemnity')"></p>
+                  <p class="ml-amount__sub" x-text="results ? results.preavislabel : ''"></p>
+                  <p class="ml-amount__formula" x-text="results ? results.preFormula : ''"></p>
+                </div>
+              </div>
+            </div>
+            <span class="ml-amount__value ml-amount__value--blue"
+              x-text="results ? fmt(results.indemnitePreavis)+' MAD' : ''"></span>
+          </div>
+
+          <!-- Salaires non payés -->
+          <div x-show="results && results.unpaidAmount > 0" class="ml-amount">
+            <div>
+              <div class="ml-row" style="gap: 10px;">
+                <div class="ml-amount__icon">∑</div>
+                <div>
+                  <p class="ml-amount__label" x-text="t('unpaid_indemnity')"></p>
+                  <p class="ml-amount__sub">
+                    <span x-text="results ? results.unpaidDays : 0"></span>
+                    <span x-text="'jours'"></span>
+                  </p>
+                  <p class="ml-amount__formula" x-text="results ? results.unpaidFormula : ''"></p>
+                </div>
+              </div>
+            </div>
+            <span class="ml-amount__value ml-amount__value--accent"
+              x-text="results ? fmt(results.unpaidAmount)+' MAD' : ''"></span>
+          </div>
+
+          <!-- Congés non pris -->
+          <div x-show="results && results.leaveAmount > 0" class="ml-amount">
+            <div>
+              <div class="ml-row" style="gap: 10px;">
+                <div class="ml-amount__icon">☀</div>
+                <div>
+                  <p class="ml-amount__label" x-text="t('leave_indemnity')"></p>
+                  <p class="ml-amount__sub" x-text="t('leave_ref')"></p>
+                  <p class="ml-amount__formula" x-text="results ? results.leaveFormula : ''"></p>
+                </div>
+              </div>
+            </div>
+            <span class="ml-amount__value ml-amount__value--ochre"
+              x-text="results ? fmt(results.leaveAmount)+' MAD' : ''"></span>
+          </div>
+
+          <!-- D&I -->
+          <div x-show="results && results.dommages > 0" class="ml-amount">
+            <div>
+              <div class="ml-row" style="gap: 10px;">
+                <div class="ml-amount__icon">⚖</div>
+                <div>
+                  <p class="ml-amount__label" x-text="t('damages')"></p>
+                  <p class="ml-amount__sub" x-text="t('damages_ref')"></p>
+                  <p class="ml-amount__formula" x-text="results ? results.domFormula : ''"></p>
+                </div>
+              </div>
+            </div>
+            <span class="ml-amount__value ml-amount__value--rouge"
+              x-text="results ? fmt(results.dommages)+' MAD' : ''"></span>
+          </div>
+
+        </div>
+
+        <!-- Infos dossier (optionnel — pour le PDF) -->
+        <div class="ml-card ml-card--bordered no-print" style="margin-bottom: 16px;">
+          <div class="ml-row ml-row--between" style="margin-bottom: 14px;">
+            <span class="ml-eyebrow" style="display:inline-flex; gap:6px;">
+              <span>Informations dossier</span>
+            </span>
+            <span class="ml-chip" style="font-size:10px;" x-text="t('dossier_opt')"></span>
+          </div>
+          <div class="ml-grid-2" style="gap: 12px; margin-bottom: 12px;">
+            <div class="ml-field">
+              <label class="ml-field__label" x-text="t('dossier_nom')"></label>
+              <input type="text" x-model="dossier.nomSalarie" class="ml-input"
+                :placeholder="t('dossier_nom_ph')">
+            </div>
+            <div class="ml-field">
+              <label class="ml-field__label" x-text="t('dossier_poste')"></label>
+              <input type="text" x-model="dossier.poste" class="ml-input"
+                :placeholder="t('dossier_poste_ph')">
+            </div>
+          </div>
+          <div class="ml-field">
+            <label class="ml-field__label" x-text="t('dossier_ref')"></label>
+            <input type="text" x-model="dossier.ref" class="ml-input"
+              :placeholder="t('dossier_ref_ph')">
+          </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="ml-card ml-card--bordered" style="background: var(--ml-ochre-soft); border-color: transparent; margin-bottom: 20px;">
+          <p class="ml-disclaimer-text" x-text="t('disclaimer')"></p>
+        </div>
+
+        <!-- Actions -->
+        <div class="ml-row no-print" style="gap: 10px; flex-wrap: wrap;">
+          <button @click="wizardStep=1; results=null; dossier={nomSalarie:'',poste:'',ref:''}" class="ml-btn" style="flex: 1; min-width: 120px;" x-text="t('restart')"></button>
+          <button @click="shareUrl()" class="ml-btn"
+            :style="copiedUrl ? 'background: var(--ml-green); color: #f6f3ec; border-color: var(--ml-green);' : ''"
+            style="flex: 1; min-width: 120px;">
+            <span x-text="copiedUrl ? t('share_copied') : t('share_btn')"></span>
+          </button>
+          <button @click="generatePDF()" class="ml-btn ml-btn--primary" style="flex: 1; min-width: 140px;">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+              <path d="M7 1v8M4 6l3 3 3-3"/><path d="M2 10v1a1 1 0 001 1h8a1 1 0 001-1v-1"/>
+            </svg>
+            <span x-text="t('pdf_btn')"></span>
+          </button>
+        </div>
+
+        <!-- Séparateur -->
+        <div class="no-print" style="height: 1px; background: var(--ml-line); margin: 36px 0;"></div>
+
+        <!-- Sauvegarder dossier (Supabase) -->
+        <button @click="saveDossier()" :disabled="savingDossier"
+          class="ml-btn ml-btn--accent ml-btn--block ml-btn--lg no-print"
+          :style="dossierSaved ? 'background: var(--ml-green-2); border-color: var(--ml-green-2);' : ''">
+          <template x-if="!savingDossier && !dossierSaved">
+            <span style="display:inline-flex; align-items:center; gap:8px;">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+                <path d="M11 12H3a1 1 0 01-1-1V3a1 1 0 011-1h6l3 3v6a1 1 0 01-1 1z"/><path d="M9 12V8H5v4M5 2v3h3"/>
+              </svg>
+              <span x-text="t('dossier_save_btn')"></span>
+            </span>
+          </template>
+          <template x-if="savingDossier"><span class="ml-spin">⏳</span></template>
+          <template x-if="dossierSaved && !savingDossier"><span x-text="t('dossier_saved')"></span></template>
+        </button>
+
+        <!-- Historique -->
+        <div x-show="history.length > 0" class="no-print" style="margin-top: 28px;">
+          <button @click="showHistory = !showHistory"
+            class="ml-btn ml-btn--ghost ml-btn--block"
+            style="justify-content: space-between; background: var(--ml-bg-2); border-color: var(--ml-line);">
+            <span style="display: inline-flex; align-items: center; gap: 8px;">
+              <span class="ml-mono" style="font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ml-ink-mute);" x-text="t('history_title')"></span>
+              <span class="ml-chip ml-chip--green" style="height: 20px; font-size: 10px;" x-text="history.length"></span>
+            </span>
+            <span :class="showHistory ? 'rotate-180' : ''" style="display:inline-block; transition: transform .25s;" :style="showHistory ? 'transform: rotate(180deg);' : ''">▾</span>
+          </button>
+          <div x-show="showHistory" class="ml-stack" style="margin-top: 10px; gap: 8px;">
+            <template x-for="entry in history" :key="entry.id">
+              <div class="ml-hist">
+                <div>
+                  <div class="ml-row" style="gap: 6px; flex-wrap: wrap;">
+                    <span class="ml-hist__date" x-text="entry.date"></span>
+                    <span class="ml-chip ml-chip--green" style="height: 20px; font-size: 10px;" x-text="t('label_'+entry.type)"></span>
+                    <span class="ml-chip" style="height: 20px; font-size: 10px;" x-text="t(entry.category)"></span>
+                    <span class="ml-chip" style="height: 20px; font-size: 10px;" x-text="entry.seniority + ' ans'"></span>
+                  </div>
+                  <div class="ml-hist__total" x-text="fmt(entry.total) + ' MAD'"></div>
+                </div>
+                <button @click="restoreFromHistory(entry)" class="ml-btn ml-btn--sm ml-btn--primary" x-text="t('history_restore')"></button>
+              </div>
+            </template>
+            <button @click="clearHistory()" class="ml-btn ml-btn--ghost ml-btn--sm" style="margin-top: 4px;" x-text="t('history_clear')"></button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Barème (visible avant les résultats) -->
+    <div x-show="wizardStep < 5" style="margin-top: 64px;">
+      <p class="ml-eyebrow ml-center" style="display: flex; justify-content: center; margin-bottom: 18px;">
+        <span x-text="t('bareme_title')"></span>
+      </p>
+      <div class="ml-bareme">
+        <template x-for="row in baremeRows()" :key="row.years">
+          <div class="ml-bareme__cell">
+            <div class="ml-bareme__years" x-text="row.years"></div>
+            <div class="ml-bareme__rate" x-text="row.rate"></div>
+            <div class="ml-bareme__art">art. 52</div>
+          </div>
+        </template>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       </main></body></html>

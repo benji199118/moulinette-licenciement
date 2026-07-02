@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html x-data="app()" dir="ltr" lang="fr" :class="darkMode ? 'dark' : ''" class="scroll-smooth">
+<head><meta charset="UTF-8"><title>bisect body</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="auth.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3/dist/cdn.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+</head>
+<body>
+
+<!-- ════════════ PRINT-ONLY HEADER ════════════ -->
+<div class="ml-print-header">
+  <div>
+    <h1>IndemnPro</h1>
+    <p>Code du Travail Marocain — Loi 65-99</p>
+  </div>
+  <div class="ml-print-header__right">
+    <p>Imprimé le <span id="print-date"></span></p>
+    <p style="font-style: italic;">Document à titre indicatif</p>
+  </div>
+</div>
+<script>document.getElementById('print-date').textContent = new Date().toLocaleDateString('fr-MA');</script>
+
+<!-- ════════════ NAVIGATION ════════════ -->
+<header class="ml-nav no-print">
+  <div class="ml-wrap">
+    <div class="ml-nav__inner">
+      <a href="index-v2.html" class="ml-logo">
+        <span class="ml-logo__mark">IP</span>
+        <span>
+          <span x-text="t('app_title')"></span>
+          <span class="ml-logo__sub"> · Loi 65-99</span>
+        </span>
+      </a>
+      <div class="ml-nav__spacer"></div>
+      <div class="ml-nav__right">
+        <button @click="darkMode = !darkMode"
+          class="ml-theme"
+          :class="darkMode ? 'is-dark' : ''"
+          :title="darkMode ? 'Mode clair' : 'Mode sombre'">
+          <!-- Knob glissant -->
+          <span class="ml-theme__knob"></span>
+          <!-- ☀ Soleil — gauche -->
+          <span class="ml-theme__icon ml-theme__sun">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"/>
+              <line x1="12" y1="2" x2="12" y2="6"/>
+              <line x1="12" y1="18" x2="12" y2="22"/>
+              <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
+              <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+              <line x1="2" y1="12" x2="6" y2="12"/>
+              <line x1="18" y1="12" x2="22" y2="12"/>
+              <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
+              <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+            </svg>
+          </span>
+          <!-- ☾ Lune — droite -->
+          <span class="ml-theme__icon ml-theme__moon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </span>
+        </button>
+
+        <!-- Badge invité (essais restants) -->
+        <div x-show="isGuest" class="ml-row" style="gap: 8px;">
+          <span class="ml-chip"
+            :class="trialRemaining() > 0 ? 'ml-chip--ochre' : 'ml-chip--rouge'"
+            style="cursor: default;">
+            <span class="ml-chip__dot"></span>
+            <span x-text="trialRemaining() > 0
+              ? trialRemaining() + ' essai' + (trialRemaining() > 1 ? 's' : '') + ' gratuit' + (trialRemaining() > 1 ? 's' : '')
+              : 'Limite atteinte'">
+            </span>
+          </span>
+          <a href="login-v2.html?tab=signup" class="ml-btn ml-btn--accent ml-btn--sm">
+            <span>Créer un compte</span>
+          </a>
+        </div>
+
+        <!-- User pill + logout (utilisateur connecté) -->
+        <div x-show="currentUser" class="ml-user-pill">
+          <span class="ml-user-pill__avatar" x-text="currentUser ? currentUser.email[0].toUpperCase() : ''"></span>
+          <span class="ml-user-pill__email ml-mono" x-text="currentUser ? currentUser.email : ''"></span>
+          <button @click="signOut()" class="ml-user-pill__logout" title="Se déconnecter">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4.5 6H11M8.5 3.5L11 6l-2.5 2.5"/>
+              <path d="M7 1.5H2a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h5"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="ml-tabs">
+      <template x-for="tab in tabs" :key="tab.id">
+        <button @click="activeTab=tab.id; wizardStep=1; window.scrollTo({top:0,behavior:'smooth'})"
+          :class="activeTab===tab.id ? 'is-active' : ''"
+          class="ml-tab">
+          <span class="ml-tab__icon" x-text="tab.icon"></span>
+          <span x-text="t(tab.labelKey)"></span>
+        </button>
+      </template>
+    </div>
+  </div>
+</header>
+
+<!-- ════════════ MAIN ════════════ -->
+</body></html>
